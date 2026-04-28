@@ -1,0 +1,1271 @@
+COUNTER UAV - CFG Bind Commands Reference
+==========================================
+COUNTER UAV - CFG COMMAND USAGE GUIDE
+HOW TO WRITE STRINGS IN NOTEPAD++ CORRECTLY
+==========================================
+
+=== WHAT IS A CFG STRING? ===
+
+A CFG string is a single line of commands separated by semicolons (;).
+You write these in Notepad++, save the file as a .cfg, then exec it in-game
+or bind it to a key. Every command runs in sequence with no delay unless
+you add a "wait" between them.
+
+Example of a valid string:
+  +inter;wait 5;+a16;wait 3;+a4;wait 5;weapnext
+
+Do NOT put line breaks inside a string. The entire shot must be ONE line.
+
+
+=== SEMICOLONS (;) ===
+
+Semicolons separate each command. Every command needs one between it and the next.
+  CORRECT:  +inter;wait 5;+a16
+  WRONG:    +inter wait 5 +a16       <- no semicolons, this does nothing
+  WRONG:    +inter; wait 5; +a16     <- spaces after ; are fine but not needed
+
+
+=== HOW + COMMANDS WORK ===
+
+A + command (like +inter or +a16) is a BUTTON PRESS trigger.
+The GSC script is listening for that command via notifyOnPlayerCommand.
+When it fires, the script thread wakes up and runs the bind.
+
+- You call +inter in a string the same way you would press the key it is bound to.
+- You do NOT need to have it bound to a controller button - calling it in a
+  string is enough as long as you are the host.
+- The - version (like -stztilt or -juitilt) releases the command.
+  Always include the - version after using a + tilt command or it stays stuck.
+
+Example for tilt:
+  +stztilt;wait 10;-stztilt
+
+
+=== HOW WAIT WORKS ===
+
+"wait N" pauses execution for N frames.
+The number of frames per second depends on your com_maxfps and sv_padpackets.
+
+  At 250 padpackets:  1 frame = 1/250s  (0.004s) - very fast
+  At 2000 padpackets: 1 frame = 1/2000s (0.0005s) - extremely fast
+  At 59fps (normal):  1 frame = 1/59s   (0.016s)
+
+wait 1   = 1 game frame
+wait 5   = 5 frames - very small gap
+wait 10  = 10 frames
+wait 50  = roughly 0.2s at 250 padpackets / much less at 8000
+
+RULE OF THUMB at 8000 padpackets:
+  wait 1   = near instant
+  wait 10  = tiny gap (still looks same frame to the eye)
+  wait 50  = about 1 frame at normal 59fps
+  wait 500 = about 10 frames at 59fps
+
+If a command fires too early or too late, adjust the wait before it by +/- 5-10.
+Do NOT use decimals: "wait 0.5" does NOT work. Only whole integers.
+
+
+=== SETTING DVARS BEFORE CALLING A COMMAND ===
+
+Many + commands read a dvar before executing. You MUST set the dvar BEFORE
+calling the + command in the string or it will use the wrong/old value.
+
+Commands that require a dvar to be set first:
+
+  +anim     needs: set Anim N          (N = animation index 0-34)
+  +anim2    needs: set Anim2 N
+  +swap     needs: set swap_weapon weaponname_mp
+  +vel      needs: set velx N; set vely N; set velz N
+  +vel2     needs: set velx2 N; set vely2 N; set velz2 N
+  +pos      needs: set posx N; set posy N; set posz N    (save first with +saveloc)
+  +saveloc  saves current position into posx/posy/posz dvars automatically
+  +radmark  marks origin for radius damage - call before +raddam
+  +ac130tog must be toggled ON before +ac130 does anything
+  +dvartog  needs: set dvar_name to whichever dvar you want toggled
+
+Example - play anim 16 on your current weapon:
+  set Anim 16;+anim
+
+Example - velocity launch north:
+  set velx 0;set vely 800;set velz 600;+vel
+
+Example - weapon swap to specific weapon:
+  set swap_weapon cheytac_mp;+swap
+
+
+=== CHAINING WEAPON MALAS IN A STRING ===
+
+A "mala" gives you a weapon, does the animation, then takes it away.
+These are self-contained - just call them and add a wait after if needed.
+Do NOT call two malas back to back with no wait or they will cancel each other.
+
+Example - frag throw into inter mala:
+  +fragthrow;wait 15;+inter;wait 10;+a16
+
+Example - spas skree into marareload:
+  +spas;wait 8;+a16;wait 5;+marareload
+
+
+=== WEAPON ANIMATIONS IN STRINGS ===
+
++a0 through +a34 fire setWeaponAnim on your CURRENT weapon.
+The anim plays immediately. Use wait before/after to time it correctly.
+
+To chain two anims:
+  +a16;wait 3;+a17         (two-stage pump)
+  +a4;wait 5;+a16          (bolt then shax)
+  +a13;wait 8;+a4          (scope freeze then bolt)
+
++anim and +anim2 do the same thing but read from the Anim/Anim2 dvar.
+Use these in strings where you want to reuse one bind for different anims:
+  set Anim 16;+anim;wait 5;set Anim 4;+anim
+
+
+=== HOW PADPACKETS WORK - COMPLETE GUIDE ===
+
+This is the most important thing to understand about CFG scripting in IW4x.
+Read this entire section before scripting anything timing-dependent.
+
+--- WHAT sv_padpackets ACTUALLY DOES ---
+
+IW4x (like MW2) works on a client-server model even in private match.
+Your controller inputs (button presses, stick movement, weapon swaps) are packaged
+into "packets" and sent to the server. The server processes them and updates the game.
+
+sv_padpackets controls HOW MANY of these input packets are sent every second.
+
+  Default (vanilla): sv_padpackets is low (~30-60 per second, matching frame rate)
+  With high padpackets: you can send thousands of packets per second
+
+Why this matters for CFG scripting:
+  "wait N" in a string pauses for N packets before continuing.
+  At low padpackets, wait 1 = a long real-time gap.
+  At high padpackets, wait 1 = an extremely short gap.
+
+This means: you can time commands to within fractions of a millisecond
+by choosing the right padpacket value. This is how impossible-looking tricks
+(bolt skrees, zoomloads, frame-perfect reloads) become consistent.
+
+Think of it like frame-data in a fighting game: every weapon animation
+has a fixed number of real-time frames. Padpackets lets you subdivide
+those frames into smaller slices so you can hit exact moments inside them.
+
+--- THE WAIT SYSTEM EXPLAINED ---
+
+"wait N" does NOT wait N milliseconds. It waits N PACKETS.
+1 packet = 1 / sv_padpackets seconds of real time.
+
+So at sv_padpackets 5000:
+  1 second = 5000 packets
+  wait 5000 = wait 1 real second
+  wait 1 = wait 0.0002 seconds = wait 0.2ms
+
+At sv_padpackets 8000:
+  wait 1 = 0.125ms
+  wait 8000 = 1 real second
+
+The game's weapon animations run at the server frame rate (59fps).
+One server frame = 1/59 = approximately 16.95ms
+At 5000pp: 1 frame = 16.95ms = ~85 packets (wait 85 ~ 1 game frame)
+At 8000pp: 1 frame ~ wait 136
+At 11000pp: 1 frame ~ wait 186
+
+--- WAIT 1 = HOW LONG AT EACH PADPACKET LEVEL ---
+
+  sv_padpackets 250    ->  wait 1 = 4.000 ms  (too slow for precise shots)
+  sv_padpackets 1000   ->  wait 1 = 1.000 ms  (slow but usable)
+  sv_padpackets 2000   ->  wait 1 = 0.500 ms
+  sv_padpackets 5000   ->  wait 1 = 0.200 ms  <- ph6n6m cfg v2 DEFAULT
+  sv_padpackets 8000   ->  wait 1 = 0.125 ms  <- good all-rounder
+  sv_padpackets 10000  ->  wait 1 = 0.100 ms
+  sv_padpackets 11000  ->  wait 1 = 0.091 ms  <- bolt skrees / TK skrees
+  sv_padpackets 15000  ->  wait 1 = 0.067 ms  <- zoomloads / no-mag skrees
+  sv_padpackets 20000  ->  wait 1 = 0.050 ms  <- cheytac reload skree timing
+  sv_padpackets 35000  ->  wait 1 = 0.029 ms  <- fake movement skree trick
+  sv_padpackets 59000  ->  wait 1 = 0.017 ms  (one game frame exactly)
+
+--- HOW TO CONVERT WAIT TIMES BETWEEN PADPACKET LEVELS ---
+
+If you find a string online that was written at a specific padpacket value
+and you want to use it at a different value, use this formula:
+
+  wait_new = wait_old x (old_padpackets / new_padpackets)
+
+ROUND to the nearest whole integer - decimals crash or get ignored.
+After calculating, test by +/- 1-2 on the converted wait to fine-tune.
+
+Examples using CheytacReloadNac (wait 114 at 5000pp):
+  You want to run it at 2000pp:  114 x (5000 / 2000)  = wait 285
+  You want to run it at 8000pp:  114 x (5000 / 8000)  = wait 71
+  You want to run it at 11000pp: 114 x (5000 / 11000) = wait 52
+  You want to run it at 59fps:   114 x (5000 / 59000) = wait 10
+
+More examples using SpasReloadNac (wait 40 at 5000pp):
+  At 2000pp:  40 x 2.5 = wait 100
+  At 8000pp:  40 x 0.625 = wait 25
+  At 11000pp: 40 x 0.454 = wait 18
+
+--- WHY DIFFERENT PADPACKETS FOR DIFFERENT SHOT TYPES ---
+
+Not every shot needs high padpackets. The rule is:
+the SHORTER the timing window, the HIGHER the padpackets you need.
+
+LONG windows (easy to time, low padpackets OK):
+  Reload animations - window is 100-400ms wide
+  Adelia/tac-flip timing - window is 50-100ms
+  Weapon swaps - window is 30-80ms
+  These all work fine at 5000pp because you have plenty of room.
+
+SHORT windows (hard to time, need high padpackets):
+  Bolt pull timing - window is only 1-2 real frames (~17-34ms)
+  Skree window after bolt - only 1 frame wide
+  Zoomload firing window - fraction of 1 frame
+  These NEED high padpackets because at 5000pp one frame = wait 85
+  and you cannot hit the 1-frame window reliably.
+
+From ph6n6m cfg v2 - actual values used by category:
+  5000pp  -> standard reload nacs, adelias, RT nacs, spins, tac-flips
+  8000pp  -> TK UB Moni skrees, RPG skrees, SPAS C-Nac skrees, care package lunge
+  11000pp -> bolt skrees, TK reload skrees, sentry skrees, TK alt-swap skrees
+  15000pp -> Cheytac no-mag zoomload (tightest window in the game)
+  20000pp -> Cheytac reload skree, barrel roll reef (multi-step overlap timing)
+  35000pp -> fake movement skree (g_speed trick - needs per-ms accuracy)
+
+--- WHERE TO SET PADPACKETS IN A STRING ---
+
+Set padpackets as the VERY FIRST command in the string, before anything else.
+The engine applies it before processing the first wait:
+
+  set BoltSkree "sv_padpackets 11000;+attack;-attack;..."
+  set NoMagZoomload "sv_padpackets 15000;+usereload;-usereload;wait 3;+attack..."
+
+Do NOT set padpackets in the MIDDLE of a string.
+Changing padpackets mid-string causes a brief stutter because the server
+has to recalibrate its packet budget. All timing after the change becomes
+inconsistent. If you absolutely need two different packet rates, use two
+separate binds chained to back-to-back keys.
+
+--- REFERENCE TABLES ---
+
+WAIT COUNT = 1 REAL SECOND at each padpacket level:
+  250pp    -> wait 250
+  1000pp   -> wait 1000
+  2000pp   -> wait 2000
+  5000pp   -> wait 5000
+  8000pp   -> wait 8000
+  11000pp  -> wait 11000
+  15000pp  -> wait 15000
+  20000pp  -> wait 20000
+  59fps    -> wait 59   (server frames, NOT packets)
+
+WAIT VALUES FOR COMMON REAL-TIME DURATIONS across padpacket levels:
+  Real time  | 2000pp  | 5000pp | 8000pp | 11000pp | 15000pp | 20000pp
+  -----------|---------|--------|--------|---------|---------|--------
+  1 ms       | wait  2 | wait 5 | wait 8 | wait 11 | wait 15 | wait 20
+  5 ms       | wait 10 | wait25 | wait40 | wait 55 | wait 75 | wait100
+  10 ms      | wait 20 | wait50 | wait80 | wait110 | wait150 | wait200
+  17 ms(1fr) | wait 34 | wait85 |wait136 | wait186 | wait254 | wait340
+  20 ms      | wait 40 |wait100 |wait160 | wait220 | wait300 | wait400
+  50 ms      | wait100 |wait250 |wait400 | wait550 | wait750 |wait1000
+  100 ms     | wait200 |wait500 |wait800 |wait1100 |wait1500 |wait2000
+  200 ms     | wait400 |wait1000|wait1600|wait2200 |wait3000 |wait4000
+  500 ms     |wait1000 |wait2500|wait4000|wait5500 |wait7500 |wait10000
+  1 second   |wait2000 |wait5000|wait8000|wait11000|wait15000|wait20000
+
+--- SHOT TIMING REFERENCE - NACS AND ADELIAS AT 5000PP (from ph6n6m v2) ---
+
+These are exact tested wait values at 5000pp. Convert with the formula above
+if you are on a different padpacket level.
+
+SNIPERS:
+  Cheytac reload nac:        wait 114
+  Cheytac bolt reload nac:   wait 38 (after +attack;-attack;+usereload;-usereload)
+  Cheytac titty nac:         wait 77 (after weapnext;wait 2;weapnext)
+  Cheytac shoot titty nac:   wait 85 (after +attack;-attack)
+  Barrett reload nac:        wait 176
+  WA2000 reload nac:         wait 158
+  M21 EBR nac:               wait 120
+  Intervention = cheytac (same weapon base)
+
+SHOTGUNS:
+  SPAS reload nac:           wait 40
+  SPAS pump reload nac:      wait 28 (after +attack;-attack;+usereload;-usereload)
+  SPAS titty nac:            wait 58 (after weapnext;wait 2;weapnext)
+  SPAS shoot titty nac:      wait 118
+  Model 1887 reload nac:     wait 55 (pump, after +attack;-attack;+usereload;-usereload)
+  AA-12 reload nac:          wait 126
+  Striker reload nac:        wait 55
+  M1014 reload nac:          wait 39
+  Ranger reload nac:         wait 98
+
+PISTOLS:
+  USP reload nac:            wait 76
+  M9 / Glock reload nac:     wait 76
+  Desert Eagle reload nac:   wait 90
+  .44 Magnum reload nac:     wait 90
+  PP2000 reload nac:         wait 80
+  G18 reload nac:            wait 116
+  TMP reload nac:            wait 84
+
+ASSAULT RIFLES:
+  M4A1 reload nac:           wait 70
+  M16 / ACR reload nac:      wait 71
+  FAMAS / FN2000 reload nac: wait 130
+  SCAR-H reload nac:         wait 118
+  Tavor reload nac:          wait 108
+  FAL reload nac:            wait 114
+  AK-47 reload nac:          wait 111
+
+SMGs:
+  MP5K reload nac:           wait 112
+  UMP-45 reload nac:         wait 114
+  Vector reload nac:         wait 88
+  P90 reload nac:            wait 112
+  Mini-Uzi reload nac:       wait 138
+
+LMGs:
+  L86 LSW reload nac:        wait 188
+  AUG HBAR reload nac:       wait 150
+  MG4 / RPD reload nac:      wait 446
+  M240 reload nac:           wait 315
+
+RPG / THUMPER:
+  RPG titty nac:             wait 75 (after weapnext;wait 2;weapnext)
+  Thumper titty nac:         wait 140 (after weapnext;wait 2;weapnext)
+
+NOTE: All the above are +2 shorter for adelia (replace weapnext with +forward;+breath_sprint)
+
+
+=== COMPLETE SV_PADPACKETS TRICK LIST ===
+
+Everything below uses padpackets alongside other dvars to create specific effects.
+Each section explains WHAT it does, WHY it works, and HOW to use it.
+
+--- 1. FAKE MOVEMENT SKREE (g_speed trick) - sv_padpackets 35000 ---
+
+WHAT: Creates the visual illusion of running movement without holding the stick.
+      The player model looks like it lurches forward and stops (reef/movement effect)
+      even though you are physically standing still.
+
+WHY IT WORKS: g_speed sets the player's max movement speed.
+      At g_speed 500 the engine thinks you are moving very fast, playing the run anim.
+      Then immediately dropping to g_speed 0 snaps the movement to zero.
+      The 35000 padpackets is needed so the wait between speed 500 and speed 0
+      is precise enough to create the exact-length visual burst.
+
+HOW TO USE:
+  set FakeMovementSkree "sv_padpackets 35000;g_speed 500;wait 200;g_speed 0;+forward;+breath_sprint;wait 10;+gostand;-gostand;-forward;-breath_sprint;g_speed 200"
+
+  Change wait 200 to control burst length (longer = more movement visible).
+  ALWAYS reset g_speed 200 at end. If you forget, you cannot move at all until reset.
+  You can use g_speed 300 for a subtle version or g_speed 800 for an exaggerated one.
+
+--- 2. FAKE PRECAM SMOOTH ANIM (cg_nopredict trick) ---
+
+WHAT: Makes a weapon swap look like a smooth slow-motion or glitched anim
+      where the weapon slides out of frame rather than instantly switching.
+      Looks like a "fake precam" or creamy smooth weapon transition.
+
+WHY IT WORKS: cg_nopredict 1 turns off client-side prediction.
+      Normally the client PREDICTS what the server will do (to hide lag).
+      With prediction off, the client has to wait for server confirmation
+      before showing the result of your inputs. This creates a visible delay
+      in the weapon swap animation - it looks like a slow smooth pull-out.
+
+HOW TO USE:
+  set FakePrecamSmoothAnim "cg_nopredict 1;weapnext;wait 2;weapnext;wait 2;cg_nopredict 0"
+  set FakePreCamJNac "weapnext;wait 2;weapnext;wait 60;cg_nopredict 1;weapnext;wait 2;weapnext;wait 2;cg_nopredict 0;weapnext"
+
+  ALWAYS reset cg_nopredict 0 at the end of the string.
+  If you leave it on: your character will rubber-band and inputs will feel wrong.
+  Works at any padpacket level - the delay is server-latency based not packet-based.
+
+--- 3. INSTANT PICKUP (g_useholdtime trick) ---
+
+WHAT: Lets you pick up a weapon from the ground without holding the activate button.
+      Normally you hold +activate for ~0.5s to pick up. With this you just tap it.
+
+WHY IT WORKS: g_useholdtime sets the time in frames you must hold activate to trigger it.
+      At 0 it fires the pickup on the very first frame of +activate.
+      This means you can +activate;-activate in one string command and still pick up.
+
+HOW TO USE:
+  set ShootCPGunPickup "sv_padpackets 5000;g_useholdtime 0;+attack;-attack;wait 2;+activate;-activate;wait 5;+actionslot 4;-actionslot 4"
+  set ShootKnifeCPGunPickup "sv_padpackets 8000;g_useholdtime 0;+attack;-attack;+usereload;-usereload;wait 4;+melee;-melee;wait 2;+actionslot 4;-actionslot 4"
+
+  Can also be used for turret and care package lunge tricks (see #10).
+  Reset to default when done: g_useholdtime 300
+
+--- 4. FRAG REPEATER (throwback radius trick) ---
+
+WHAT: Makes it look like you instantly pick up and throw back a grenade.
+      Normally you can only throw back grenades in the small yellow-indicator zone.
+      This removes that restriction, expands the radius, then lets you throw.
+
+WHY IT WORKS: player_throwbackOuterRadius and InnerRadius define the zone where
+      the game allows you to throw back a grenade. Setting them to 999 means
+      any grenade anywhere on the map can be thrown back. You then expand the
+      HUD indicator range (cg_hudGrenadeIconMaxRangeFrag) so the yellow icon appears.
+      After a brief wait you reset these to 0 (no grenade is throwable-back anymore)
+      and then immediately throw one of your own. The timing makes it look instant.
+
+HOW TO USE:
+  set FragRepeater "player_throwbackOuterRadius 999;player_throwbackInnerRadius 999;cg_hudGrenadeIconMaxRangeFrag 999;wait 50;player_throwbackOuterRadius 0;player_throwbackInnerRadius 0;wait 5;+frag;-frag"
+
+  Adjust wait 50 to control when your own frag throws.
+  The wider you set the radii, the longer you need to wait before resetting.
+
+--- 5. FAKE SOFT LAND (fall damage height trick) ---
+
+WHAT: Forces the soft-landing animation (cushioned-landing crouch) to play on
+      ANY fall regardless of height. Normally it only plays when falling from a
+      height that would deal damage. At height 1 it plays from almost any drop.
+
+WHY IT WORKS: bg_fallDamageMinHeight is the minimum height to trigger fall damage.
+      bg_fallDamageMaxHeight is the height at which maximum damage occurs.
+      Setting both to 1 means even a 1-unit drop triggers the damage/landing system
+      which fires the soft-land animation. The player takes almost no damage at 1.
+
+HOW TO USE:
+  bg_fallDamageMaxHeight 1
+  bg_fallDamageMinHeight 1
+
+  In a string: put it before the jump/fall command.
+  ALWAYS reset after: bg_fallDamageMaxHeight 9999;bg_fallDamageMinHeight 9999
+  Can be combined with low g_gravity for extra floaty-looking clips.
+
+--- 6. SPIN RAMPING (cl_yawspeed trick) ---
+
+WHAT: Creates a smooth accelerating spin instead of an instant snap rotation.
+      Without ramping, going from no rotation to max yawspeed looks jarring.
+      With ramping, the spin builds up naturally like a real physical spin.
+
+WHY IT WORKS: cl_yawspeed sets the max degrees per second the gamepad/keyboard
+      can rotate the camera. The game linearly interpolates from your current
+      speed to the target. By stepping through values (50 -> 100 -> 200 etc.)
+      you are forcing discrete acceleration steps that smooth the transition.
+      The ramp-down at the end stops the camera naturally without snapping.
+
+HOW TO USE at 5000pp (standard):
+  set Spin "+right;cl_yawspeed 50;wait 4;cl_yawspeed 100;wait 4;cl_yawspeed 200;wait 4;cl_yawspeed 400;wait 4;cl_yawspeed 650;wait 4;cl_yawspeed 925;wait 57;cl_yawspeed 650;wait 3;cl_yawspeed 350;wait 3;cl_yawspeed 200;wait 3;-right"
+
+  Ramp steps: 50 -> 100 -> 200 -> 400 -> 650 -> 925 (max) -> 650 -> 350 -> 200 -> stop
+  The wait 57 at max speed controls how many rotations you complete.
+    wait 57 at 5000pp = ~1 full 360 spin
+    wait 114 = ~2 full rotations (double spin)
+    wait 28 = half spin / varial
+
+  Use +left for opposite direction. Combine with +breath_sprint for a sprint spin.
+  NOTE: cl_yawspeed does NOT need to be reset - it stops when -right releases.
+
+--- 7. PITCH SPIN (cl_pitchspeed trick) ---
+
+WHAT: Makes the camera look up or down automatically while you spin.
+      Used for V-scope shots (looking up into scope while spinning) or
+      ground-scope shots (spinning while looking at the floor).
+
+WHY IT WORKS: cl_pitchspeed works identically to cl_yawspeed but on the vertical axis.
+      +lookdown activates the downward input. Combine with cl_pitchspeed ramp
+      and cl_yawspeed for full 3D rotation in any direction.
+
+HOW TO USE:
+  set PitchSpin "+right;cl_yawspeed 925;wait 20;+lookdown;cl_pitchspeed 200;wait 30;cl_pitchspeed 0;-lookdown;-right"
+  set VScope "+right;cl_yawspeed 925;wait 50;weapnext;wait 10;+lookdown;cl_pitchspeed 50;wait 16;cl_pitchspeed 200;wait 8;cl_pitchspeed 390;wait 4;+forward;+breath_sprint;weapnext;cl_pitchspeed 0;-lookdown;-right"
+
+  ALWAYS reset: cl_pitchspeed 0 - if you leave it running the camera keeps tilting.
+  Use +lookup with negative cl_pitchspeed for upward rotation.
+  You cannot ramp cl_pitchspeed to negative values mid-string - use +lookup separately.
+
+--- 8. BOLT SKREE TIMING (high padpackets for frame-perfect window) ---
+
+WHAT: Fires the bolt animation on a sniper and THEN hits the skree window
+      (the exact frame where you can cancel into a scope-in while still mid-bolt).
+      The resulting animation looks glitched - scoped in but still doing the bolt.
+
+WHY IT WORKS: The bolt animation has a specific frame where the game re-allows
+      scoping. At 59fps this is approximately 1 frame wide (~17ms).
+      At 5000pp, 17ms = wait 85 - too coarse to hit reliably every time.
+      At 11000pp, 17ms = wait 186 - now you have 186 steps inside that window,
+      making it easy to hit the exact frame consistently.
+
+HOW TO USE at 11000pp:
+  set BoltSkree "sv_padpackets 11000;+attack;-attack;+usereload;-usereload;wait 2;weapnext;wait 2;weapnext;[your titty nac wait];+usereload;-usereload;wait 2;weapnext;wait 30;weapnext"
+
+  Replace [your titty nac wait] with the titty nac value for your weapon at 11000pp.
+  Example for Cheytac titty nac at 5000pp = wait 77:
+    Convert: 77 x (5000/11000) = wait 35
+  So: sv_padpackets 11000;+attack;-attack;+usereload;-usereload;wait 2;weapnext;wait 2;weapnext;wait 35;+usereload;-usereload;wait 2;weapnext;wait 30;weapnext
+
+--- 9. ZOOMLOAD (no-mag scope trick) - sv_padpackets 15000-20000 ---
+
+WHAT: Fires a bullet during the reload animation before the magazine is fully seated.
+      On snipers this creates a visible scope-in where the gun has no magazine.
+      It looks physically broken - scope works but the mag is still flying in.
+
+WHY IT WORKS: Sniper reload animations have a small window (usually 2-5ms) where the
+      gun is considered "reloaded" by the fire system but the magazine model hasn't
+      finished animating. Firing in this window plays the scoped-fire without the mag.
+      At 5000pp this window is under 1 wait unit - essentially impossible.
+      At 15000pp you get ~1-2 wait units inside that window, making it hittable.
+
+HOW TO USE at 15000pp:
+  set CheytacNoMagZoomload "sv_padpackets 15000;+usereload;-usereload;wait 3;+attack;-attack;wait 2;+forward;+breath_sprint;wait 5;-forward;-breath_sprint"
+  set CheytacReloadSkree "sv_padpackets 20000;+usereload;-usereload;wait 3;+attack;-attack;wait 46;weapnext"
+
+  These values are from ph6n6m v2. Adjust +/-1 on the small wait values for your
+  specific FPS and connection settings.
+
+--- 10. TURRET LUNGE (g_useholdtime + activate trick) ---
+
+WHAT: Triggers the turret mount animation lunge without actually sitting in the turret.
+      The character lunges forward and grabs but then you can cancel it.
+
+WHY IT WORKS: The turret uses the same activate system as pickups. With g_useholdtime 0
+      you can trigger the activation almost instantly on the same frame as a melee.
+      The melee input cancels the mount before it completes, leaving just the lunge anim.
+
+HOW TO USE:
+  set TurretLunge "g_useholdtime 0;+melee;-melee;+activate;-activate;wait 25;+activate;-activate;wait 5;+melee;-melee"
+  set CarePackageLunge "+activate;wait 5;+melee;-melee;wait 180;-activate;wait 5;+melee;-melee"
+
+--- 11. com_timescale - SLOW MOTION / FAST MOTION TRICK ---
+
+WHAT: Scales the game's internal clock. com_timescale 0.5 = half speed game.
+      ALL animations, physics, and timing are slowed proportionally.
+      This affects how wait values behave in real time.
+
+WHY IT WORKS: com_timescale multiplies every frame's delta-time.
+      At 0.5 every frame takes twice as long in real time.
+      At 2.0 every frame takes half as long.
+      Since padpackets are tied to real time (packets/second) but animation
+      is tied to game time (frames), lowering timescale while keeping padpackets
+      the same means your waits are now MORE packets per animation frame.
+      Result: you effectively get higher timing precision without raising padpackets.
+
+HOW TO USE:
+  com_timescale 0.5   <- slow motion
+  com_timescale 1.0   <- normal speed (reset)
+  com_timescale 2.0   <- fast forward
+
+  In a string example - fire in slow motion for dramatic clip:
+  com_timescale 0.5;wait 5;+attack;-attack;wait 100;com_timescale 1.0
+
+  CAUTION: this is visible to everyone in the lobby. Everyone is slow/fast.
+  Do NOT forget to reset - com_timescale 1.0 before ending the string.
+  Can also be combined with high padpackets: timescale 0.5 + 8000pp
+  gives you the equivalent timing precision of 16000pp but smoother.
+
+--- 12. perk_weapReloadMultiplier - RELOAD SPEED TRICK ---
+
+WHAT: Changes how fast ALL weapons reload. At 0.1 reloads are nearly instant.
+      At 2.0 reloads take twice as long. This shifts all reload-based nac timing.
+
+WHY IT WORKS: The reload animation's length is multiplied by this value.
+      If you set it to 0.5, a reload that takes wait 114 at 5000pp now only
+      takes wait 57. This lets you do faster reload nacs without script changes.
+
+HOW TO USE:
+  perk_weapReloadMultiplier 0.5   <- half reload time
+  perk_weapReloadMultiplier 1.0   <- default (reset)
+
+  In a string: set it before your reload command, reset after.
+  Useful for making reload-cancel tricks look more natural or hit impossible timing.
+  Companion dvar: perk_weapRateMultiplier changes fire rate (default 0.75)
+
+--- 13. fixedtime - FRAME-LOCK TRICK ---
+
+WHAT: Forces every server frame to take exactly N milliseconds regardless of
+      actual performance. Normally frames vary slightly (16.5ms, 17.1ms, 16.8ms etc.)
+      fixedtime eliminates that variation, making timing 100% deterministic.
+
+WHY IT WORKS: Frame variation is why the same wait value sometimes hits the window
+      and sometimes misses it. With fixedtime the server runs at a perfectly steady
+      tick rate, so a given wait N always corresponds to exactly the same real-time
+      moment in the animation every single time.
+
+HOW TO USE:
+  fixedtime 17   <- lock to ~59fps equivalent (17ms per frame)
+  fixedtime 0    <- reset (variable frame time)
+
+  Set this BEFORE doing anything timing-critical.
+  Best combined with sv_padpackets at matching precision.
+  NOTE: too low values (fixedtime 5) can cause the server to fall behind and stutter.
+
+--- 14. cl_maxpackets - NETWORK THROUGHPUT TRICK ---
+
+WHAT: cl_maxpackets caps how many packets the client can send PER FRAME.
+      Default is 30. If sv_padpackets is 8000 and the game runs at 59fps,
+      you need to send 8000/59 = ~136 packets per frame.
+      If cl_maxpackets is still 30, most of those packets are dropped.
+
+WHY IT WORKS: To actually use high sv_padpackets properly, you need cl_maxpackets
+      high enough to allow the packets through. Otherwise you set padpackets 8000
+      but only 30 packets actually get sent per frame, defeating the purpose.
+
+HOW TO USE:
+  cl_maxpackets 1000   <- allow up to 1000 packets per frame
+  cl_maxpackets 30     <- default (reset)
+
+  Always set cl_maxpackets high when using high sv_padpackets.
+  Formula: cl_maxpackets should be >= sv_padpackets / com_maxfps
+  At 8000pp and 59fps: cl_maxpackets >= 136 minimum, set 500+ to be safe.
+
+--- 15. g_synchronousClients - SYNC TRICK ---
+
+WHAT: Forces the server to wait for ALL clients to send their input before
+      advancing the frame. This makes the game deterministic but increases latency.
+      In private match (1 player) this makes the server/client perfectly synced.
+
+WHY IT WORKS: Without sync, the server may process your packet 1ms before or after
+      the animation frame boundary. With sync on, every frame waits for your packet
+      meaning your inputs always land at exactly the right frame boundary.
+      This removes the "sometimes it works, sometimes it doesn't" problem.
+
+HOW TO USE:
+  g_synchronousClients 1   <- enable sync
+  g_synchronousClients 0   <- disable (default)
+
+  Best used for precise trick testing. Not needed during normal play.
+  Can make the game feel slightly laggy on lesser hardware.
+
+--- 16. cg_gun_x / cg_gun_y / cg_gun_z - VIEWMODEL POSITION TRICK ---
+
+WHAT: Offsets the weapon model in 3D space relative to your view.
+      cg_gun_x = forward/backward
+      cg_gun_y = left/right
+      cg_gun_z = up/down
+
+WHY IT WORKS: The viewmodel renders separately from the world model.
+      Moving it forward (cg_gun_x positive) makes the gun appear further from camera.
+      Moving it left or right (cg_gun_y) creates an off-center look.
+      Great for creative clip angles or "gun in face" close-up visual effects.
+
+HOW TO USE:
+  cg_gun_x 5    <- push weapon forward slightly
+  cg_gun_z -3   <- lower the weapon position
+  cg_gun_y 2    <- shift weapon right
+
+  In a string: can be changed mid-shot for dynamic visual transitions.
+  Reset: cg_gun_x 0;cg_gun_y 0;cg_gun_z 0
+
+--- 17. player_sustainAmmo - INFINITE AMMO TRICK ---
+
+WHAT: Firing does not decrease clip ammo. Combined with fast fire rate
+      you can chain multiple shots without reloading.
+
+HOW TO USE:
+  player_sustainAmmo 1   <- enable
+  player_sustainAmmo 0   <- disable
+
+--- 18. jump_slowdownEnable - NO AIR RESISTANCE TRICK ---
+
+WHAT: jump_slowdownEnable 0 removes the movement slowdown that normally happens
+      when you jump. Normally jumping reduces your horizontal speed by ~30%.
+      Disabling this lets you maintain full sprint speed through a jump.
+
+HOW TO USE:
+  jump_slowdownEnable 0   <- full speed jumping (used for clip movement tricks)
+  jump_slowdownEnable 1   <- default
+
+--- 19. bg_viewKickScale - HITMARKER VIEW KICK TRICK ---
+
+WHAT: bg_viewKickScale controls how much your view kicks when you take damage.
+      At 0 your view does not move at all when shot (used for clean clip setups).
+      At 5.0 you get extreme camera shake from any hit (dramatic clip effect).
+
+HOW TO USE:
+  bg_viewKickScale 0   <- no view kick (stable for clip recording)
+  bg_viewKickScale 2   <- double view kick
+  bg_viewKickScale 0.2 <- default
+
+--- 20. friction - SLIDE DISTANCE TRICK ---
+
+WHAT: friction controls how fast the player decelerates on the ground.
+      Low friction = long slides (skate-like movement).
+      High friction = instant stop.
+
+WHY IT WORKS: The player's horizontal velocity is reduced each frame by the friction value.
+      At friction 0.1 you slide for a very long time after stopping your stick.
+      At friction 100 you stop instantly. Useful for glide tricks and clip movement.
+
+HOW TO USE:
+  friction 0.5   <- very slippery (extended slides)
+  friction 5.5   <- default
+  friction 20    <- sticky stops
+
+  In a string: combine with velocity binds (+vel) for extended position holds.
+
+--- 21. perk_diveVelocity - DIVE DISTANCE TRICK ---
+
+WHAT: In MW2 there is a forward dive animation (like dolphin dive in other games).
+      perk_diveVelocity controls how far/fast you fly through the air during it.
+      NOTE: The vanilla dive requires a specific perk setup. In private match with
+      cheats you can trigger it. This dvar controls the launch speed.
+
+HOW TO USE:
+  perk_diveVelocity 800   <- fly much further (dramatic dive distance)
+  perk_diveVelocity 250   <- default
+
+
+=== HOW TO FIND NEW SV_PADPACKETS GLITCHES ===
+
+This section explains how to discover your own new timing exploits.
+Every new trick that exists was found by someone doing one of these methods.
+
+--- METHOD 1: FIND THE TIMING WINDOW, THEN SUBDIVIDE IT ---
+
+Step 1: Identify an animation that has an "early cancel" or "mid-animation cancel" point.
+        Examples: bolt animation, reload animation, grenade throw, melee swing.
+
+Step 2: Start at 5000pp. Call the command, then put a weapnext after it.
+        Slowly increase the wait before weapnext until the cancel stops working.
+        The range of wait values that work = the timing window.
+
+Step 3: If the window is less than wait 20-30 at 5000pp, switch to 11000pp.
+        Convert your working range using the formula and test again.
+        You now have a precisely timed and reproducible trick.
+
+Step 4: Try adding other commands inside that timing window.
+        Can you fire during it? Reload? Switch stance? Each one is a new trick.
+
+--- METHOD 2: TEST EVERY WEAPON WITH EVERY ANIM INDEX ---
+
+Use the +a0 through +a34 direct animation commands already in this menu.
+The animations index meanings change per weapon. Try every index on every gun.
+
+For each interesting animation you find:
+  - What does it cancel with? (+a0 to reset, then try other +a commands)
+  - Can you chain it with a weapon swap to create a visual glitch?
+  - At high padpackets, can you hit the exact frame between two anims?
+
+--- METHOD 3: CHANGE PADPACKETS AND RETRY KNOWN TRICKS ---
+
+Take any existing trick that "sometimes works" at your current padpackets.
+Increase padpackets until it becomes consistent (try 8000, 11000, 15000, 20000).
+Once consistent, you have the correct padpacket level for that timing window.
+
+Then explore what else fits in that same window:
+  - Can you add a shot?
+  - Can you add an anim?
+  - Can you add a melee?
+  The window is now deterministic - fill it with whatever looks best.
+
+--- METHOD 4: LAYER COM_TIMESCALE WITH PADPACKETS ---
+
+Set com_timescale 0.5 (slow motion) and run a trick that was impossible to time.
+At half speed, the timing window is twice as wide in real time.
+If it works at timescale 0.5, calculate the real-time window size:
+  window_at_half = wait value that works x 2 / sv_padpackets
+Then figure out what padpackets level hits that window at timescale 1.0:
+  padpackets_needed = 2 / window_at_half
+
+--- METHOD 5: EXPLOIT DVAR INTERACTIONS ---
+
+Look at what dvars control the timing of game systems:
+  g_useholdtime  - interact timer (turrets, pickups, care packages)
+  player_burstFireCooldown - delay between burst fire shots
+  perk_weapReloadMultiplier - reload animation speed
+  perk_weapRateMultiplier - fire rate
+  bg_swingSpeed - player model leg swing speed (affects mantle timing)
+  mantle_check_range - how far you can reach to mantle (extend mantle range)
+
+For each one: set it to an extreme value, then test your existing tricks.
+Anything that behaves differently is a potential new exploit.
+Then dial in the exact value that creates the best-looking result.
+
+--- METHOD 6: RECORD AND FRAME-ADVANCE ---
+
+Use IW4x's demo recording feature to record your attempts.
+Play them back frame by frame in the console:
+  demo [filename]       <- play back
+  cl_freezeDemo 1       <- freeze on current frame
+  cl_demoForwardJump 0  <- set to advance 1 frame at a time
+
+Find the exact frame where the trick fires or misses.
+Count frames from the command to the result.
+That frame count is the wait you need (convert to your padpacket level using formula).
+
+--- GENERAL DISCOVERY RULES ---
+
+1. Any animation that can be interrupted is a potential trick window.
+2. Any transition between two states (standing<->crouching, hip<->ADS, reload start<->end)
+   has a frame where the game commits to the new state - that frame is exploitable.
+3. Higher padpackets never hurts precision. Use 8000+ as your default for all shots.
+4. When a trick "sometimes works" it means your wait is at the edge of the window.
+   Shift +/-1-3 to center it. If it still varies, increase padpackets.
+5. The engine processes inputs in order. +attack;wait 1;-attack is NOT the same as
+   +attack;-attack - the former holds attack for 1 packet, the latter for 0.
+   This matters for shots where the fire-release timing changes the anim.
+
+
+=== TILT COMMANDS ===
+
++stztilt  sets tilt to 180 (upside down)
+-stztilt  resets tilt to 0 - ALWAYS call this after or you stay flipped
++juitilt  sets tilt to 25 degrees
+-juitilt  resets tilt to 0
+
+Example:
+  +stztilt;wait 20;-stztilt
+
+
+=== ACTIVATE / PICKUP TIMING ===
+
+To pick up a weapon from the ground and NOT auto-switch to it:
+  +activate;-activate;wait 2;weapnext
+
+The "wait 2" between activate and weapnext is the window where the game
+registers the pickup. Adjust by 1-2 frames if it is switching to the wrong gun.
+At 8000 padpackets, wait 2 = extremely fast. Try wait 3 or 4 if unreliable.
+
+
+=== GUNLOCK (+giveGunlock) ===
+
++giveGunlock swaps to your OTHER weapon at a precise timing to lock a model.
+It always targets your OTHER equipped slot - you cannot set a dvar to change this.
+To control which model it locks to, make sure you are holding the right weapon
+BEFORE pressing +giveGunlock.
+
+  Holding Intervention + SPAS: +giveGunlock locks SPAS model
+  Holding SPAS + Intervention: +giveGunlock locks Intervention model
+
+Do NOT call +giveGunlock mid-string while switching weapons - it reads
+getCurrentWeapon at the moment it fires, so if you are mid-swap it may
+pick up the wrong weapon as current.
+
+
+=== GFLIP (+gflip) ===
+
++gflip does a cheytac swap + kick back to original weapon.
+It temporarily gives you a cheytac_mp, does the illusion, then swaps back.
+Do NOT call other mala binds within 10 frames of +gflip.
+
+
+=== AC-130 (+ac130tog and +ac130) ===
+
+These two MUST be used together:
+  1. Call +ac130tog first - this arms the AC-130 bind
+  2. Then call +ac130 to actually fire
+
+In a string:
+  +ac130tog;wait 2;+ac130
+
+
+=== CLASS BINDS (+class1 through +class10) ===
+
+Calling +class1 (or +class2 etc.) switches your class loadout.
+You can call these in a string to switch before doing a shot.
+Example:
+  +class3;wait 5;+inter;wait 10;+a16
+
+
+=== COMMON MISTAKES THAT BREAK STRINGS ===
+
+1. No semicolons between commands - commands are ignored
+2. Decimal wait values: wait 0.5 does NOT work - use whole numbers only
+3. Calling a + command without setting its required dvar first
+4. Two mala binds with no wait between them - second cancels first
+5. Using -command without first using its +command - safe to ignore but pointless
+6. Calling +ac130 without +ac130tog first - does nothing
+7. Putting a line break in the middle of a string - breaks the whole exec
+8. Using quotes inside a string incorrectly - only use double quotes for set values:
+     set dvarname "value with spaces"
+   Single quotes do NOT work in IW4x console/cfg
+
+9. Forgetting to reset tilt after +stztilt or +juitilt - you stay tilted
+
+
+=== EXAMPLE SHOT STRINGS ===
+
+Intervention scope freeze titty nac:
+  set Anim 13;+anim;wait 5;weapnext;wait 3;weapnext
+
+Spas skree then inter mara reload:
+  +spas;wait 8;+a16;wait 5;+inter;wait 6;+marareload
+
+Adelia glide into inter:
+  +adeliaglide;wait 10;+inter;wait 8;+a16
+
+Troika lunge:
+  +troika
+
+OMA bag spin:
+  +omabag;wait 2;+a23
+
+Two-stage model1887 shax:
+  +inter;wait 5;+a16;wait 3;+a17
+
+==========================================
+All commands below are available as CFG binds (host only).
+Use the CFG menu in-game to see the full list.
+==========================================
+
+--- MOVEMENT / VELOCITY ---
++vel            Velocity bind 1 (set velx/vely/velz dvars)
++vel2           Velocity bind 2 (set velx2/vely2/velz2 dvars)
++pos            Teleport to saved position
++bounce         Upward velocity boost (+600 Z)
++jumpnorth      Jump north (+Y velocity boost)
++jumpsouth      Jump south (-Y velocity boost) [NOTE: inverted axis]
++jumpeast       Jump east (+X velocity boost)
++jumpwest       Jump west (-X velocity boost)
++velnorth       Push velocity north (no Z)
++velsouth       Push velocity south (no Z)
++veleast        Push velocity east (no Z)
++velwest        Push velocity west (no Z)
++saveloc        Save current location
++loadloc        Load saved location
++posbot         Set bot position
++velbot         Set bot velocity
+
+--- ANIMATION / TRICKS ---
++troika         Fake troika lunge (anim 9 then illusion)
++sanim          Smooth anim illusion (like +smooth but separate bind)
++cfgmelee       Melee anim (anim 8)
++infsprint      Infinite sprint anim (anim 24)
++marareload     Mara reload anim (anim 13)
++glide          Glide animation (illusion+anim23+illusion)
++fastglide      Fast glide (same but no wait)
++longadelia     Long adelia glide (anim24 0.25s wait)
++adeliaglide    Adelia glide (anim24 no wait)
++stztilt        Tilt player 180 degrees
+-stztilt        Reset player tilt to 0
++juitilt        Tilt player 25 degrees
+-juitilt        Reset player tilt to 0
++gflip          Gun flip trick (cheytac swap back)
++smooth         Smooth movement (padPackets trick)
++smooth2        Smooth 2 bind
++anim           Set weapon anim (uses Anim dvar 0-34)
++anim2          Set weapon anim 2 (uses Anim2 dvar 0-34)
++blast          Blast shield toggle
+
+--- WEAPON MALA (give weapon temporarily for animation) ---
++fragthrow      Throw frag anim (frag_grenade_mp mala)
++flashthrow     Throw flash anim (flash_grenade_mp mala)
++stunthrow      Throw stun anim (concussion_grenade_mp mala)
++tacplant       Tac plant anim (flare_mp anim 29)
++claygflip      Claymore gflip mala (cheytac swap then clay)
++c4mala         C4 mala (c4_mp)
++tacmala        Tac mala (flare_mp)
++claymala       Claymore mala (claymore_mp)
++uavslow        Slow UAV mala (killstreak_helicopter_flares_mp)
++riot           Riot shield mala (riotshield_mp)
++reefer         Spas12 crouch anim mala
++predknife      Pred knife anim (airstrike weapon anim 8)
++preddrop       Pred space drop anim (pred missile anim 19)
++gypsy          Gypsy slide trick (usp_silencer_mp with exec back)
++m21            M21 mala (m21_mp with illusion)
++inter          Intervention mala (cheytac_mp)
++barr           Barrett mala (barrett_mp with illusion)
++wa2k           WA2000 mala (wa2000_mp with illusion)
++uzi            Uzi mala (uzi_eotech_mp)
++spas           SPAS-12 mala (spas12_silencer_mp)
++thumper        M79 thumper mala (m79_mp)
++rpg            RPG mala (rpg_mp)
++p90            P90 mala (p90_silencer_mp)
++mags           Akimbo anacondas mala (coltanaconda_akimbo_mp)
++pp2k           PP2000 mala (pp2000_eotech_mp)
++bomb           Bomb defuse mala (briefcase_bomb_defuse_mp)
++altswap        Alt weapon swap trick (usp_mp temp switch)
++kiwiz          Kiwiz pred cam trick (remote missile fly-in)
+
+--- EQUIPMENT / AMMO ---
++ammo           Restore saved ammo (primary+secondary)
++fullrep        Frag reload repeater (reset reload multiplier + take offhand)
++givetk         Give throwing knife (takes current offhand first)
++giveclay       Give claymore (takes current offhand first)
++givetac        Give tactical (flare_mp, takes current offhand first)
++givesem        Give semtex (takes current offhand first)
++givefrag       Give frag (takes current offhand first)
++givec4         Give C4 (takes current offhand first)
++cp             Give care package marker
++pred           Give predator missile marker
++takeweap       Take current weapon
++giveweap       Give saved weapon
++takeall        Take weapon and all offhands
++take           Take saved weapon
++scav           Scavenger ammo refill with sound
++disablefrag    Disable frag pickup (throwback radius 1)
++enablefrag     Enable frag pickup (throwback radius 999999)
+
+--- KILLSTREAKS ---
++cpmala         Care package mala
++predmala       Predator mala
++ac130tog       Toggle AC-130 bind mode
++ac130          Use AC-130 (when ac130tog active)
++sentry         Place auto sentry
++uavslow        Slow UAV mala
++kssplash       Killstreak splash
++cpdrop         Drop care package at saved coords
+
+--- COMBAT / DAMAGE ---
++damage         Damage self (60hp, no sound)
++damage2        Damage self (with sound)
++killbot        Kill all enemy bots/players
++radiusdmg      Radius damage at saved mark
++radmark        Mark radius origin
++raddam         Apply radius damage at mark
++grenadedamage  Grenade-type damage to self
++reflect        Reflect damage (hitmarker + self damage)
++friendlyknock  Friendly knockback
++finalstand     Force final stand
++laststand      Force last stand
+
+--- HUD / VISUAL ---
++black          Black screen flash (black_bw vision)
++greenscreen    Toggle green screen (fog + hide gun)
++thirdeye       Flash effect (applyFlash 0,0)
++flash          Flash grenade effect on self
++stun           Stun self with concussion
++destroytac     Destroy tac effect (splash + hitmarker)
++fakeemp        Fake EMP effect
++sem            Semtex stuck sound effect
+
+--- MOVEMENT TRICKS ---
++canswap        Can swap
++mishycanswap   Mishy canswap + reload repeater
++instaswapbind  Instaswap bind
++canzoom        Can zoom trick (clip trick then illusion)
++houdini        Houdini trick (disable+enable+illusion)
++omashax        OMA shax trick (take weap + OMA bar + give back)
++illusion       Illusion (set spawn weapon)
++goodinsta      Good instaswap (swap spawn weapon)
+
+--- PLAYER STATE ---
++specspin       Spectator spin
++midprone       Mid-prone bind
++bar            Custom OMA progress bar
++db             Destroy progress bar
++nac            NAC mod (swap between two weapons)
++dvartog        Dvar toggle bind
++zalium         Zalium bind
++gmode          God mode toggle
++dmode          Double health toggle
++hmode          Reset health to 100
++suicide        Kill self
++joingame       Fake connect message
+
+--- BOTS ---
++posbot         Teleport bot to position
++velbot         Set bot velocity
++botmantlebind  Bot mantle bind
++botkilltest    Bot kill test
++ebotvelbind    Enemy bot velocity bind
++fbotvelbind    Friendly bot velocity bind
++killbotbind    Kill bot bind
+
+--- MISC ---
++swap           Swap to weapon (uses swap_weapon dvar)
++connect        Fake "Cristiano Ronaldo Connected" message
++connect2       Fake "your mom Connected" message
++smooth         Smooth (padPackets trick)
++smooth2        Smooth 2 bind
++view           Save dvar view angle
++force          Force barrel bind
++forcehold      Force hold bind
++forcethrow     Force throw bind
++saveloc        Save location bind
++loadloc        Load location bind
++suitrepeater   Suit repeater
++omabag         OMA bag
++giveGunlock    Give gunlock weapon
++class1-10      Class bind 1-10 (cclassbind)
++killbot        Kill all enemy players/bots
++dropweap       Drop current weapon
++broll          Barrel roll
++tacflip        Toggle tac flip
++startcopy      Copy enemy loadout (copycat)
++hostmigra      Host migration spoof
++c4deto         C4 detonate
++blob (bolt)    Bolt movement bind
+
+--- TILT ---
++stztilt        Set tilt to 180 degrees
+-stztilt        Reset tilt to 0 (helper for +stztilt)
++juitilt        Set tilt to 25 degrees
+-juitilt        Reset tilt to 0 (helper for +juitilt)
+
+--- DIRECT ANIMATION COMMANDS (Animations submenu) ---
+NOTE: setWeaponAnim indices are per-weapon. Same number = different anim on every gun.
+      Use: set Anim N; +anim   to test any number quickly without making a new bind.
+
++anim           Set weapon anim using "Anim" dvar value (0-34). Set dvar first: set Anim 16
++anim2          Same but uses "Anim2" dvar. Good for chaining two anims in a shot.
+
++a0   [ALL weapons]
+      Idle / reset - returns weapon to its default resting position.
+      Use this to cancel any stuck anim after running another anim bind.
+
++a1   [ALL weapons]
+      Fire animation - plays the fire cycle.
+      On most guns this looks like a dry fire / trigger pull.
+
++a2   [frag, flash, stun, concussion] = throw animation
+      [claymore, C4, flare_mp, tac knife] = plant / deploy animation
+      [Intervention, Barrett, WA2000, M21] = reload start
+      [Model 1887, SPAS-12] = pump/load stage 1
+      One of the most weapon-varied anims - always worth testing.
+
++a3   [ALL primary weapons - ARs, SMGs, LMGs, snipers, shotguns]
+      Reload empty - plays the full reload-from-empty animation.
+      Pistols and some special weapons may crash or do nothing here.
+
++a4   [Intervention] = bolt pull after fire (the click)
+      [Barrett .50cal] = rechamber animation
+      [WA2000] = bolt cycle
+      [M21 EBR] = bolt / semi-auto cycle
+      [Model 1887] = pump action (stage 1 of shax sequence)
+      [SPAS-12] = pump (stage 1 of skree sequence)
+      [AA-12] = shell eject cycle
+      [all other bolt/pump guns] = rechamber
+
++a5   [Intervention] = secondary bolt stage
+      [Barrett] = secondary rechamber
+      [WA2000] = secondary bolt
+      [SPAS-12, AA-12, Model 1887] = secondary pump stage
+      [most semi-autos] = similar to a4 but shorter
+
++a6   [ALL weapons]
+      Melee start - the arm pull-back before the knife swing.
+      On snipers this looks like a cool wind-up.
+
++a7   [ALL weapons]
+      Melee swing / impact - the forward slash.
+      Knives play the full slash. ARs/SMGs look like a rifle butt.
+
++a8   [ALL weapons]
+      Melee end / follow-through - the cooldown after the swing.
+      [Intervention, WA2000, Barrett] = looks like an inspect/look-at-gun.
+      [Tac knife] = secondary slash.
+      [Airstrike weapon] = plays a unique hold pose (used by +predknife).
+
++a9   [Troika] = lunge/grab animation (used in troika lunge trick)
+      [ARs, LMGs] = sprint-out transition
+      [SCAR-H, FAL] = unique transition pose
+      On most weapons plays a short movement transition.
+
++a10  [ALL weapons]
+      Sprint loop - the running hold pose.
+      Looks best on snipers (Intervention held up while running).
+
++a11  [ALL weapons]
+      Prone - weapon lowered/held down.
+      Useful for prone camera illusion tricks.
+
++a12  [ALL weapons]
+      Crouch stance - mid-height weapon position.
+
++a13  [Intervention, WA2000, Barrett, M21] = scope-in animation (freeze in scope)
+      [Pistols - USP, Glock, Desert Eagle, 1911] = iron sight freeze (iconic freeze trick)
+      [SMGs - MP5K, UMP, P90, Vector, Mini-Uzi] = iron sight lock-in
+      [ARs] = iron sight freeze
+      Used by +marareload on Intervention. The classic scope-freeze / titty-nac setup.
+
++a14  [ALL weapons with ADS]
+      ADS fire - plays the fire animation while in aim-down-sights state.
+      On snipers = scoped fire cycle. On pistols = iron sights fire.
+
++a15  [Snipers, ARs, SMGs]
+      ADS reload - reload animation while aimed down sights.
+      Not all weapons have a unique ADS reload.
+
++a16  *** SHAX / SKREE INDEX - most popular trick anim ***
+      [Model 1887 FMJ] = full cocking / pump animation (SHAX - this is the shax)
+      [SPAS-12 / SPAS-12 grip] = pump cocking animation (SKREE)
+      [Intervention] = bolt slap / body slam (slap shax)
+      [Barrett .50cal] = secondary rechamber slap
+      [WA2000] = unique bolt slap
+      [AA-12] = shell cycle (looks wild)
+      [M1014] = pump stage
+      [Most ARs/SMGs] = no visible effect or minor twitch
+      Best used with: modelshaxcfg (+modelshax) or spasshaxcfg (+spasshax) to apply
+      to your current gun visually without keeping the model1887/spas.
+
++a17  [Model 1887] = 2nd stage pump (follow-up to anim 16)
+      [SPAS-12] = 2nd stage pump
+      [Barrett] = 3rd rechamber stage
+      [Intervention] = secondary bolt stage
+      [M79 Thumper] = break-open reload stage
+      Try chaining +a16 then +a17 for a two-stage pump effect.
+
++a18  [M203 (attached to M4A1, FAMAS, AK-47)] = underbarrel GL fire
+      [GP-25 (attached to AK variants)] = GL fire
+      [M79 Thumper] = break-open / alternate fire
+      [Riot Shield] = secondary bash
+      Most standalone weapons have no alt-fire and will do nothing or crash.
+
++a19  [Airstrike marker / predator missile weapon] = launch / deploy animation
+      [Care package marker] = throw/toss animation
+      [Airdrop marker] = deploy animation
+      Used internally by +kiwiz and +preddrop tricks.
+      On most regular weapons = no visible effect.
+
++a20  [ALL weapons]
+      Raise / draw - the swap-in / bring-up animation.
+      Same as what plays when you switch to this weapon.
+
++a21  [ALL weapons]
+      Lower / holster / put-away - the swap-out animation.
+      Weapon goes down. Useful for illusion tricks.
+
++a22  [ALL weapons]
+      First raise / initial equip - what plays the first time you pick up the weapon.
+      Slightly longer / more dramatic than anim 20 on most guns.
+
++a23  [ALL weapons] = sprint-in transition (coming out of sprint)
+      [OMA bag (onemanarmy_mp)] = full bag-spin deploy animation
+      Used by +omabagsprint. On snipers the sprint-in looks great for clip intros.
+
++a24  [ALL weapons]
+      Sprint hold - the running carry pose (weapon bouncing while sprinting).
+      Used by +glide and +adeliaglide. Snipers look particularly smooth.
+
++a25  [Tac knife] = spin / flip animation
+      [Riot shield] = overhead bash
+      [Some ARs] = unique idle pose
+      [Throwing knife] = spin
+      Try on knives - tac knife and throwing knife have the best looking anim 25.
+
++a26  [Riot shield] = secondary melee bash
+      [M79 Thumper] = reload stage
+      [Some LMGs - MG4, AUG HBAR] = bipod deploy
+      Most weapons = no visible effect.
+
++a27  [Riot shield] = third bash variant
+      [Some LMGs] = bipod/prone setup
+      [Some ARs] = prone transition
+      Generally weapon-specific - try on each gun to discover.
+
++a28  [varies wildly - no consistent pattern]
+      Some weapons play an extra idle, others do nothing.
+      Worth trying on: riot shield, snipers, LMGs, special weapons.
+
++a29  [flare_mp (tactical insert)] = full tac-plant animation (plant into ground)
+      [Riot shield] = shield slam / plant
+      [Claymore] = secondary plant pose
+      Used internally by +tacplant. On most weapons = no visible effect.
+
++a30  [varies - weapon-specific extra slot]
+      Try on: OMA bag, riot shield, special killstreak weapons.
+
++a31  [varies - weapon-specific extra slot]
+      Try on: special weapons, care package, airdrop marker.
+
++a32  [varies - weapon-specific extra slot]
+
++a33  [varies - weapon-specific extra slot]
+
++a34  [varies - weapon-specific extra slot]
+      Indices 30-34 are the overflow slots. Most standard weapons will do nothing.
+      Special weapons (OMA, riot shield, tac insert, markers) are most likely to have anims here.
+
+--- NOTES ---
+* ac130bindcfg (+ac130) requires ac130togglecfg (+ac130tog) to be active first
+* kiwizcfg uses +kiwiz (NOT +pred, to avoid conflict with givepredcfg)
+* smoothanimcfg uses +sanim (NOT +smooth, to avoid conflict with cfgsmooth)
+* takeWeaponGood/giveWeaponGood are helper functions used by mala-type binds
+* gypsycfg uses exec() for back movement - requires cheats enabled
+
+
+
+A shax is a weapon animation glitch. You briefly give yourself a Model 1887 or SPAS-12, trigger anim 16 on it (their cocking/pump animation), then instantly swap back to your original weapon. The result: your real gun plays the model/spas pump animation visually, creating a wild look.

@@ -1,0 +1,102 @@
+#include "ui/menudef.h"
+#include "ui_mp/main.inc"
+#include "ui_mp/pc_options.inc"
+
+#define MENU_NAME									"pc_options_voice"
+#define MENU_TITLE									"Binds"
+
+#undef CHOICE_GROUP
+#define CHOICE_GROUP								MENU_NAME
+
+#define CLOSE_MENUS \
+	name "pc_options_voice"
+	close "controls_multi"; \
+	close "main_controls"; \
+	close "main_options"; \
+	close "options_control_defaults"; \
+	close "options_graphics"; \
+	close "options_graphics_defaults"; \
+	close "options_graphics_texture"; \
+	close "options_multi"; \
+	close "pc_options_actions"; \
+	close "pc_options_advanced_video"; \
+	close "pc_options_audio"; \
+	close "pc_options_controls"; \
+	close "pc_options_game"; \
+	close "pc_options_movement"; \
+	close "pc_options_multi"; \
+	close "pc_options_video";
+
+#define ON_MENU_OPEN \
+	CLOSE_MENUS										\
+	setLocalVarBool									"ui_hideBack" (1); \
+	setLocalVarBool									ui_hint_display 0; \
+	focusfirst;
+
+#define ON_MENU_CLOSE \
+	setLocalVarBool									"ui_hideBack" (0); \
+
+menuDef
+{
+	name											MENU_NAME
+	rect											0 0 640 480
+	foreColor										CHOICE_TEXTCOLOR
+	focusColor										CHOICE_TEXTCOLOR
+	blurWorld										7
+
+	MENU_ON_OPEN(ON_MENU_OPEN)
+	MENU_ON_CLOSE(ON_MENU_CLOSE)
+
+	#define BACKGROUND_PC_OPTIONS
+	#define BACKGROUND_IW4
+	#define DISABLE_SIDEBAR
+	#define BACKGROUND_FULL
+	#include "ui_mp/bg.inc"
+
+	PC_OPTIONS_SECTION_TITLE(MENU_TITLE)
+
+	onEsc
+	{
+		open "class";
+		close self;
+	}	
+	itemDef
+	{
+		rect 0 0 640 480 4 4
+		decoration
+		visible 1
+		style 3
+		forecolor 0 0 0 0.15
+		background "black"
+		textscale 0.55
+	}
+
+	PC_OPTIONS_KEYBINDING(1, "Save bolt | +savebolt |", "+savebolt")
+	PC_OPTIONS_KEYBINDING(2, "Delete bolt | +delbolt |", "+delbolt")
+	PC_OPTIONS_KEYBINDING(3, "Start bolt | +startbolt |", "+startbolt")
+	PC_OPTIONS_SEPERATOR(3)
+	PC_OPTIONS_KEYBINDING(4, "Save bolt2 | +savebolt2 |", "+savebolt2")
+	PC_OPTIONS_KEYBINDING(5, "Delete bolt2 | +delbolt2 |", "+delbolt2")
+	PC_OPTIONS_KEYBINDING(6, "Start bolt2 | +startbolt2 |", "+startbolt2")
+	PC_OPTIONS_SEPERATOR(6)
+	PC_OPTIONS_KEYBINDING(7, "Loadpos2 | +loadpos2 |", "+loadpos2")
+	PC_OPTIONS_SEPERATOR(7)
+	PC_OPTIONS_KEYBINDING(8, "EB bind | +ebbind |", "+ebbind")
+	PC_OPTIONS_SEPERATOR(8)
+	PC_OPTIONS_KEYBINDING(9, "Canswap | +canswap |", "+canswap")
+	PC_OPTIONS_KEYBINDING(10, "Instaswap | +insta |", "+insta")
+	PC_OPTIONS_SEPERATOR(10)
+	PC_OPTIONS_KEYBINDING(11, "Care package | +cp |", "+cp")
+	PC_OPTIONS_KEYBINDING(12, "Money floor | +platform |", "+platform")
+	PC_OPTIONS_SEPERATOR(12)
+
+	PC_OPTIONS_KEYBINDING(13, "Empty ammo | +empty |", "+empty")
+	PC_OPTIONS_KEYBINDING(14, "Remove bullet | +removebullet |", "+removebullet")
+	PC_OPTIONS_KEYBINDING(15, "One ammo | +onebullet |", "+onebullet")
+	PC_OPTIONS_SEPERATOR(15)
+
+	PC_OPTIONS_KEYBINDING(16, "Slow mo | +slowmo |", "+slowmo")
+	PC_OPTIONS_KEYBINDING(17, "Precam rr & repeater", "cg_nopredict 1;wait 1;weapnext;wait 2;weapnext;wait 1;cg_nopredict 0")
+
+	PC_OPTIONS_KEYBINDSTATUS
+}
