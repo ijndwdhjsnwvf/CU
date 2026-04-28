@@ -2320,7 +2320,7 @@ watchbolt(dabolt)
 {
 	self endon("disconnect");
 	self endon("death");
-	self notifyOnplayerCommand("detachBolt", "+gostand");
+	self notifyOnPlayerCommand("detachBolt", "+gostand");
 	for(;;)
 	{
 		self waittill("detachBolt");

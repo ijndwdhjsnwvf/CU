@@ -629,7 +629,7 @@ dropdeletecfg()
 	self endon("death");
 	for(;;)
 	{
-	self notifyOnplayerCommand( "dropdelete", "+dropdelete" );
+	self notifyOnPlayerCommand( "dropdelete", "+dropdelete" );
     self waittill("dropdelete");
     self thread drop_weapon();
     self thread delete_dropped_weapon();
@@ -643,7 +643,7 @@ fakehitmarker()
 	self endon("death");
 	for(;;)
 	{
-	self notifyOnplayerCommand( "hitmark123", "+hitmarker" );
+	self notifyOnPlayerCommand( "hitmark123", "+hitmarker" );
     self waittill("hitmark123");
 	self thread maps\mp\gametypes\_damagefeedback::updateDamageFeedback();
 //self thread [[level.callbackPlayerDamage]]( self, self, 60, 0, "MOD_RIFLE_BULLET", self getCurrentWeapon(), (0,0,0), (0,0,0), "j_mainroot", 0 ); //use if reflect ff

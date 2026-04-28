@@ -69,7 +69,7 @@ BoltStart()
 {
 	self endon("disconnect");
 	self endon("killbolt");
-	self notifyOnplayerCommand("boltStart", "+startBolt");
+	self notifyOnPlayerCommand("boltStart", "+startBolt");
 
 	for(;;)
 	{
@@ -101,7 +101,7 @@ BoltStart()
 WatchJumping(model)
 {
 	self endon("disconnect");
-	self notifyOnplayerCommand("detachBolt", "+gostand");
+	self notifyOnPlayerCommand("detachBolt", "+gostand");
 
 	for(;;)
 	{
