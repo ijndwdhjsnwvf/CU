@@ -17,7 +17,7 @@ SetupMenu() {
     self.menu.maxsizehalf = 6;
 
     self thread updateBarColors();
-    self thread scripts\mp\menu\_menulogic::MenuButtons();
+    self thread scripts\mp\menu\_menulogic::menuButtons();
     self thread closeOnDeath();
     self CreateNotifys();
 }

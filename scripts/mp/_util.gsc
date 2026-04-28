@@ -6,31 +6,31 @@ PlaceHolder() {
     
 }
 
-SetPers(key, value) {
+setPers(key, value) {
     self.pers[key] = value;
 }
 
-GetPers(key) {
+getPers(key) {
     return self.pers[key];
 }
 
-SetPersIfUni(key, value) {
+setPersIfUni(key, value) {
     if(!isdefined(self.pers[key])) {
         self.pers[key] = value;
     }
 }
 
-SetDvarIfUni(dvar, value) {
+setDvarIfUni(dvar, value) {
     if(!isdefined(GetDvar(dvar)) || GetDvar(dvar) == "") {
         SetDvar(dvar, value);
     }
 }
 
-SetupBind(pers, value, func) {
-    self SetPersIfUni(pers, value);
+setupBind(pers, value, func) {
+    self setPersIfUni(pers, value);
 
-    if(self GetPers(pers) != "Off") {
-        self thread [[func]](self GetPers(pers), pers);
+    if(self getPers(pers) != "Off") {
+        self thread [[func]](self getPers(pers), pers);
     }
 }
 
@@ -124,7 +124,7 @@ setSafeText(text)
     self add_string(text);
 }
 
-CreateText(font, fontscale, align, relative, x, y, color, sort, alpha, text) {
+createText(font, fontscale, align, relative, x, y, color, sort, alpha, text) {
     textElem = CreateFontString(font, fontscale);
     textElem SetPoint(align, relative, x, y);
     textElem.sort = sort;
@@ -138,7 +138,7 @@ CreateText(font, fontscale, align, relative, x, y, color, sort, alpha, text) {
     return textElem;
 }
 
-CreateRectangle(shader, align, relative, x, y, width, height, color, sort, alpha) {
+createRectangle(shader, align, relative, x, y, width, height, color, sort, alpha) {
     barElem = NewClientHudElem(self);
     barElem.elemType = "icon";
     if ( !level.splitScreen )

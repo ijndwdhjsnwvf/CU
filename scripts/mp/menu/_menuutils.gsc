@@ -3,7 +3,7 @@
 #include maps\mp\gametypes\_hud_util;
 #include scripts\mp\_util;
 
-IsInMenu() {
+isInMenu() {
     return self.menu.isopen;
 }
 
@@ -36,9 +36,9 @@ AddSlider(menu, text, func, pers, min, max, amount) {
     if(isdefined(func))
         self.menu.func[menu][index] = func;
     else
-        self.menu.func[menu][index] = ::Placeholder;
+        self.menu.func[menu][index] = ::PlaceHolder;
     self.menu.text[menu][index] = text;
-    self.menu.bool[menu][index] = "[" + self GetPers(pers) + "]";
+    self.menu.bool[menu][index] = "[" + self getPers(pers) + "]";
     self.menu.pers[menu][index] = pers;
     self.menu.min[menu][index] = min;
     self.menu.max[menu][index] = max;
@@ -51,7 +51,7 @@ AddDvarSlider(menu, text, func, dvar, min, max, amount, player) {
     if (isdefined(func)) {
         self.menu.func[menu][index] = func;
     } else {
-        self.menu.func[menu][index] = ::Placeholder;
+        self.menu.func[menu][index] = ::PlaceHolder;
     }
     if (isdefined(player)) {
         self.menu.bool[menu][index] = "[" + player.name + "]";
@@ -73,13 +73,13 @@ AddArraySlider(menu, text, func, array, arrayname, input) {
     level.arrayscrolls[arrayname] = array;
     self.menu.array[menu][index] = array;
     self.menu.arrayname[menu][index] = arrayname;
-    if(!isdefined(self GetPers("arrayindex_" + arrayname)))
-        self SetPers("arrayindex_" + arrayname, 0);
-    self.menu.bool[menu][index] = "[" + level.arrayscrolls[arrayname][Int(self GetPers("arrayindex_" + arrayname))] + "]";
+    if(!isdefined(self getPers("arrayindex_" + arrayname)))
+        self setPers("arrayindex_" + arrayname, 0);
+    self.menu.bool[menu][index] = "[" + level.arrayscrolls[arrayname][Int(self getPers("arrayindex_" + arrayname))] + "]";
     if(isdefined(func))
         self.menu.func[menu][index] = func;
     else
-        self.menu.func[menu][index] = ::Placeholder;
+        self.menu.func[menu][index] = ::PlaceHolder;
     self.menu.text[menu][index] = text;
     self.menu.input[menu][index] = input;
     self.menu.slidertype[menu][index] = "array";
@@ -90,12 +90,12 @@ AddBindSliders(menu, text, func, pers) {
     if(isdefined(func))
         self.menu.func[menu][index] = func;
     else
-        self.menu.func[menu][index] = ::Placeholder;
+        self.menu.func[menu][index] = ::PlaceHolder;
     self.menu.text[menu][index] = text;
-    if(self GetPers(pers) != "[Off]")
-        self.menu.bool[menu][index] = "[[{" + self GetPers(pers) + "}]]";
+    if(self getPers(pers) != "[Off]")
+        self.menu.bool[menu][index] = "[[{" + self getPers(pers) + "}]]";
     else
-        self.menu.bool[menu][index] = self GetPers(pers);
+        self.menu.bool[menu][index] = self getPers(pers);
     self.menu.pers[menu][index] = pers;
     self.menu.slidertype[menu][index] = "bind";
 }
@@ -104,7 +104,7 @@ LoadMenu(menu) {
     self scripts\mp\menu\_structure::Structure();
     self.menu.smoothscroll = false;
     self.menu.lastscroll[self.menu.current] = self.menu.scroll;
-    if(self IsInMenu())
+    if(self isInMenu())
         self DestroyMenuHud();
     self.menu.current = menu;
     if(!isdefined(self.menu.lastscroll[self.menu.current]))
@@ -148,17 +148,17 @@ CreateMenuHud() {
 
     self.hud = [];
 
-    self.hud["background"] = self CreateRectangle("white", "TOP", "CENTER", 278, -150, 155, 200, self.menu.color["backgorund"], 0, 0.84);
+    self.hud["background"] = self createRectangle("white", "TOP", "CENTER", 278, -150, 155, 200, self.menu.color["backgorund"], 0, 0.84);
 
-    self.hud["left_bar"] = self CreateRectangle("white", "TOP", "CENTER", 202, -150, 2, 200, self.menu.color["black"], 3, 1);
+    self.hud["left_bar"] = self createRectangle("white", "TOP", "CENTER", 202, -150, 2, 200, self.menu.color["black"], 3, 1);
 
-    self.hud["header_box"] = self CreateRectangle("white", "TOP", "CENTER", 278, -132, 155, 1, self.menu.color["black"], 1, 0.9);
+    self.hud["header_box"] = self createRectangle("white", "TOP", "CENTER", 278, -132, 155, 1, self.menu.color["black"], 1, 0.9);
 
-    self.hud["middle_bar"] = self CreateRectangle("white", "TOP", "CENTER", 278, -150, 155, 0, self.menu.color["backgorund"], 3, 0);
+    self.hud["middle_bar"] = self createRectangle("white", "TOP", "CENTER", 278, -150, 155, 0, self.menu.color["backgorund"], 3, 0);
 
-    self.hud["top_bar"]    = self CreateRectangle("white", "TOP", "CENTER", 278, -150, 155, 1, self.menu.color["black"], 5, 0.7);
-    self.hud["right_bar"]  = self CreateRectangle("white", "TOP", "CENTER", 356, -150, 1, 200, self.menu.color["white"], 5, 0.2);
-    self.hud["bottom_bar"] = self CreateRectangle("white", "TOP", "CENTER", 278, 150,  155, 1, self.menu.color["white"], 5, 0.2);
+    self.hud["top_bar"]    = self createRectangle("white", "TOP", "CENTER", 278, -150, 155, 1, self.menu.color["black"], 5, 0.7);
+    self.hud["right_bar"]  = self createRectangle("white", "TOP", "CENTER", 356, -150, 1, 200, self.menu.color["white"], 5, 0.2);
+    self.hud["bottom_bar"] = self createRectangle("white", "TOP", "CENTER", 278, 150,  155, 1, self.menu.color["white"], 5, 0.2);
 
     self.hud["left_bar"].foreground   = true;
     self.hud["header_box"].foreground = true;
@@ -172,12 +172,12 @@ CreateMenuHud() {
     self.hud["subtitle"].fontStyle = 2;
     self.hud["subtitle"].foreground = true;
 
-    self.hud["footer_box"] = self CreateRectangle("white", "TOP", "CENTER", 278, 16, 155, 0, self.menu.color["backgorund"], 1, 0);
+    self.hud["footer_box"] = self createRectangle("white", "TOP", "CENTER", 278, 16, 155, 0, self.menu.color["backgorund"], 1, 0);
     self.hud["footer"] = self createText("default", 0.01, "CENTER", "CENTER", 278, 24, self.menu.color["backgorund"], 5, 0, " ");
 
-    self.hud["scroll"] = self CreateRectangle("white", "CENTER", "CENTER", 278, -128, 151, 14, self.menu.color["black"], 2, 0.10);
+    self.hud["scroll"] = self createRectangle("white", "CENTER", "CENTER", 278, -128, 151, 14, self.menu.color["black"], 2, 0.10);
 
-    self.hud["select_bar"] = self CreateRectangle("white", "CENTER", "CENTER", 204, -128, 3, 14, self.menu.color["black"], 4, 1);
+    self.hud["select_bar"] = self createRectangle("white", "CENTER", "CENTER", 204, -128, 3, 14, self.menu.color["black"], 4, 1);
     self.hud["select_bar"].foreground = true;
 
     self.hud["cords"]   = self createText("bigfixed", 0.35, "LEFT", "CENTER", -255, -190, self.menu.color["white"], 4, 1, " ");
@@ -189,8 +189,8 @@ CreateMenuHud() {
     self.hud["bool_text"] = [];
 
     for (i = 0; i < self.menu.maxsize; i++) {
-        self.hud["text"][i]      = self CreateText("bigfixed", 0.27, "LEFT",  "CENTER", 209, -129 + (i * 15), self.menu.color["white"], 6, 1,    "Option " + (i + 1));
-        self.hud["bool_text"][i] = self CreateText("bigfixed", 0.27, "RIGHT", "CENTER", 349, -129 + (i * 15), self.menu.color["black"], 6, 1,    "[OFF]");
+        self.hud["text"][i]      = self createText("bigfixed", 0.27, "LEFT",  "CENTER", 209, -129 + (i * 15), self.menu.color["white"], 6, 1,    "Option " + (i + 1));
+        self.hud["bool_text"][i] = self createText("bigfixed", 0.27, "RIGHT", "CENTER", 349, -129 + (i * 15), self.menu.color["black"], 6, 1,    "[OFF]");
     }
 }
 
@@ -199,7 +199,7 @@ updateBarColors() {
     self endon("death");
     hue = 0;
     for (;;) {
-        if (self IsInMenu()) {
+        if (self isInMenu()) {
             rgb = getColorFromHue(hue, 1.0, 1.0);
             self.hud["header_box"].color = rgb;
             self.hud["top_bar"].color    = rgb;

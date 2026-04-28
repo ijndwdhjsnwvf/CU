@@ -85,7 +85,7 @@ onRoundEnd()
 
 
 
-doDVARs()
+doDvars()
 {
 
     self setClientDvar( "g_ScoresColor_Spectator", ".25 .25 .25");

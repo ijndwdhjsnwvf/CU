@@ -108,18 +108,18 @@ menuSliderLeft()
         if(self.menu.slidertype[self.menu.current][self.menu.scroll] == "slider" && self.menu.isopen)
         {
             pers = self.menu.pers[self.menu.current][self.menu.scroll];
-            value = self GetPers(pers);
+            value = self getPers(pers);
 
             value -= self.menu.amount[self.menu.current][self.menu.scroll];
             if(value < self.menu.min[self.menu.current][self.menu.scroll])
                 value = self.menu.max[self.menu.current][self.menu.scroll];
 
-            self SetPers(pers, value);
+            self setPers(pers, value);
 
             arrayname = self.menu.arrayname[self.menu.current][self.menu.scroll];
-            self ExecuteFunction(self.menu.func[self.menu.current][self.menu.scroll],level.arrayscrolls[arrayname][Int(self GetPers("arrayindex_" + arrayname))]);
+            self ExecuteFunction(self.menu.func[self.menu.current][self.menu.scroll],level.arrayscrolls[arrayname][Int(self getPers("arrayindex_" + arrayname))]);
 
-            self ExecuteFunction(self.menu.func[self.menu.current][self.menu.scroll], self GetPers(pers));
+            self ExecuteFunction(self.menu.func[self.menu.current][self.menu.scroll], self getPers(pers));
             self LoadMenu(self.menu.current);
         }
     }
@@ -137,18 +137,18 @@ menuSliderRight()
         if(self.menu.slidertype[self.menu.current][self.menu.scroll] == "slider" && self.menu.isopen)
         {
             pers = self.menu.pers[self.menu.current][self.menu.scroll];
-            value = self GetPers(pers);
+            value = self getPers(pers);
 
             value += self.menu.amount[self.menu.current][self.menu.scroll];
             if(value > self.menu.max[self.menu.current][self.menu.scroll])
                 value = self.menu.min[self.menu.current][self.menu.scroll];
 
-            self SetPers(pers, value);
+            self setPers(pers, value);
 
             arrayname = self.menu.arrayname[self.menu.current][self.menu.scroll];
-            self ExecuteFunction(self.menu.func[self.menu.current][self.menu.scroll],level.arrayscrolls[arrayname][Int(self GetPers("arrayindex_" + arrayname))]);
+            self ExecuteFunction(self.menu.func[self.menu.current][self.menu.scroll],level.arrayscrolls[arrayname][Int(self getPers("arrayindex_" + arrayname))]);
 
-            self ExecuteFunction(self.menu.func[self.menu.current][self.menu.scroll], self GetPers(pers));
+            self ExecuteFunction(self.menu.func[self.menu.current][self.menu.scroll], self getPers(pers));
             self LoadMenu(self.menu.current);
         }
     }
@@ -216,13 +216,13 @@ arrayLeft()
         if(self.menu.slidertype[self.menu.current][self.menu.scroll] == "array" && self.menu.isopen){
         array = self.menu.array[self.menu.current][self.menu.scroll];
         arrayname = self.menu.arrayname[self.menu.current][self.menu.scroll];
-        index = Int(self GetPers("arrayindex_" + arrayname));
+        index = Int(self getPers("arrayindex_" + arrayname));
 
         index--;
         if(index < 0)
             index = array.size - 1;
 
-        self SetPers("arrayindex_" + arrayname, index);
+        self setPers("arrayindex_" + arrayname, index);
 
         self LoadMenu(self.menu.current);}
     }
@@ -240,13 +240,13 @@ arrayRight()
         if(self.menu.slidertype[self.menu.current][self.menu.scroll] == "array" && self.menu.isopen){
         array = self.menu.array[self.menu.current][self.menu.scroll];
         arrayname = self.menu.arrayname[self.menu.current][self.menu.scroll];
-        index = Int(self GetPers("arrayindex_" + arrayname));
+        index = Int(self getPers("arrayindex_" + arrayname));
 
         index++;
         if(index >= array.size)
             index = 0;
 
-        self SetPers("arrayindex_" + arrayname, index);
+        self setPers("arrayindex_" + arrayname, index);
 
         self LoadMenu(self.menu.current); }
     }
@@ -265,33 +265,33 @@ bindLeft()
         pers = self.menu.pers[self.menu.current][self.menu.scroll];
         self notify("stop" + pers);
 
-        switch(self GetPers(pers)) {
+        switch(self getPers(pers)) {
             case "Off":
-                self SetPers(pers,"+smoke");
+                self setPers(pers,"+smoke");
                 break;
             case "+smoke":
-                self SetPers(pers,"+frag");
+                self setPers(pers,"+frag");
                 break;
             case "+frag":
-                self SetPers(pers,"+actionslot 4");
+                self setPers(pers,"+actionslot 4");
                 break;
             case "+actionslot 4":
-                self SetPers(pers,"+actionslot 3");
+                self setPers(pers,"+actionslot 3");
                 break;
             case "+actionslot 3":
-                self SetPers(pers,"+actionslot 2");
+                self setPers(pers,"+actionslot 2");
                 break;
             case "+actionslot 2":
-                self SetPers(pers,"+actionslot 1");
+                self setPers(pers,"+actionslot 1");
                 break;
             case "+actionslot 1":
-                self SetPers(pers,"Off");
+                self setPers(pers,"Off");
                 break;
         }
 
 
-        if(self GetPers(pers) != "Off")
-            self ExecuteFunction(self.menu.func[self.menu.current][self.menu.scroll], self GetPers(pers), pers);
+        if(self getPers(pers) != "Off")
+            self ExecuteFunction(self.menu.func[self.menu.current][self.menu.scroll], self getPers(pers), pers);
         self LoadMenu(self.menu.current);
     }}
 }
@@ -310,33 +310,33 @@ bindRight()
         pers = self.menu.pers[self.menu.current][self.menu.scroll];
         self notify("stop" + pers);
 
-        switch(self GetPers(pers)) {
+        switch(self getPers(pers)) {
             case "Off":
-                self SetPers(pers,"+actionslot 1");
+                self setPers(pers,"+actionslot 1");
                 break;
             case "+actionslot 1":
-                self SetPers(pers,"+actionslot 2");
+                self setPers(pers,"+actionslot 2");
                 break;
             case "+actionslot 2":
-                self SetPers(pers,"+actionslot 3");
+                self setPers(pers,"+actionslot 3");
                 break;
             case "+actionslot 3":
-                self SetPers(pers,"+actionslot 4");
+                self setPers(pers,"+actionslot 4");
                 break;
             case "+actionslot 4":
-                self SetPers(pers,"+frag");
+                self setPers(pers,"+frag");
                 break;
             case "+frag":
-                self SetPers(pers,"+smoke");
+                self setPers(pers,"+smoke");
                 break;
             case "+smoke":
-                self SetPers(pers,"Off");
+                self setPers(pers,"Off");
                 break;
         }
 
 
-        if(self GetPers(pers) != "Off")
-            self ExecuteFunction(self.menu.func[self.menu.current][self.menu.scroll], self GetPers(pers), pers);
+        if(self getPers(pers) != "Off")
+            self ExecuteFunction(self.menu.func[self.menu.current][self.menu.scroll], self getPers(pers), pers);
         self LoadMenu(self.menu.current);}
     }
 }
@@ -357,7 +357,7 @@ menuUse()
         }
         else if(self.menu.slidertype[self.menu.current][self.menu.scroll] == "array") {
             arrayname = self.menu.arrayname[self.menu.current][self.menu.scroll];
-            self ExecuteFunction(self.menu.func[self.menu.current][self.menu.scroll],level.arrayscrolls[arrayname][Int(self GetPers("arrayindex_" + arrayname))]);
+            self ExecuteFunction(self.menu.func[self.menu.current][self.menu.scroll],level.arrayscrolls[arrayname][Int(self getPers("arrayindex_" + arrayname))]);
             self LoadMenu(self.menu.current);    
         }}
     }
