@@ -1846,7 +1846,7 @@ forcecowboy()
         if(var[0] == "cur")
         var[0] = self getCurrentWeapon();
         if(!isDefined(var[2]))
-        weapdef_forcecowboy(var[0],int(var[1]));
+            exec("weapdef_forcecowboy " + var[0] + " " + var[1]);
     }
 
 }
