@@ -1,0 +1,272 @@
+==========================================
+COUNTER UAV - WEAPON FILE FIELD REFERENCE
+==========================================
+
+Weapon files are in: mods/COUNTER UAV/weapons/mp/
+They are plain text, one line, fields separated by \fieldName\value\
+
+Open any weapon file in Notepad++ and use Ctrl+F to find a field.
+Change the value after the field name, save, reload the mod.
+
+
+==========================================
+ANIMATION FIELDS
+==========================================
+
+\idleAnim\           Standing idle hipfire
+\emptyIdleAnim\      Idle when clip is empty
+\fireAnim\           Firing animation
+\lastShotAnim\       Last bullet fired animation
+\rechamberAnim\      Bolt cycle after shot (snipers/shotguns)
+\reloadAnim\         Reload with ammo remaining
+\reloadEmptyAnim\    Reload from completely empty
+\raiseAnim\          Weapon swap-in (normal)
+\dropAnim\           Weapon swap-out (normal)
+\quickRaiseAnim\     Fast swap-in
+\quickDropAnim\      Fast swap-out
+\firstRaiseAnim\     First equip animation at spawn
+\emptyRaiseAnim\     Raise when clip is empty
+\emptyDropAnim\      Drop when clip is empty
+\sprintInAnim\       Start sprinting animation
+\sprintLoopAnim\     Sprint hold loop animation
+\sprintOutAnim\      End sprint animation
+\adsUpAnim\          ADS / scope-in animation
+\adsDownAnim\        ADS / scope-out animation
+\adsFireAnim\        Fire while ADS
+\adsLastShotAnim\    Last shot while ADS
+\adsRechamberAnim\   Bolt rechamber while ADS
+\meleeAnim\          Melee swing animation
+\meleeChargeAnim\    Knife lunge/charge animation
+
+--- ANIMATION NAME FORMAT ---
+viewmodel_WEAPNAME_ANIMTYPE
+
+Common weapon names:
+  cheytac   barrett   wa2000   m21
+  spas12    model1887  aa12   striker   ranger   m1014
+  m4        famas     scar    ak47      m16      masada   fal   fn2000   tavor
+  mp5k      ump45     kriss   p90       uzi
+  sa80      rpd       mg4     aug       m240
+  usp       beretta   coltanaconda  deserteagle  glock  beretta393  pp2000  tmp
+  at4       m79       stinger  javelin  rpg
+  knife     c4        claymore  frag_grenade  flash_grenade  concussion_grenade
+
+Common animation types:
+  _idle           _fire           _reload         _reload_empty
+  _pullout        _putaway        _putaway_quick  _pullout_quick
+  _sprint_in      _sprint_loop    _sprint_out
+  _rechamber      _rechamber_ads  _ADS_up         _ADS_down
+  _melee_slice    _melee_stab
+
+--- CROSS-WEAPON SWAP RULES ---
+You can ONLY swap animations between weapons that share the same viewmodel rig.
+
+SAFE to swap between each other:
+  Snipers:   cheytac, barrett, wa2000, m21
+  Shotguns:  spas12, model1887 (partially)
+  Knife:     viewmodel_knife_melee_slice and _stab work on ANY weapon's meleeAnim
+
+WILL BREAK if mixed across families:
+  Putting a sniper reload on a pistol - different skeleton, glitches out
+
+
+==========================================
+TIMING FIELDS  (all values in seconds)
+==========================================
+
+\fireTime\           Delay between shots (e.g. 0.05 = semi auto feel)
+\rechamberTime\      Full bolt cycle time after shot
+\rechamberBoltTime\  Partial bolt phase time
+\reloadTime\         Full reload duration
+\reloadEmptyTime\    Empty mag reload duration
+\reloadAddTime\      Moment ammo is added during reload (for interrupt timing)
+\reloadStartTime\    Start phase before clip ejects
+\reloadEndTime\      End phase after clip is seated
+\raiseTime\          Normal swap-in duration
+\dropTime\           Normal swap-out duration
+\quickRaiseTime\     Fast swap-in duration
+\quickDropTime\      Fast swap-out duration
+\firstRaiseTime\     First equip duration at spawn
+\sprintInTime\       Sprint start duration
+\sprintLoopTime\     Sprint loop duration
+\sprintOutTime\      Sprint end duration
+\meleeTime\          Full melee animation duration
+\meleeChargeTime\    Knife lunge full duration
+\meleeDelay\         Delay before melee damage registers
+\adsTransInTime\     Time to fully ADS
+\adsTransOutTime\    Time to fully un-ADS
+
+TIP: Lowering rechamberTime shortens bolt cycle = faster shot to shot
+TIP: reloadAddTime controls when you can cancel a reload - lower = earlier
+
+
+==========================================
+DAMAGE & STATS FIELDS
+==========================================
+
+\damage\             Base damage per bullet
+\playerDamage\       Damage specifically vs players
+\meleeDamage\        Melee strike damage
+\minDamage\          Minimum damage at max range
+\minPlayerDamage\    Min player damage at max range
+\maxDamageRange\     Range at which full damage applies (inches)
+\minDamageRange\     Range at which minimum damage applies
+\clipSize\           Bullets per magazine
+\maxAmmo\            Total ammo reserve
+\startAmmo\          Ammo carried at spawn
+\shotCount\          Pellets per trigger pull (shotguns use 8-12)
+\fireDelay\          Delay from trigger pull to bullet leaving barrel
+\penetrateType\      none / small / medium / large (wall penetration)
+\penetrateMultiplier\ Multiplier on penetration damage
+\locHead\            Headshot multiplier (default 1.5)
+\locHelmet\          Helmet shot multiplier
+\locNeck\            Neck shot multiplier
+\locTorsoUpper\      Upper torso multiplier
+\locTorsoLower\      Lower torso multiplier
+\locRightArmUpper\   Right arm multiplier
+\locGun\             Gun-hit multiplier (0 = no damage through gun)
+\moveSpeedScale\     Movement speed while holding weapon (1.0 = normal)
+\adsMoveSpeedScale\  Movement speed while ADS (1.0 = normal)
+\sprintDurationScale\ Sprint time multiplier
+
+
+==========================================
+SPREAD & RECOIL FIELDS
+==========================================
+
+\hipSpreadStandMin\      Min hip spread standing
+\hipSpreadDuckedMin\     Min hip spread crouched
+\hipSpreadProneMin\      Min hip spread prone
+\hipSpreadMax\           Max possible hip spread
+\hipSpreadDuckedMax\     Max spread crouched
+\hipSpreadProneMax\      Max spread prone
+\hipSpreadDecayRate\     How fast spread recovers (higher = faster)
+\hipSpreadFireAdd\       Spread added per shot
+\hipSpreadMoveAdd\       Spread added while moving
+\hipSpreadTurnAdd\       Spread added while turning
+\adsSpread\              Spread while ADS (0 for snipers)
+
+Gun Kick (actual gun model movement):
+\hipGunKickPitchMin\     Min vertical gun kick hip
+\hipGunKickPitchMax\     Max vertical gun kick hip
+\hipGunKickYawMin\       Min horizontal gun kick hip
+\hipGunKickYawMax\       Max horizontal gun kick hip
+\hipGunKickAccel\        Kick acceleration
+\hipGunKickSpeedMax\     Max kick speed
+\hipGunKickSpeedDecay\   Kick decay rate
+\hipGunKickStaticDecay\  Static decay rate
+
+View Kick (camera moves):
+\hipViewKickPitchMin\    Min camera pitch kick hip
+\hipViewKickPitchMax\    Max camera pitch kick hip
+\hipViewKickYawMin\      Min camera yaw kick hip
+\hipViewKickYawMax\      Max camera yaw kick hip
+\hipViewKickCenterSpeed\ Speed camera returns to center
+
+ADS versions:
+\adsGunKickPitchMin\     Min gun kick ADS
+\adsGunKickPitchMax\     Max gun kick ADS
+\adsGunKickYawMin\       Min horizontal gun kick ADS
+\adsGunKickYawMax\       Max horizontal gun kick ADS
+\adsViewKickPitchMin\    Min camera pitch kick ADS
+\adsViewKickPitchMax\    Max camera pitch kick ADS
+\adsViewKickYawMin\      Min camera yaw kick ADS
+\adsViewKickYawMax\      Max camera yaw kick ADS
+\adsViewKickCenterSpeed\ ADS re-center speed
+
+TIP: Set ALL kick/viewkick min and max to 0 for zero recoil
+
+
+==========================================
+ADS / SCOPE FIELDS
+==========================================
+
+\adsZoomFov\             ADS field of view (lower number = more zoom)
+                         Intervention default: 15   Barrett: 15
+                         Most pistols/ARs: 35-55
+\adsTransInTime\         Time to fully ADS (seconds)
+\adsTransOutTime\        Time to fully un-ADS (seconds)
+\adsZoomInFrac\          Fraction into raise anim when zoom activates (0-1)
+\adsZoomOutFrac\         Fraction into lower anim when zoom deactivates (0-1)
+\adsBobFactor\           Weapon bob intensity while ADS
+\adsViewBobMult\         View bob multiplier while ADS
+\adsIdleAmount\          Idle sway amount while ADS
+\adsIdleSpeed\           Idle sway oscillation speed while ADS
+\adsOverlayShader\       Name of the scope overlay material
+                         e.g. scope_overlay_m40a3
+\adsOverlayWidth\        Overlay width pixels
+\adsOverlayHeight\       Overlay height pixels
+\adsCrosshairInFrac\     Crosshair fade-in fraction (1=shows at start of ADS)
+\adsCrosshairOutFrac\    Crosshair fade-out fraction
+\adsReloadTransTime\     Transition time when reloading while ADS
+\adsFire\                0 = cannot fire while ADS  1 = can fire while ADS
+\aimDownSight\           0 = weapon has no ADS   1 = has ADS
+\autoAimRange\           Auto aim radius (console aim assist)
+\aimAssistRange\         Aim assist slowdown range (hipfire)
+\aimAssistRangeAds\      Aim assist slowdown range (ADS)
+
+
+==========================================
+SWAY & VIEWMODEL MOVEMENT FIELDS
+==========================================
+
+\swayMaxAngle\           Maximum weapon sway angle
+\swayLerpSpeed\          How fast sway interpolates
+\swayPitchScale\         Vertical sway scale
+\swayYawScale\           Horizontal sway scale
+\swayHorizScale\         Movement-based horizontal sway
+\swayVertScale\          Movement-based vertical sway
+\swayShellShockScale\    Sway increase when shell shocked
+
+ADS sway:
+\adsSwayMaxAngle\        Max sway angle while ADS
+\adsSwayLerpSpeed\       ADS sway interpolation speed
+\adsSwayPitchScale\      Vertical ADS sway
+\adsSwayYawScale\        Horizontal ADS sway
+\adsSwayHorizScale\      Move-based ADS horizontal sway
+\adsSwayVertScale\       Move-based ADS vertical sway
+
+Viewmodel position while moving:
+\standMoveF\             Forward offset when moving
+\standMoveR\             Right offset when moving
+\standMoveU\             Up offset when moving
+\standRotP\              Pitch rotation when moving
+\standRotY\              Yaw rotation when moving
+\standRotR\              Roll rotation when moving
+\strafeMoveF\            Forward offset when strafing
+\strafeMoveR\            Right offset when strafing
+\strafeMoveU\            Up offset when strafing
+\strafeRotP\             Pitch rotation when strafing
+\strafeRotY\             Yaw rotation when strafing
+\strafeRotR\             Roll rotation when strafing
+\gunMaxPitch\            Max pitch the gun model can angle
+\gunMaxYaw\              Max yaw the gun model can angle
+\idleCrouchFactor\       Idle sway multiplier when crouched
+\idleProneFactor\        Idle sway multiplier when prone
+
+TIP: Set all sway values to 0 for perfectly stable no-sway viewmodel
+TIP: standRotR (roll) is what causes the intervention tilt on strafes
+
+
+==========================================
+MISC FLAGS
+==========================================
+
+\boltAction\             1 = bolt action weapon (manual rechamber required)
+\aimDownSight\           1 = has ADS
+\adsFire\                1 = can fire while zoomed
+\noDualWield\            1 = cannot be akimbo'd
+\noAmmoPickup\           1 = cannot pick up ammo from ground
+\noPartialReload\        1 = must complete full reload (no interrupt)
+\segmentedReload\        1 = reload adds one round at a time (shotgun style)
+\reloadAmmoAdd\          0/1 = add ammo per segment during segmented reload
+\suppressAmmoReserveDisplay\ 1 = hides ammo counter
+\cancelAutoHolsterWhenEmpty\ 1 = auto holster cancelled when empty
+\blocksProne\            1 = cannot go prone while holding this weapon
+\silenced\               1 = weapon is silenced
+\thermalScope\           1 = weapon has thermal vision
+\motionTracker\          1 = weapon has heartbeat sensor
+\enhanced\               1 = enhanced stats perk applied
+\rifleBullet\            1 = rifle caliber bullet (affects penetration)
+\armorPiercing\          1 = armor piercing rounds
+\inheritsPerks\          1 = weapon inherits perk bonuses from class
