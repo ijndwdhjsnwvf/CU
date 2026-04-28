@@ -32,9 +32,9 @@ Structure()
     self AddOption("COUNTER UAV", "Weap Defs", ::LoadMenu, undefined, "Weap Defs");
 
     self CreateMenu("Misc", "COUNTER UAV");
-    self addOption("Misc", "UFO", ::noclipToggle, getPers("noclip"));
+    self AddOption("Misc", "UFO", ::noclipToggle, getPers("noclip"));
     self AddOption("Misc", "God Mode", ::godmode, getPers("god"));
-    self addOption("Misc", "Killcam Timer", ::killcamTimer, getPers("killcamtimer"));
+    self AddOption("Misc", "Killcam Timer", ::killcamTimer, getPers("killcamtimer"));
     self AddDvarSlider("Misc", "Killcam Length", undefined, "scr_killcam_time", 1, 10, 1);
     self AddOption("Misc", "Killcam Lag", ::KillcamLagTog, getDvar("function_killcamlag"));
     self AddOption("Misc", "Killcam Softland", ::KillcamSoftTog, getDvar("killcam_softland"));
@@ -45,18 +45,18 @@ Structure()
     self AddOption("Misc", "Clip Cutting", ::LoadMenu, undefined, "Clip Cutting");
     self AddOption("Misc", "Easy Ele", ::quickElev4, getPers("quickElev4"));
     self AddOption("Misc", "BO2 Instaswaps", ::instaswaps, getPers("instaswaps"));
-    self addOption("Misc", "Unlimited Equipment", ::unlimknifetoggle, getPers("unlimitedeq"));
+    self AddOption("Misc", "Unlimited Equipment", ::unlimknifetoggle, getPers("unlimitedeq"));
     self AddOption("Misc", "Good Nade", ::goodfrag1, getPers("goodnade"));
-    self addOption("Misc", "Load Saved Game for: [^1" + getDvar("ui_mapname") + "^7]", ::presetload);
+    self AddOption("Misc", "Load Saved Game for: [^1" + getDvar("ui_mapname") + "^7]", ::presetload);
 
-    self addoption("Misc", "Suicide", ::suicideTU6);
+    self AddOption("Misc", "Suicide", ::suicideTU6);
 
 
-    self createMenu("Clip Cutting", "COUNTER UAV");
+    self CreateMenu("Clip Cutting", "COUNTER UAV");
     self AddOption("Clip Cutting", "Green Screen", ::greenScreen, getPers("greenscreen"));
     self AddOption("Clip Cutting", "Blue Screen", ::blueScreen, getPers("bluescreen"));
     self AddOption("Clip Cutting", "Red Screen", ::redScreen, getPers("redscreen"));
-    self AddOption("Clip Cutting", "Black Screen", ::BlackScreen, getPers("blackscreen"));
+    self AddOption("Clip Cutting", "Black Screen", ::blackScreen, getPers("blackscreen"));
     self AddOption("Clip Cutting", "+greenscreen (cfg toggle)", ::cfgCmdExec, "+greenscreen");
     self AddOption("Clip Cutting", "+black (black flash)", ::cfgCmdExec, "+black");
     self AddOption("Clip Cutting", "Fast Restart", ::_fastRestart);
@@ -76,16 +76,16 @@ Structure()
     self AddOption("Ammo Menu", "Clip: ", ::setammo, getDvar("secondary_clip"));
     self AddOption("Ammo Menu", "Stock: ", ::setammo, getDvar("secondary_stock"));
 
-    self createMenu("One Man Army", "Misc");
+    self CreateMenu("One Man Army", "Misc");
     self AddDvarSlider("One Man Army", "One Man Army Charge Time", undefined, "scr_oma_usetime", 0, 10, 1);
-    self AddOption("One Man Army", "One Man Army Nac", ::omaNac, getPers("omanac"));
+    self AddOption("One Man Army", "One Man Army Nac", ::omanac, getPers("omanac"));
     self AddOption("One Man Army", "One Man Army Sprint", ::omaSprint, getPers("omasprint"));
     self AddOption("One Man Army", "Sprint on Second Bar", ::omaSprintSecond, getPers("omasprintsecond"));
     self AddOption("One Man Army", "Double One Man Army", ::doubleOma, getPers("doubleoma"));
 
 
-    self createMenu("Class Change", "Misc");
-    self AddOption("Class Change", "Class Change Adelia", ::classchangeadelia, getPers("classchangeadelia"));
+    self CreateMenu("Class Change", "Misc");
+    self AddOption("Class Change", "Class Change Adelia", ::classChangeAdelia, getPers("classchangeadelia"));
     self AddOption("Class Change", "Infinite Sprint", ::classinfsprint, getPers("classinfsprint"));
     self AddOption("Class Change", "Knife", ::classmelee, getPers("classmelee"));
     self AddOption("Class Change", "Lunge", ::classlunge, getPers("classlunge"));
@@ -93,9 +93,9 @@ Structure()
     self AddOption("Class Change", "Canswap", ::classcanswap, getPers("classcanswap"));
     self AddOption("Class Change", "Max Ammo on Class Change", ::maxammotog, getPers("maxammo"));
 
-    self createMenu("Fake Bounces", "Misc");
-    self addOption("Fake Bounces", "Spawn Bounce", ::spawn_fake_bounce);
-    self addOption("Fake Bounces", "Remove Bounces", ::delbounce);
+    self CreateMenu("Fake Bounces", "Misc");
+    self AddOption("Fake Bounces", "Spawn Bounce", ::spawn_fake_bounce);
+    self AddOption("Fake Bounces", "Remove Bounces", ::delbounce);
 
     self CreateMenu("Teleport", "COUNTER UAV");
     self AddDvarSlider("Teleport", "Save Point:", undefined, "function_savepoint", 1, 5, 1);
@@ -105,7 +105,7 @@ Structure()
     self AddBindSliders("Teleport", "Save Location Bind", ::saveLocBind, "saveloc");
     self AddBindSliders("Teleport", "Load Location Bind", ::loadLocBind, "loadloc"); 
     self AddOption("Teleport", "Custom Locations", ::LoadMenu, undefined, "Custom Locations");
-    self createMenu("Custom Locations", "Teleport");
+    self CreateMenu("Custom Locations", "Teleport");
     switch(getDvar("ui_mapname"))
     {
         case "mp_afghan":
@@ -195,26 +195,26 @@ Structure()
     }
 
     /*self CreateMenu("Aimbot", "COUNTER UAV");  old aimbot shit
-    self addoption("Aimbot","Aimbot Weapon", ::aimbotWeapon, getDvar("aimbotWeapon"));
-    self addOption ("Aimbot", "Aimbot Strength", ::aimbotStrength, self.aimbotStrength);
-    self addoption("Aimbot","Hitmarker Weapon", ::hitmarkerWeapon, getDvar("hitmarkerWeapon"));
-    self addOption ("Aimbot","Aimbot Hitmarker", ::aimbot_hitmarker, self.aimbothitmarker);
-    self addOption ("Aimbot", "Headshot Aimbot", ::headshotAimbot, getPers("headshotAimbot"));
-    self addOption ("Aimbot", "Aimbot Delay Settings", ::loadMenu, undefined,"Aimbot Delay Settings");
+    self AddOption("Aimbot","Aimbot Weapon", ::aimbotWeapon, getDvar("aimbotWeapon"));
+    self AddOption ("Aimbot", "Aimbot Strength", ::aimbotStrength, self.aimbotStrength);
+    self AddOption("Aimbot","Hitmarker Weapon", ::hitmarkerWeapon, getDvar("hitmarkerWeapon"));
+    self AddOption ("Aimbot","Aimbot Hitmarker", ::aimbot_hitmarker, self.aimbothitmarker);
+    self AddOption ("Aimbot", "Headshot Aimbot", ::headshotAimbot, getPers("headshotAimbot"));
+    self AddOption ("Aimbot", "Aimbot Delay Settings", ::LoadMenu, undefined,"Aimbot Delay Settings");
 
-	self createMenu("Aimbot Delay Settings", "Aimbot");
-	self addOption ("Aimbot Delay Settings", "Increase Aimbot Delay by 0.1", ::aimbotDelay, undefined, 0.1);
-	self addOption ("Aimbot Delay Settings", "Decrease Aimbot Delay by 0.1", ::aimbotDelay, undefined, -0.1);
-	self addOption ("Aimbot Delay Settings", "Value : [^1" + self.aimbotDelay + "^7]" );*/
+	self CreateMenu("Aimbot Delay Settings", "Aimbot");
+	self AddOption ("Aimbot Delay Settings", "Increase Aimbot Delay by 0.1", ::aimbotDelay, undefined, 0.1);
+	self AddOption ("Aimbot Delay Settings", "Decrease Aimbot Delay by 0.1", ::aimbotDelay, undefined, -0.1);
+	self AddOption ("Aimbot Delay Settings", "Value : [^1" + self.aimbotDelay + "^7]" );*/
 
 
     self CreateMenu("Aimbot", "COUNTER UAV");
     self AddOption("Aimbot", "Weapon", ::aimbotWeapon, self.pers["aimbotWeapon"]);
     self AddSlider("Aimbot", "Strength", undefined, "aimbotStrength", 0, 10000, 250);
-    self addOption("Aimbot", "Everwhere", ::everywhereeb, getPers("everywhereeb"));
+    self AddOption("Aimbot", "Everwhere", ::everywhereeb, getPers("everywhereeb"));
     self AddSlider("Aimbot", "Delay", undefined, "aimbotDelay", 0, 3, 0.1);
-    self addOption("Aimbot", "Mid Air", ::midAirOnly, getPers("midAirOnly"));
-    self addOption("Aimbot", "Headshots", ::headshots, getDvar("headshots"));
+    self AddOption("Aimbot", "Mid Air", ::midAirOnly, getPers("midAirOnly"));
+    self AddOption("Aimbot", "Headshots", ::headshots, getDvar("headshots"));
     self AddOption("Aimbot", "Friendly Weapon", ::friendlyWeapon, getPers("friendlyweapon"));
     self AddOption("Aimbot", "Friendly Aimbot", ::friendlyAimbot, getPers("friendlyaimbot"));
     self AddOption("Aimbot", "Hitmarker Aimbot", ::hmaimbot, getPers("hmaimbot"));
@@ -222,7 +222,7 @@ Structure()
 
     
     self CreateMenu("Game", "COUNTER UAV");
-    self addoption("Game", "Rounds Setup",::LoadMenu, undefined,"Rounds");
+    self AddOption("Game", "Rounds Setup",::LoadMenu, undefined,"Rounds");
     self AddOption("Game", "Instashoot", ::LoadMenu, undefined, "Instashoot");
     self AddOption("Game", "Round Timer", ::timerToggle, getPers("timerthing"));
     self AddOption("Game", "Player Health", ::playerhealth, getDvar("player_health"));
@@ -244,8 +244,8 @@ Structure()
     self AddOption("Game", "Bullet Marks", ::bullets, getPers("bullets"));
     self AddOption("Game", "Death Barriers", ::deathbarrierstog, getPers("deathbarriers"));
     self AddArraySlider("Game", "Change Map", ::changeMap, strTok("mp_afghan,mp_derail,mp_estate,mp_favela,mp_highrise,mp_invasion,mp_checkpoint,mp_quarry,mp_rundown,mp_rust,mp_boneyard,mp_nightshift,mp_subbase,mp_terminal,mp_underpass,mp_brecourt", ","), "change_map");
-    self AddOption("Game", "Map Restart", ::_mapRestart);
-    self AddOption("Game", "Disconnect", ::_Disconnect);
+    self AddOption("Game", "Map Restart", ::_maprestart);
+    self AddOption("Game", "Disconnect", ::_disconnect);
 
 
     self CreateMenu("Rounds", "Game");
@@ -254,7 +254,7 @@ Structure()
     self AddOption("Rounds", "Set Rounds", ::sndroundreset2);
 
     self CreateMenu("Instashoot", "Game");
-    self addoption("Instashoot","Instashoot", ::instashoots_tog, getPers("instashoots"));
+    self AddOption("Instashoot","Instashoot", ::instashoots_tog, getPers("instashoots"));
     self AddOption("Instashoot", "Instashoot Weapon", ::instashoots_weapon, getDvar("instashoots_weapon"));
 
     self CreateMenu("Weapon", "COUNTER UAV");
@@ -280,28 +280,28 @@ Structure()
     self AddArraySlider("Weapons", "Special", ::giveWeap, strTok("defaultweapon,deserteaglegold", ","), "give_weapon_special");
 
     self CreateMenu("Bots", "COUNTER UAV");
-    self addoption("Bots", "Spawn Friendly", ::spawnFriendlyBot);
-    self addoption("Bots", "Spawn Enemy", ::spawnEnemyBot);
-    self addoption("Bots", "Teleport Settings",::LoadMenu, undefined,"Teleport Bots");
+    self AddOption("Bots", "Spawn Friendly", ::spawnFriendlyBot);
+    self AddOption("Bots", "Spawn Enemy", ::spawnEnemyBot);
+    self AddOption("Bots", "Teleport Settings",::LoadMenu, undefined,"Teleport Bots");
     self AddOption("Bots", "Bots Functions", ::LoadMenu, undefined, "Bots Functions");
 
         self CreateMenu("Bots Functions", "Bots");
         self AddArraySlider("Bots Functions", "Bot Preset", ::change_bot, strTok("default,mishy,syncroh,areal,brx,chim,jtm,meta,zekah,deft,azr,qurve", ","), "change_bot");
-        self addoption("Bots Functions", "Enemy Bot Weapon", ::ebotweapon, getDvar("ebotweapon"));
-        self addoption("Bots Functions", "Friendly Bot Weapon", ::fbotWeapon, getDvar("fbotweapon"));
+        self AddOption("Bots Functions", "Enemy Bot Weapon", ::ebotweapon, getDvar("ebotweapon"));
+        self AddOption("Bots Functions", "Friendly Bot Weapon", ::fbotweapon, getDvar("fbotweapon"));
         self AddDvarSlider("Bots Functions", "Bot Prestige", ::botprestige, "bot_prestige",  0, 11, 1); 
 
         self AddBindSliders("Bots Functions", "Bot Mantle Bind", ::botmantlebind, "botmantlebind");
         self AddBindSliders("Bots Functions", "Bot Kills Friend", ::botkilltest, "botkilltest");
-        self addoption("Bots Functions", "Enemy Bot Velocity",::LoadMenu, undefined,"eBotVelo");
-        self addoption("Bots Functions", "Friendly Bot Velocity",::LoadMenu, undefined,"fBotVelo");
+        self AddOption("Bots Functions", "Enemy Bot Velocity",::LoadMenu, undefined,"eBotVelo");
+        self AddOption("Bots Functions", "Friendly Bot Velocity",::LoadMenu, undefined,"fBotVelo");
 
 
     self CreateMenu("eBotVelo", "Bots Functions");
     self AddDvarSlider("eBotVelo", "Bot Velocity X", undefined, "ebotvelx", -500, 500, 20);
     self AddDvarSlider("eBotVelo", "Bot Velocity Z", undefined, "ebotvelz", -500, 500, 20);
     self AddDvarSlider("eBotVelo", "Bot Velocity Y", undefined, "ebotvely", -500, 500, 20);
-    self addoption("eBotVelo","Reset Bot Vel", ::resetebotvel);
+    self AddOption("eBotVelo","Reset Bot Vel", ::resetebotvel);
     self AddBindSliders("eBotVelo", "Bot Velocity Bind", ::ebotvelbind, "ebotvelbind");
     //
     self CreateMenu("fBotVelo", "Bots Functions");
@@ -314,33 +314,33 @@ Structure()
     self CreateMenu("Teleport Bots", "Bots");
     self AddOption("Teleport Bots", "Teleport Enemy [3 Seconds]", ::teleportbots, undefined, getOtherTeam(self.pers["team"]));
     self AddOption("Teleport Bots", "Teleport Friendly [3 Seconds]", ::teleportbots, undefined, self.pers["team"]);
-    self addoption("Teleport Bots", "Teleport Enemy", ::tpenemybots);
-    self addoption("Teleport Bots", "Teleport Friendly", ::tpfriendbots);
+    self AddOption("Teleport Bots", "Teleport Enemy", ::tpenemybots);
+    self AddOption("Teleport Bots", "Teleport Friendly", ::tpfriendbots);
 
     self AddOption("Teleport Bots", "Save Location", ::saveLocationBot);
     self AddOption("Teleport Bots", "Load Location", ::loadLocationBot);
 
-    self addoption("Bots", "Kick Settings",::LoadMenu, undefined,"Kick Bots");
+    self AddOption("Bots", "Kick Settings",::LoadMenu, undefined,"Kick Bots");
     
     self CreateMenu("Kick Bots", "Bots");
     self AddOption("Kick Bots", "Kick Enemy Bots", ::kickenemybots);
     self AddOption("Kick Bots", "Kick Friendly Bots", ::kickfriendbots);
-    self addoption("Kick Bots", "Kick All Bots", ::removeEveryBot);
+    self AddOption("Kick Bots", "Kick All Bots", ::removeEveryBot);
 
 
     self CreateMenu("Binds", "COUNTER UAV");
-    self addoption("Binds", "Dvar Toggle",::LoadMenu, undefined,"Dvar Toggle");
-    //self addoption("Binds", "Weapon Def",::LoadMenu, undefined, "Weapon Def");
-    self addoption("Binds", "Velocity",::LoadMenu, undefined,"Velocity");
-    self addoption("Binds", "Nac Mod",::LoadMenu, undefined,"Nac Mod");
-    self addoption("Binds", "Kill Bot",::LoadMenu, undefined,"KillBotMenu");
-    self addoption("Binds", "Set Anim",::LoadMenu, undefined,"Set Anim");
-    self addoption("Binds", "Swap to Weapon",::LoadMenu, undefined,"SwaptoWeapon");
-    self addoption("Binds", "Radius Damage",::LoadMenu, undefined,"Radius");
-    self addoption("Binds", "Bolt Movement",::LoadMenu, undefined,"Bolt");
-    self addoption("Binds", "Force Barrel",::LoadMenu, undefined,"Force");
-    self addoption("Binds", "Canswaps",::LoadMenu, undefined,"Canswaps");
-    self addoption("Binds", "Instashoots",::LoadMenu, undefined,"Instashoots");
+    self AddOption("Binds", "Dvar Toggle",::LoadMenu, undefined,"Dvar Toggle");
+    //self AddOption("Binds", "Weapon Def",::LoadMenu, undefined, "Weapon Def");
+    self AddOption("Binds", "Velocity",::LoadMenu, undefined,"Velocity");
+    self AddOption("Binds", "Nac Mod",::LoadMenu, undefined,"Nac Mod");
+    self AddOption("Binds", "Kill Bot",::LoadMenu, undefined,"KillBotMenu");
+    self AddOption("Binds", "Set Anim",::LoadMenu, undefined,"Set Anim");
+    self AddOption("Binds", "Swap to Weapon",::LoadMenu, undefined,"SwaptoWeapon");
+    self AddOption("Binds", "Radius Damage",::LoadMenu, undefined,"Radius");
+    self AddOption("Binds", "Bolt Movement",::LoadMenu, undefined,"Bolt");
+    self AddOption("Binds", "Force Barrel",::LoadMenu, undefined,"Force");
+    self AddOption("Binds", "Canswaps",::LoadMenu, undefined,"Canswaps");
+    self AddOption("Binds", "Instashoots",::LoadMenu, undefined,"Instashoots");
     self AddBindSliders("Binds", "Blast Shield", ::blastbind, "blastbind");
     self AddBindSliders("Binds", "Cp Mala", ::cpmala, "cpmala");
     self AddBindSliders("Binds", "Pred Mala", ::predmala, "predmala");
@@ -365,11 +365,11 @@ Structure()
 
 
     self CreateMenu("Bolt", "Binds");
-    self addoption("Bolt", "Save Point", ::savebolt);
-    self addoption("Bolt", "Delete Point", ::deletebolt);
+    self AddOption("Bolt", "Save Point", ::savebolt);
+    self AddOption("Bolt", "Delete Point", ::deletebolt);
     self AddDvarSlider("Bolt", "Bolt Speed", undefined, "bolttime", 0, 10, 0.2);
     self AddBindSliders("Bolt", "Bolt Movement Bind", ::boltbind, "boltbind");
-    self addoption("Bolt", "Fix ADS [^1LATENCY WHEN ON^7]", ::fix_ads, getPers("fixADS"));
+    self AddOption("Bolt", "Fix ADS [^1LATENCY WHEN ON^7]", ::fix_ads, getPers("fixADS"));
 
 
     self CreateMenu("Force", "Binds");
@@ -385,30 +385,30 @@ Structure()
     self AddOption("Instashoots", "Register Gun (Instashoot)", ::instashootRegisterGun, getPers("instashootregistered"));
 
     self CreateMenu("Velocity", "Binds");
-    self addoption("Velocity", "Velocity 1",::LoadMenu, undefined,"Velocity1");
-    self addoption("Velocity", "Velocity 2",::LoadMenu, undefined,"Velocity2");
+    self AddOption("Velocity", "Velocity 1",::LoadMenu, undefined,"Velocity1");
+    self AddOption("Velocity", "Velocity 2",::LoadMenu, undefined,"Velocity2");
 
     self CreateMenu("Velocity1", "Velocity");
     self AddDvarSlider("Velocity1", "Velocity 1 X", undefined, "velx", -500, 500, 10);
     self AddDvarSlider("Velocity1", "Velocity 1 Z", undefined, "velz", -500, 500, 10);
     self AddDvarSlider("Velocity1", "Velocity 1 Y", undefined, "vely", -500, 500, 10);
-    self addoption("Velocity1","Reset Velocity 1",::resetvel);
+    self AddOption("Velocity1","Reset Velocity 1",::resetvel);
     self AddBindSliders("Velocity1", "Velocity 1 Bind", ::velbind, "velbind");
     //
     self CreateMenu("Velocity2", "Velocity");
     self AddDvarSlider("Velocity2", "Velocity 2 X", undefined, "velx2", -500, 500, 10);
     self AddDvarSlider("Velocity2", "Velocity 2 Z", undefined, "velz2", -500, 500, 10);
     self AddDvarSlider("Velocity2", "Velocity 2 Y", undefined, "vely2", -500, 500, 10);
-    self addoption("Velocity2","Reset Velocity 2",::resetvel2);
+    self AddOption("Velocity2","Reset Velocity 2",::resetvel2);
     self AddBindSliders("Velocity2", "Velocity 2 Bind", ::vel2bind, "vel2bind");
 
     self CreateMenu("Nac Mod", "Binds");
-    self addoption("Nac Mod","Nac Weapon 1",::nacmod1, getDvar("nacmod1"));
-    self addoption("Nac Mod","Nac Weapon 2",::nacmod2, getDvar("nacmod2"));
+    self AddOption("Nac Mod","Nac Weapon 1",::nacmod1, getDvar("nacmod1"));
+    self AddOption("Nac Mod","Nac Weapon 2",::nacmod2, getDvar("nacmod2"));
     self AddBindSliders("Nac Mod", "Nac Mod Bind", ::nacmodbind, "nacmodbind");
 
     self CreateMenu("KillBotMenu", "Binds");
-    self addoption("KillBotMenu", "Weapon:",::killbot_weapon, getDvar("killbot_weapon"));
+    self AddOption("KillBotMenu", "Weapon:",::killbot_weapon, getDvar("killbot_weapon"));
     self AddBindSliders("KillBotMenu", "KillBot Bind", ::killbotbind, "killbotbind");
 
     self CreateMenu("Set Anim", "Binds");
@@ -418,7 +418,7 @@ Structure()
     self AddBindSliders("Set Anim", "Set Anim Bind 2", ::anim2bind, "anim2bind");
 
     self CreateMenu("SwaptoWeapon", "Binds");
-    self addoption("SwaptoWeapon","Swap Weapon",::swap_weapon, getDvar("swap_weapon"));
+    self AddOption("SwaptoWeapon","Swap Weapon",::swap_weapon, getDvar("swap_weapon"));
     self AddBindSliders("SwaptoWeapon", "Swap Bind", ::swapbind, "swapbind");
 
     self CreateMenu("Radius", "Binds");
@@ -461,7 +461,7 @@ Structure()
     self AddBindSliders("CPFUNC", "Call Carepackage in Location", ::cppos, "cppos");
 
 
-    self createMenu("Game Profile", "COUNTER UAV");
+    self CreateMenu("Game Profile", "COUNTER UAV");
     self AddOption("Game Profile", "Edit Primary Weapon", ::LoadMenu, undefined, "primary_weapon");
     self AddOption("Game Profile", "Edit Secondary Weapon", ::LoadMenu, undefined, "secondary_weapon");
     self AddOption("Game Profile", "Edit Camos", ::LoadMenu, undefined, "camo_editor");
@@ -474,7 +474,7 @@ Structure()
 
 
 
-    self createMenu("primary_weapon", "Game Profile");
+    self CreateMenu("primary_weapon", "Game Profile");
     self AddOption("primary_weapon", "Assault Rifles", ::LoadMenu, undefined, "primary_ars");
     self AddOption("primary_weapon", "Sub Machine Guns", ::LoadMenu, undefined, "primary_smg");
     self AddOption("primary_weapon", "Light Machine Guns", ::LoadMenu, undefined, "primary_lmg");
@@ -483,10 +483,10 @@ Structure()
     self AddOption("primary_weapon", "Shotguns", ::LoadMenu, undefined, "primary_shotguns");
     self AddOption("primary_weapon", "Handguns", ::LoadMenu, undefined, "primary_handguns");
     self AddOption("primary_weapon", "Launchers", ::LoadMenu, undefined, "primary_launchers");
-    self addOption ("primary_weapon", "OMA Bag", ::weapon_editor, undefined, "onemanarmy", 0);
-    self addOption ("primary_weapon", "Riot Shield", ::weapon_editor, undefined, "riotshield", 0);
+    self AddOption ("primary_weapon", "OMA Bag", ::weapon_editor, undefined, "onemanarmy", 0);
+    self AddOption ("primary_weapon", "Riot Shield", ::weapon_editor, undefined, "riotshield", 0);
 
-    self createMenu("primary_ars", "primary_weapon");
+    self CreateMenu("primary_ars", "primary_weapon");
     self AddOption("primary_ars", "M4A1", ::weapon_editor, undefined, "m4", 0);
     self AddOption("primary_ars", "FAMAS", ::weapon_editor, undefined, "famas", 0);
     self AddOption("primary_ars", "SCAR-H", ::weapon_editor, undefined, "scar", 0);
@@ -497,33 +497,33 @@ Structure()
     self AddOption("primary_ars", "F2000", ::weapon_editor, undefined, "fn2000", 0);
     self AddOption("primary_ars", "AK-47", ::weapon_editor, undefined, "ak47", 0);
 
-    self createMenu("primary_smg", "primary_weapon");
+    self CreateMenu("primary_smg", "primary_weapon");
     self AddOption("primary_smg", "MP5K", ::weapon_editor, undefined, "mp5k", 0);
     self AddOption("primary_smg", "UMP45", ::weapon_editor, undefined, "ump45", 0);
     self AddOption("primary_smg", "Vector", ::weapon_editor, undefined, "kriss", 0);
     self AddOption("primary_smg", "P90", ::weapon_editor, undefined, "p90", 0);
     self AddOption("primary_smg", "Mini-Uzi", ::weapon_editor, undefined, "uzi", 0);
 
-    self createMenu("primary_lmg", "primary_weapon");
+    self CreateMenu("primary_lmg", "primary_weapon");
     self AddOption("primary_lmg", "L86 LSW", ::weapon_editor, undefined, "sa80", 0);
     self AddOption("primary_lmg", "RPD", ::weapon_editor, undefined, "rpd", 0);
     self AddOption("primary_lmg", "MG4", ::weapon_editor, undefined, "mg4", 0);
     self AddOption("primary_lmg", "AUG HBAR", ::weapon_editor, undefined, "aug", 0);
     self AddOption("primary_lmg", "M240", ::weapon_editor, undefined, "m240", 0);
 
-    self createMenu("primary_snipers", "primary_weapon");
+    self CreateMenu("primary_snipers", "primary_weapon");
     self AddOption("primary_snipers", "Intervention", ::weapon_editor, undefined, "cheytac", 0);
     self AddOption("primary_snipers", "Barrett .50Cal", ::weapon_editor, undefined, "barrett", 0);
     self AddOption("primary_snipers", "WA2000", ::weapon_editor, undefined, "wa2000", 0);
     self AddOption("primary_snipers", "M21 EBR", ::weapon_editor, undefined, "m21", 0);
 
-    self createMenu("primary_machine_pistols", "primary_weapon");
+    self CreateMenu("primary_machine_pistols", "primary_weapon");
     self AddOption("primary_machine_pistols", "PP-2000", ::weapon_editor, undefined, "pp2000", 0);
     self AddOption("primary_machine_pistols", "Glock 18", ::weapon_editor, undefined, "glock", 0);
     self AddOption("primary_machine_pistols", "Raffica", ::weapon_editor, undefined, "beretta393", 0);
     self AddOption("primary_machine_pistols", "TMP", ::weapon_editor, undefined, "tmp", 0);
 
-    self createMenu("primary_shotguns", "primary_weapon");
+    self CreateMenu("primary_shotguns", "primary_weapon");
     self AddOption("primary_shotguns", "SPAS-12", ::weapon_editor, undefined, "spas12", 0);
     self AddOption("primary_shotguns", "AA-12", ::weapon_editor, undefined, "aa12", 0);
     self AddOption("primary_shotguns", "Striker", ::weapon_editor, undefined, "striker", 0);
@@ -531,20 +531,20 @@ Structure()
     self AddOption("primary_shotguns", "M1014", ::weapon_editor, undefined, "m1014", 0);
     self AddOption("primary_shotguns", "Model 1887", ::weapon_editor, undefined, "model1887", 0);
 
-    self createMenu("primary_handguns", "primary_weapon");
+    self CreateMenu("primary_handguns", "primary_weapon");
     self AddOption("primary_handguns", "USP .45", ::weapon_editor, undefined, "usp", 0);
     self AddOption("primary_handguns", "Magnum", ::weapon_editor, undefined, "coltanaconda", 0);
     self AddOption("primary_handguns", "M9", ::weapon_editor, undefined, "beretta", 0);
     self AddOption("primary_handguns", "Desert Eagle", ::weapon_editor, undefined, "deserteagle", 0);
 
-    self createMenu("primary_launchers", "primary_weapon");
+    self CreateMenu("primary_launchers", "primary_weapon");
     self AddOption("primary_launchers", "AT4-HS", ::weapon_editor, undefined, "at4", 0);
     self AddOption("primary_launchers", "Thumper", ::weapon_editor, undefined, "m79", 0);
     self AddOption("primary_launchers", "Stinger", ::weapon_editor, undefined, "stinger", 0);
     self AddOption("primary_launchers", "Javelin", ::weapon_editor, undefined, "javelin", 0);
     self AddOption("primary_launchers", "RPG-7", ::weapon_editor, undefined, "rpg", 0);
 
-    self createMenu("attachment_primary_one", "primary_weapon");
+    self CreateMenu("attachment_primary_one", "primary_weapon");
     self AddOption("attachment_primary_one", "None", ::attachment_editor_one, undefined, "none", 0);
     self AddOption("attachment_primary_one", "Acog", ::attachment_editor_one, undefined, "acog", 0);
     self AddOption("attachment_primary_one", "Grip", ::attachment_editor_one, undefined, "grip", 0);
@@ -561,7 +561,7 @@ Structure()
     self AddOption("attachment_primary_one", "Extended Mags", ::attachment_editor_one, undefined, "xmags", 0);
     self AddOption("attachment_primary_one", "Holographic", ::attachment_editor_one, undefined, "eotech", 0);
 
-    self createMenu("attachment_primary_two", "primary_weapon");
+    self CreateMenu("attachment_primary_two", "primary_weapon");
     self AddOption("attachment_primary_two", "None", ::attachment_editor_two, undefined, "none", 0);
     self AddOption("attachment_primary_two", "Acog", ::attachment_editor_two, undefined, "acog", 0);
     self AddOption("attachment_primary_two", "Grip", ::attachment_editor_two, undefined, "grip", 0);
@@ -578,19 +578,19 @@ Structure()
     self AddOption("attachment_primary_two", "Extended Mags", ::attachment_editor_two, undefined, "xmags", 0);
     self AddOption("attachment_primary_two", "Holographic", ::attachment_editor_two, undefined, "eotech", 0);
 
-    self createMenu("secondary_weapon", "Game Profile");
-    self AddOption("secondary_weapon", "Assault Rifles", ::loadmenu, undefined, "secondary_ars");
-    self AddOption("secondary_weapon", "Sub Machine Guns", ::loadmenu, undefined, "secondary_smg");
-    self AddOption("secondary_weapon", "Light Machine Guns", ::loadmenu, undefined, "secondary_lmg");
-    self AddOption("secondary_weapon", "Sniper Rifles", ::loadmenu, undefined, "secondary_snipers");
-    self AddOption("secondary_weapon", "Machine Pistols", ::loadmenu, undefined, "secondary_machine_pistols");
-    self AddOption("secondary_weapon", "Shotguns", ::loadmenu, undefined, "secondary_shotguns");
-    self AddOption("secondary_weapon", "Handguns", ::loadmenu, undefined, "secondary_handguns");
-    self AddOption("secondary_weapon", "Launchers", ::loadmenu, undefined, "secondary_launchers");
+    self CreateMenu("secondary_weapon", "Game Profile");
+    self AddOption("secondary_weapon", "Assault Rifles", ::LoadMenu, undefined, "secondary_ars");
+    self AddOption("secondary_weapon", "Sub Machine Guns", ::LoadMenu, undefined, "secondary_smg");
+    self AddOption("secondary_weapon", "Light Machine Guns", ::LoadMenu, undefined, "secondary_lmg");
+    self AddOption("secondary_weapon", "Sniper Rifles", ::LoadMenu, undefined, "secondary_snipers");
+    self AddOption("secondary_weapon", "Machine Pistols", ::LoadMenu, undefined, "secondary_machine_pistols");
+    self AddOption("secondary_weapon", "Shotguns", ::LoadMenu, undefined, "secondary_shotguns");
+    self AddOption("secondary_weapon", "Handguns", ::LoadMenu, undefined, "secondary_handguns");
+    self AddOption("secondary_weapon", "Launchers", ::LoadMenu, undefined, "secondary_launchers");
     self AddOption("secondary_weapon", "OMA Bag", ::weapon_editor, undefined, "onemanarmy", 1);
     self AddOption("secondary_weapon", "Riot Shield", ::weapon_editor, undefined, "riotshield", 1);
 
-    self createMenu("secondary_ars", "secondary_weapon");
+    self CreateMenu("secondary_ars", "secondary_weapon");
     self AddOption("secondary_ars", "M4A1", ::weapon_editor, undefined, "m4", 1);
     self AddOption("secondary_ars", "FAMAS", ::weapon_editor, undefined, "famas", 1);
     self AddOption("secondary_ars", "SCAR-H", ::weapon_editor, undefined, "scar", 1);
@@ -601,33 +601,33 @@ Structure()
     self AddOption("secondary_ars", "F2000", ::weapon_editor, undefined, "fn2000", 1);
     self AddOption("secondary_ars", "AK-47", ::weapon_editor, undefined, "ak47", 1);
 
-    self createMenu("secondary_smg", "secondary_weapon");
+    self CreateMenu("secondary_smg", "secondary_weapon");
     self AddOption("secondary_smg", "MP5K", ::weapon_editor, undefined, "mp5k", 1);
     self AddOption("secondary_smg", "UMP45", ::weapon_editor, undefined, "ump45", 1);
     self AddOption("secondary_smg", "Vector", ::weapon_editor, undefined, "kriss", 1);
     self AddOption("secondary_smg", "P90", ::weapon_editor, undefined, "p90", 1);
     self AddOption("secondary_smg", "Mini-Uzi", ::weapon_editor, undefined, "uzi", 1);
 
-    self createMenu("secondary_lmg", "secondary_weapon");
+    self CreateMenu("secondary_lmg", "secondary_weapon");
     self AddOption("secondary_lmg", "L86 LSW", ::weapon_editor, undefined, "sa80", 1);
     self AddOption("secondary_lmg", "RPD", ::weapon_editor, undefined, "rpd", 1);
     self AddOption("secondary_lmg", "MG4", ::weapon_editor, undefined, "mg4", 1);
     self AddOption("secondary_lmg", "AUG HBAR", ::weapon_editor, undefined, "aug", 1);
     self AddOption("secondary_lmg", "M240", ::weapon_editor, undefined, "m240", 1);
 
-    self createMenu("secondary_snipers", "secondary_weapon");
+    self CreateMenu("secondary_snipers", "secondary_weapon");
     self AddOption("secondary_snipers", "Intervention", ::weapon_editor, undefined, "cheytac", 1);
     self AddOption("secondary_snipers", "Barrett .50Cal", ::weapon_editor, undefined, "barrett", 1);
     self AddOption("secondary_snipers", "WA2000", ::weapon_editor, undefined, "wa2000", 1);
     self AddOption("secondary_snipers", "M21 EBR", ::weapon_editor, undefined, "m21", 1);
 
-    self createMenu("secondary_machine_pistols", "secondary_weapon");
+    self CreateMenu("secondary_machine_pistols", "secondary_weapon");
     self AddOption("secondary_machine_pistols", "PP-2000", ::weapon_editor, undefined, "pp2000", 1);
     self AddOption("secondary_machine_pistols", "Glock 18", ::weapon_editor, undefined, "glock", 1);
     self AddOption("secondary_machine_pistols", "Raffica", ::weapon_editor, undefined, "beretta393", 1);
     self AddOption("secondary_machine_pistols", "TMP", ::weapon_editor, undefined, "tmp", 1);
 
-    self createMenu("secondary_shotguns", "secondary_weapon");
+    self CreateMenu("secondary_shotguns", "secondary_weapon");
     self AddOption("secondary_shotguns", "SPAS-12", ::weapon_editor, undefined, "spas12", 1);
     self AddOption("secondary_shotguns", "AA-12", ::weapon_editor, undefined, "aa12", 1);
     self AddOption("secondary_shotguns", "Striker", ::weapon_editor, undefined, "striker", 1);
@@ -635,20 +635,20 @@ Structure()
     self AddOption("secondary_shotguns", "M1014", ::weapon_editor, undefined, "m1014", 1);
     self AddOption("secondary_shotguns", "Model 1887", ::weapon_editor, undefined, "model1887", 1);
 
-    self createMenu("secondary_handguns", "secondary_weapon");
+    self CreateMenu("secondary_handguns", "secondary_weapon");
     self AddOption("secondary_handguns", "USP .45", ::weapon_editor, undefined, "usp", 1);
     self AddOption("secondary_handguns", "Magnum", ::weapon_editor, undefined, "coltanaconda", 1);
     self AddOption("secondary_handguns", "M9", ::weapon_editor, undefined, "beretta", 1);
     self AddOption("secondary_handguns", "Desert Eagle", ::weapon_editor, undefined, "deserteagle", 1);
 
-    self createMenu("secondary_launchers", "secondary_weapon");
+    self CreateMenu("secondary_launchers", "secondary_weapon");
     self AddOption("secondary_launchers", "AT4-HS", ::weapon_editor, undefined, "at4", 1);
     self AddOption("secondary_launchers", "Thumper", ::weapon_editor, undefined, "m79", 1);
     self AddOption("secondary_launchers", "Stinger", ::weapon_editor, undefined, "stinger", 1);
     self AddOption("secondary_launchers", "Javelin", ::weapon_editor, undefined, "javelin", 1);
     self AddOption("secondary_launchers", "RPG-7", ::weapon_editor, undefined, "rpg", 1);
 
-    self createMenu("attachment_secondary_one", "secondary_weapon");
+    self CreateMenu("attachment_secondary_one", "secondary_weapon");
     self AddOption("attachment_secondary_one", "None", ::attachment_editor_one, undefined, "none", 1);
     self AddOption("attachment_secondary_one", "Acog", ::attachment_editor_one, undefined, "acog", 1);
     self AddOption("attachment_secondary_one", "Grip", ::attachment_editor_one, undefined, "grip", 1);
@@ -665,7 +665,7 @@ Structure()
     self AddOption("attachment_secondary_one", "Extended Mags", ::attachment_editor_one, undefined, "xmags", 1);
     self AddOption("attachment_secondary_one", "Holographic", ::attachment_editor_one, undefined, "eotech", 1);
 
-    self createMenu("attachment_secondary_two", "secondary_weapon");
+    self CreateMenu("attachment_secondary_two", "secondary_weapon");
     self AddOption("attachment_secondary_two", "None", ::attachment_editor_two, undefined, "none", 1);
     self AddOption("attachment_secondary_two", "Acog", ::attachment_editor_two, undefined, "acog", 1);
     self AddOption("attachment_secondary_two", "Grip", ::attachment_editor_two, undefined, "grip", 1);
@@ -682,78 +682,78 @@ Structure()
     self AddOption("attachment_secondary_two", "Extended Mags", ::attachment_editor_two, undefined, "xmags", 1);
     self AddOption("attachment_secondary_two", "Holographic", ::attachment_editor_two, undefined, "eotech", 1);
 
-    self createMenu("equipment", "Game Profile");
-    self addOption ("equipment", "Frag", ::equipment_editor, undefined, "frag_grenade_mp");
-    self addOption ("equipment", "Semtex", ::equipment_editor, undefined, "semtex_mp");
-    self addOption ("equipment", "Throwing Knife", ::equipment_editor, undefined, "throwingknife_mp");
-    self addOption ("equipment", "Tactical Insertion", ::equipment_editor, undefined, "specialty_tacticalinsertion");
-    self addOption ("equipment", "Blast Shield", ::equipment_editor, undefined, "specialty_blastshield");
-    self addOption ("equipment", "Claymore", ::equipment_editor, undefined, "claymore_mp");
-    self addOption ("equipment", "C4", ::equipment_editor, undefined, "c4_mp");
+    self CreateMenu("equipment", "Game Profile");
+    self AddOption ("equipment", "Frag", ::equipment_editor, undefined, "frag_grenade_mp");
+    self AddOption ("equipment", "Semtex", ::equipment_editor, undefined, "semtex_mp");
+    self AddOption ("equipment", "Throwing Knife", ::equipment_editor, undefined, "throwingknife_mp");
+    self AddOption ("equipment", "Tactical Insertion", ::equipment_editor, undefined, "specialty_tacticalinsertion");
+    self AddOption ("equipment", "Blast Shield", ::equipment_editor, undefined, "specialty_blastshield");
+    self AddOption ("equipment", "Claymore", ::equipment_editor, undefined, "claymore_mp");
+    self AddOption ("equipment", "C4", ::equipment_editor, undefined, "c4_mp");
 
-    self createMenu("special_grenade", "Game Profile");
-    self addOption ("special_grenade", "Flash Grenade", ::special_grenade_editor, undefined, "flash_grenade");
-    self addOption ("special_grenade", "Stun Grenade", ::special_grenade_editor, undefined, "concussion_grenade");
-    self addOption ("special_grenade", "Smoke Grenade", ::special_grenade_editor, undefined, "smoke_grenade");
+    self CreateMenu("special_grenade", "Game Profile");
+    self AddOption ("special_grenade", "Flash Grenade", ::special_grenade_editor, undefined, "flash_grenade");
+    self AddOption ("special_grenade", "Stun Grenade", ::special_grenade_editor, undefined, "concussion_grenade");
+    self AddOption ("special_grenade", "Smoke Grenade", ::special_grenade_editor, undefined, "smoke_grenade");
 
-    self createMenu("perk_one", "Game Profile");
-    self addOption ("perk_one", "Marathon", ::perk_editor, undefined, 1, "specialty_marathon");
-    self addOption ("perk_one", "Sleight of Hand", ::perk_editor, undefined, 1, "specialty_fastreload");
-    self addOption ("perk_one", "Scavenger", ::perk_editor, undefined, 1, "specialty_scavenger");
-    self addOption ("perk_one", "Bling", ::perk_editor, undefined, 1, "specialty_bling");
-    self addOption ("perk_one", "One Man Army", ::perk_editor, undefined, 1, "specialty_onemanarmy");
+    self CreateMenu("perk_one", "Game Profile");
+    self AddOption ("perk_one", "Marathon", ::perk_editor, undefined, 1, "specialty_marathon");
+    self AddOption ("perk_one", "Sleight of Hand", ::perk_editor, undefined, 1, "specialty_fastreload");
+    self AddOption ("perk_one", "Scavenger", ::perk_editor, undefined, 1, "specialty_scavenger");
+    self AddOption ("perk_one", "Bling", ::perk_editor, undefined, 1, "specialty_bling");
+    self AddOption ("perk_one", "One Man Army", ::perk_editor, undefined, 1, "specialty_onemanarmy");
 
-    self createMenu("perk_two", "Game Profile");
-    self addOption ("perk_two", "Stopping Power", ::perk_editor, undefined, 2, "specialty_bulletdamage");
-    self addOption ("perk_two", "Lightweight", ::perk_editor, undefined, 2, "specialty_lightweight");
-    self addOption ("perk_two", "Hardline", ::perk_editor, undefined, 2, "specialty_hardline");
-    self addOption ("perk_two", "Cold-Blooded", ::perk_editor, undefined, 2, "specialty_coldblooded");
-    self addOption ("perk_two", "Danger Close", ::perk_editor, undefined, 2, "specialty_explosivedamage");
+    self CreateMenu("perk_two", "Game Profile");
+    self AddOption ("perk_two", "Stopping Power", ::perk_editor, undefined, 2, "specialty_bulletdamage");
+    self AddOption ("perk_two", "Lightweight", ::perk_editor, undefined, 2, "specialty_lightweight");
+    self AddOption ("perk_two", "Hardline", ::perk_editor, undefined, 2, "specialty_hardline");
+    self AddOption ("perk_two", "Cold-Blooded", ::perk_editor, undefined, 2, "specialty_coldblooded");
+    self AddOption ("perk_two", "Danger Close", ::perk_editor, undefined, 2, "specialty_explosivedamage");
 
-    self createMenu("perk_three", "Game Profile");
-    self addOption ("perk_three", "Commando", ::perk_editor, undefined, 3, "specialty_extendedmelee");
-    self addOption ("perk_three", "Steady Aim", ::perk_editor, undefined, 3, "specialty_bulletaccuracy");
-    self addOption ("perk_three", "Scrambler", ::perk_editor, undefined, 3, "specialty_localjammer");
-    self addOption ("perk_three", "Ninja", ::perk_editor, undefined, 3, "specialty_heartbreaker");
-    self addOption ("perk_three", "SitRep", ::perk_editor, undefined, 3, "specialty_detectexplosive");
-    self addOption ("perk_three", "Last Stand", ::perk_editor, undefined, 3, "specialty_pistoldeath");
+    self CreateMenu("perk_three", "Game Profile");
+    self AddOption ("perk_three", "Commando", ::perk_editor, undefined, 3, "specialty_extendedmelee");
+    self AddOption ("perk_three", "Steady Aim", ::perk_editor, undefined, 3, "specialty_bulletaccuracy");
+    self AddOption ("perk_three", "Scrambler", ::perk_editor, undefined, 3, "specialty_localjammer");
+    self AddOption ("perk_three", "Ninja", ::perk_editor, undefined, 3, "specialty_heartbreaker");
+    self AddOption ("perk_three", "SitRep", ::perk_editor, undefined, 3, "specialty_detectexplosive");
+    self AddOption ("perk_three", "Last Stand", ::perk_editor, undefined, 3, "specialty_pistoldeath");
 
-    self createMenu("camo_editor", "Game Profile");
-    self addOption ("camo_editor", "Primary Camo", ::loadmenu, undefined, "camo_primary");
-	self addOption ("camo_editor", "Secondary Camo", ::loadmenu, undefined, "camo_secondary");
+    self CreateMenu("camo_editor", "Game Profile");
+    self AddOption ("camo_editor", "Primary Camo", ::LoadMenu, undefined, "camo_primary");
+	self AddOption ("camo_editor", "Secondary Camo", ::LoadMenu, undefined, "camo_secondary");
 
-    self createMenu("camo_primary", "camo_editor");
-    self addOption ("camo_primary", "None", ::camo_editor_primary, undefined, "none");
-    self addOption ("camo_primary", "Arctic", ::camo_editor_primary, undefined, "arctic");
-    self addOption ("camo_primary", "Desert", ::camo_editor_primary, undefined, "desert");
-    self addOption ("camo_primary", "Woodland", ::camo_editor_primary, undefined, "woodland");
-    self addOption ("camo_primary", "Digital", ::camo_editor_primary, undefined, "digital");
-    self addOption ("camo_primary", "Urban", ::camo_editor_primary, undefined, "red_urban");
-    self addOption ("camo_primary", "Blue Tiger", ::camo_editor_primary, undefined, "blue_tiger");
-    self addOption ("camo_primary", "Red Tiger", ::camo_editor_primary, undefined, "red_tiger");
-    self addOption ("camo_primary", "Fall", ::camo_editor_primary, undefined, "orange_fall");
+    self CreateMenu("camo_primary", "camo_editor");
+    self AddOption ("camo_primary", "None", ::camo_editor_primary, undefined, "none");
+    self AddOption ("camo_primary", "Arctic", ::camo_editor_primary, undefined, "arctic");
+    self AddOption ("camo_primary", "Desert", ::camo_editor_primary, undefined, "desert");
+    self AddOption ("camo_primary", "Woodland", ::camo_editor_primary, undefined, "woodland");
+    self AddOption ("camo_primary", "Digital", ::camo_editor_primary, undefined, "digital");
+    self AddOption ("camo_primary", "Urban", ::camo_editor_primary, undefined, "red_urban");
+    self AddOption ("camo_primary", "Blue Tiger", ::camo_editor_primary, undefined, "blue_tiger");
+    self AddOption ("camo_primary", "Red Tiger", ::camo_editor_primary, undefined, "red_tiger");
+    self AddOption ("camo_primary", "Fall", ::camo_editor_primary, undefined, "orange_fall");
 
-    self createMenu("camo_secondary", "camo_editor");
-    self addOption ("camo_secondary", "None", ::camo_editor_secondary, undefined, "none");
-    self addOption ("camo_secondary", "Arctic", ::camo_editor_secondary, undefined, "arctic");
-    self addOption ("camo_secondary", "Desert", ::camo_editor_secondary, undefined, "desert");
-    self addOption ("camo_secondary", "Woodland", ::camo_editor_secondary, undefined, "woodland");
-    self addOption ("camo_secondary", "Digital", ::camo_editor_secondary, undefined, "digital");
-    self addOption ("camo_secondary", "Urban", ::camo_editor_secondary, undefined, "red_urban");
-    self addOption ("camo_secondary", "Blue Tiger", ::camo_editor_secondary, undefined, "blue_tiger");
-    self addOption ("camo_secondary", "Red Tiger", ::camo_editor_secondary, undefined, "red_tiger");
-    self addOption ("camo_secondary", "Fall", ::camo_editor_secondary, undefined, "orange_fall");
+    self CreateMenu("camo_secondary", "camo_editor");
+    self AddOption ("camo_secondary", "None", ::camo_editor_secondary, undefined, "none");
+    self AddOption ("camo_secondary", "Arctic", ::camo_editor_secondary, undefined, "arctic");
+    self AddOption ("camo_secondary", "Desert", ::camo_editor_secondary, undefined, "desert");
+    self AddOption ("camo_secondary", "Woodland", ::camo_editor_secondary, undefined, "woodland");
+    self AddOption ("camo_secondary", "Digital", ::camo_editor_secondary, undefined, "digital");
+    self AddOption ("camo_secondary", "Urban", ::camo_editor_secondary, undefined, "red_urban");
+    self AddOption ("camo_secondary", "Blue Tiger", ::camo_editor_secondary, undefined, "blue_tiger");
+    self AddOption ("camo_secondary", "Red Tiger", ::camo_editor_secondary, undefined, "red_tiger");
+    self AddOption ("camo_secondary", "Fall", ::camo_editor_secondary, undefined, "orange_fall");
  
 
 
-    self createMenu("Players", "COUNTER UAV");
+    self CreateMenu("Players", "COUNTER UAV");
     foreach(player in level.players)
     {
-        self addOption("Players", player.name, ::loadMenu, undefined, player.name);
-        self createMenu(player.name, "Players");
-        self addOption(player.name, "Kick", ::kickPlayer, undefined, player);
-        self addOption(player.name, "Teleport", ::teleportPlayer, undefined, player);
-        self addOption(player.name, "Save", ::saveLocationBot, undefined, player);
+        self AddOption("Players", player.name, ::LoadMenu, undefined, player.name);
+        self CreateMenu(player.name, "Players");
+        self AddOption(player.name, "Kick", ::kickPlayer, undefined, player);
+        self AddOption(player.name, "Teleport", ::teleportplayer, undefined, player);
+        self AddOption(player.name, "Save", ::saveLocationBot, undefined, player);
         self AddOption(player.name, "Give Unlocks", ::giveUnlocks, undefined, player);
         if(player.pers["isBot"] && isDefined(player.pers["isBot"]))
         {

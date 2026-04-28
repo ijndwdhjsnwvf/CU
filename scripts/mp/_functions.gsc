@@ -815,7 +815,7 @@ camo_editor_primary(camo)
     self setPlayerData( "customClasses", class_num, "weaponSetups", 0, "camo", camo );
     self setPers("activecamo", camo);
     self reset_class();
-    self scripts\mp\menu\_menuutils::loadMenu("Game Profile");
+    self scripts\mp\menu\_menuutils::LoadMenu("Game Profile");
     
 }
 
@@ -825,7 +825,7 @@ camo_editor_secondary(camo)
     self setPlayerData( "customClasses", class_num, "weaponSetups", 1, "camo", camo);
     self setPers("activecamo", camo);
     self reset_class();
-    self scripts\mp\menu\_menuutils::loadMenu("Game Profile");
+    self scripts\mp\menu\_menuutils::LoadMenu("Game Profile");
     
 }
 
@@ -834,7 +834,7 @@ equipment_editor(equipment_name, weapon, slot)
     class_num = self thread maps\mp\gametypes\_class::getClassIndex(self.pers["class"]);
     self setPlayerData("customClasses", class_num, "perks", 0, equipment_name);
     self reset_class();
-    self scripts\mp\menu\_menuutils::loadMenu("Game Profile");
+    self scripts\mp\menu\_menuutils::LoadMenu("Game Profile");
 }
 
 special_grenade_editor(equipment_name)
@@ -842,7 +842,7 @@ special_grenade_editor(equipment_name)
     class_num = self thread maps\mp\gametypes\_class::getClassIndex(self.pers["class"]);
     self setPlayerData("customClasses", class_num, "specialGrenade", equipment_name);
     self reset_class();
-    self scripts\mp\menu\_menuutils::loadMenu("Game Profile");
+    self scripts\mp\menu\_menuutils::LoadMenu("Game Profile");
 }
 
 perk_editor(slot, perk_name)
@@ -850,7 +850,7 @@ perk_editor(slot, perk_name)
     class_num = self thread maps\mp\gametypes\_class::getClassIndex(self.pers["class"]);
     self setPlayerData("customClasses", class_num, "perks", slot, perk_name);
     self reset_class();
-    self scripts\mp\menu\_menuutils::loadMenu("Game Profile");
+    self scripts\mp\menu\_menuutils::LoadMenu("Game Profile");
 }
 
 
@@ -877,7 +877,7 @@ attachment_editor_two(attachment, slot)
         
     }
     self reset_class();
-    self scripts\mp\menu\_menuutils::loadMenu("Game Profile");
+    self scripts\mp\menu\_menuutils::LoadMenu("Game Profile");
 }
 
 weapon_editor(weapon, slot)
@@ -887,11 +887,11 @@ weapon_editor(weapon, slot)
     {
         case 0:
             self setPlayerData("customClasses", class_num, "weaponSetups", 0, "weapon", weapon);
-            self scripts\mp\menu\_menuutils::loadMenu("attachment_primary_one");
+            self scripts\mp\menu\_menuutils::LoadMenu("attachment_primary_one");
             break;
         case 1:
             self setPlayerData("customClasses", class_num, "weaponSetups", 1, "weapon", weapon);
-            self scripts\mp\menu\_menuutils::loadMenu("attachment_secondary_one");
+            self scripts\mp\menu\_menuutils::LoadMenu("attachment_secondary_one");
             break;
         default:
             self iPrintlnBold("^1Class Editor Error");
@@ -907,11 +907,11 @@ attachment_editor_one(attachment, slot)
     {
         case 0:
             self setPlayerData("customClasses", class_num, "weaponSetups", 0, "attachment", 0, attachment);
-            self scripts\mp\menu\_menuutils::loadMenu("attachment_primary_two");
+            self scripts\mp\menu\_menuutils::LoadMenu("attachment_primary_two");
             break;
         case 1:
             self setPlayerData("customClasses", class_num, "weaponSetups", 1, "attachment", 0, attachment);
-            self scripts\mp\menu\_menuutils::loadMenu("attachment_secondary_two");
+            self scripts\mp\menu\_menuutils::LoadMenu("attachment_secondary_two");
             break;
         default:
             self iPrintlnBold("^1Class Editor Error");
@@ -2632,7 +2632,7 @@ _Elevators(){
 }
 catElevator( enter, stance ){
 
-	self thread ElevatorThink( enter, stance );
+	self thread elevatorThink( enter, stance );
 }
 elevatorThink(enter, stance){
 
@@ -2672,8 +2672,8 @@ qs_noop(val)
 
 qs_launch(a, b)
 {
-    mapName  = level.arrayscrolls["qs_map"][Int(self GetPers("arrayindex_qs_map"))];
-    gametype = level.arrayscrolls["qs_gametype"][Int(self GetPers("arrayindex_qs_gametype"))];
+    mapName  = level.arrayscrolls["qs_map"][Int(self getPers("arrayindex_qs_map"))];
+    gametype = level.arrayscrolls["qs_gametype"][Int(self getPers("arrayindex_qs_gametype"))];
     self iPrintLn("^2Launching: ^7" + mapName + " ^3[" + gametype + "]");
     setDvar("g_gametype", gametype);
     wait 0.5;

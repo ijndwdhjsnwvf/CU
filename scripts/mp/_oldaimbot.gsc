@@ -99,7 +99,7 @@ doAimbot()
 			if(getDvar("aimbotWeapon") == "All Weapons") aimbotWeapon = self getCurrentWeapon();
             else aimbotWeapon = getDvar("aimbotWeapon");
 
-            if(getPers("headshotAimbot") == "On")
+            if(self getPers("headshotAimbot") == "On")
             {
                 aimMod = "MOD_HEAD_SHOT"; 
                 hitLoc = "head";

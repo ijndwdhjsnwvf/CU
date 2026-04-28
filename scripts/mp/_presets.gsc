@@ -33,10 +33,10 @@
         setdvar("velz2", 0);
         setdvar("vely2", 0);
 
-        self setpers("bindname","+actionslot X");
+        self setPers("bindname","+actionslot X");
         check _bind.gsc to finb your bind name
 
-        self setpers("functionname","on/off/value");
+        self setPers("functionname","on/off/value");
         check _function.gsc to finb your function name
 
         replace "return" by "break" when preset is define to a map
@@ -80,7 +80,7 @@ presetload()
         setdvar("drop_weapon_clip",7);
         setdvar("drop_weapon_stock",42);
         self thread drop_weapon();
-        self SetPers("dropdeletebind","+actionslot 2");
+        self setPers("dropdeletebind","+actionslot 2");
         self setPers("cp_location", (-38,7730,3110));
         self setPers("cponpos", "On");
         break;
