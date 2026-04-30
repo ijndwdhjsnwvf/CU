@@ -1,0 +1,685 @@
+================================================================================
+                    IW4x GSC CFG MENU - COMPLETE GUIDE
+================================================================================
+
+This guide explains everything about how the base menu works and how to
+customize it: appearance, adding functions, binds, cfg commands, and +commands.
+
+
+================================================================================
+  TABLE OF CONTENTS
+================================================================================
+
+  1. FILE STRUCTURE
+  2. HOW THE MENU WORKS
+  3. CHANGING THE MENU APPEARANCE
+  4. ADDING A BASIC MENU OPTION
+  5. ADDING A SUBMENU
+  6. WRITING YOUR OWN FUNCTIONS
+  7. OPTION TYPES (TOGGLES, SLIDERS, ARRAYS, BINDS)
+  8. CFG COMMANDS & +COMMANDS
+  9. MAKING A BIND CALLABLE WITH A +COMMAND
+  10. FULL EXAMPLE: BUILDING A COMPLETE SUBMENU
+
+
+================================================================================
+  1. FILE STRUCTURE
+================================================================================
+
+  base_menu/
+    scripts/mp/
+      _main.gsc           <- Entry point. Runs on player connect/spawn.
+      _util.gsc            <- Utility functions (overflow fix, HUD helpers).
+      _functions.gsc       <- Your gameplay functions go here.
+      menu/
+        _setupmenu.gsc     <- Initializes the menu system on spawn.
+        _menuutils.gsc     <- Menu rendering, HUD creation, option types.
+        _menulogic.gsc     <- Input handling (scrolling, selecting, closing).
+        _structure.gsc     <- Menu layout. THIS IS WHERE YOU ADD OPTIONS.
+
+
+================================================================================
+  2. HOW THE MENU WORKS
+================================================================================
+
+  When a player spawns:
+    1. _main.gsc calls SetupMenu() from _setupmenu.gsc
+    2. SetupMenu() creates the menu data structure and starts input listeners
+    3. When the player presses ADS + actionslot 2, monitorOpen() fires
+    4. monitorOpen() calls LoadMenu("Main") which:
+       a. Calls Structure() from _structure.gsc to build all menu data
+       b. Creates the HUD elements (background, bars, text)
+       c. Displays the menu
+
+  Menu controls:
+    - ADS + [{+actionslot 2}]  = Open menu
+    - [{+melee}]               = Close / go back
+    - [{+actionslot 1}]        = Scroll up
+    - [{+actionslot 2}]        = Scroll down
+    - [{+actionslot 3}]        = Slider left / bind left
+    - [{+actionslot 4}]        = Slider right / bind right
+    - [{+usereload}]           = Select option
+
+
+================================================================================
+  3. CHANGING THE MENU APPEARANCE
+================================================================================
+
+  All appearance settings are in _setupmenu.gsc inside SetupMenu().
+
+  --- COLORS ---
+
+  The menu uses 3 color values. Change the RGB values (0.0 to 1.0):
+
+    self.menu.color["background"] = (0, 0, 0);       // Menu background (black)
+    self.menu.color["accent"]     = (0.6, 0.0, 1.0);  // Bars/highlights (purple)
+    self.menu.color["white"]      = (1, 1, 1);        // Text color (white)
+
+  Examples:
+    Red accent:    (1.0, 0.0, 0.0)
+    Blue accent:   (0.0, 0.4, 1.0)
+    Green accent:  (0.0, 1.0, 0.0)
+    Gold accent:   (1.0, 0.85, 0.0)
+    Dark gray bg:  (0.1, 0.1, 0.1)
+
+  --- RAINBOW CYCLING ---
+
+  The menu has rainbow color cycling by default on the bars and highlights.
+  This is in _menuutils.gsc in updateBarColors().
+
+  To DISABLE rainbow cycling:
+    In _setupmenu.gsc, REMOVE or comment out this line:
+      self thread updateBarColors();
+
+  To change the rainbow SPEED:
+    In _menuutils.gsc, find updateBarColors() and change:
+      hue += 0.004;    // Slower = smaller number, faster = bigger number
+
+  --- TITLE TEXT ---
+
+  In _menuutils.gsc inside CreateMenuHud(), find:
+    self.hud["title"] = self createText("bigfixed", 0.20, "CENTER", "CENTER",
+        278, -145, self.menu.color["white"], 5, 1, "B A S E   M E N U");
+
+  Change "B A S E   M E N U" to whatever you want.
+
+  The subtitle is right below it:
+    self.hud["subtitle"] = self createText("bigfixed", 0.17, "CENTER", "CENTER",
+        278, -137, self.menu.color["white"], 5, 0.88, "IW4x GSC Menu");
+
+  --- SIZE ---
+
+  self.menu.maxsize = 10;       // Max visible options at once
+  self.menu.maxsizehalf = 6;    // Half of max (used for scroll centering)
+
+  If you change maxsize, set maxsizehalf to roughly half of it.
+
+
+================================================================================
+  4. ADDING A BASIC MENU OPTION
+================================================================================
+
+  All menu options are added in _structure.gsc inside Structure().
+
+  The function is:
+    self AddOption(menu, text, function, booltext, input, input2);
+
+  Parameters:
+    menu      = Which menu to add this option to (string name)
+    text      = The text shown in the menu
+    function  = The function reference (::functionName)
+    booltext  = Text shown on the right side (usually a toggle state)
+    input     = First argument passed to the function
+    input2    = Second argument passed to the function
+
+  --- EXAMPLE: Add a simple option to Submenu 1 ---
+
+  In _structure.gsc, find the empty "Submenu 1" and add options:
+
+    self CreateMenu("Submenu 1", "Main");
+    self AddOption("Submenu 1", "God Mode", ::godmode, self getPers("god"));
+    self AddOption("Submenu 1", "Suicide", ::suicide);
+
+  Then in _functions.gsc, define the functions:
+
+    godmode()
+    {
+        if (self getPers("god") == "Off")
+        {
+            self setPers("god", "On");
+            self enableInvulnerability();
+            self iPrintLn("God Mode: ^2On");
+        }
+        else
+        {
+            self setPers("god", "Off");
+            self disableInvulnerability();
+            self iPrintLn("God Mode: ^1Off");
+        }
+    }
+
+    suicide()
+    {
+        self suicide();
+    }
+
+
+================================================================================
+  5. ADDING A SUBMENU
+================================================================================
+
+  To add a new submenu:
+
+  Step 1: Add a menu option that links to it (using ::LoadMenu):
+
+    self AddOption("Main", "My New Menu", ::LoadMenu, undefined, "My New Menu");
+
+  Step 2: Create the submenu and add options:
+
+    self CreateMenu("My New Menu", "Main");
+    self AddOption("My New Menu", "Option A", ::myFunctionA);
+    self AddOption("My New Menu", "Option B", ::myFunctionB);
+
+  The second parameter of CreateMenu is the PARENT menu. When the player
+  presses melee (close), it goes back to the parent. "exit" means close
+  the whole menu.
+
+  --- NESTED SUBMENUS ---
+
+    self AddOption("My New Menu", "Sub-Sub Menu", ::LoadMenu, undefined, "Deep Menu");
+    self CreateMenu("Deep Menu", "My New Menu");
+    self AddOption("Deep Menu", "Deep Option", ::deepFunction);
+
+  Pressing close from "Deep Menu" goes back to "My New Menu".
+  Pressing close from "My New Menu" goes back to "Main".
+
+
+================================================================================
+  6. WRITING YOUR OWN FUNCTIONS
+================================================================================
+
+  Functions go in _functions.gsc. Here are the patterns you'll use:
+
+  --- SIMPLE TOGGLE ---
+
+    myToggle()
+    {
+        if (self getPers("mytoggle") == "Off")
+        {
+            self setPers("mytoggle", "On");
+            self iPrintLn("My Feature: ^2On");
+            // Do your ON logic here
+        }
+        else
+        {
+            self setPers("mytoggle", "Off");
+            self iPrintLn("My Feature: ^1Off");
+            // Do your OFF logic here
+        }
+    }
+
+  Don't forget to initialize the pers value in functions_calls():
+
+    self setPersIfUni("mytoggle", "Off");
+
+  And add the option in _structure.gsc with the bool display:
+
+    self AddOption("Submenu 1", "My Feature", ::myToggle, self getPers("mytoggle"));
+
+  --- FUNCTION WITH INPUT ---
+
+  Sometimes you want one function that does different things based on input:
+
+    giveWeapon(weapon)
+    {
+        self giveWeapon(weapon + "_mp");
+        self switchToWeapon(weapon + "_mp");
+        self iPrintLn("Gave: " + weapon);
+    }
+
+  In _structure.gsc:
+
+    self AddOption("Submenu 2", "Give AK47", ::giveWeapon, undefined, "ak47");
+    self AddOption("Submenu 2", "Give M4", ::giveWeapon, undefined, "m4");
+
+  The 5th parameter (input) gets passed as the first argument to the function.
+
+  --- LOOPING FUNCTION (runs continuously) ---
+
+  For things that need to keep running every frame:
+
+    myLoop()
+    {
+        self endon("disconnect");
+        self endon("death");
+        self notify("stop_myloop");
+        self endon("stop_myloop");
+        for (;;)
+        {
+            // Your code that runs every frame
+            self iPrintLn("Running...");
+            wait 0.05;
+        }
+    }
+
+  IMPORTANT: Always include endon("disconnect") and endon("death") on loops.
+  The self notify / self endon pattern prevents duplicate loops from stacking.
+
+
+================================================================================
+  7. OPTION TYPES (TOGGLES, SLIDERS, ARRAYS, BINDS)
+================================================================================
+
+  --- REGULAR OPTION (AddOption) ---
+  Calls a function when you press select.
+
+    self AddOption("Menu", "Text", ::function, "booltext", input, input2);
+
+  --- SLIDER (AddSlider) ---
+  Left/right changes a pers value between min and max.
+
+    self AddSlider("Menu", "Speed", ::onSpeedChange, "speed", 0, 500, 10);
+    //                                                pers   min max step
+
+  Initialize the pers:
+    self setPersIfUni("speed", 190);
+
+  The function receives the new value:
+    onSpeedChange(value)
+    {
+        setDvar("g_speed", value);
+    }
+
+  --- DVAR SLIDER (AddDvarSlider) ---
+  Like a slider but directly changes a dvar instead of a pers value.
+
+    self AddDvarSlider("Menu", "Gravity", undefined, "g_gravity", 50, 1500, 50);
+    //                                               dvar        min max   step
+
+  If func is undefined, it just changes the dvar with no extra action.
+
+  --- ARRAY SLIDER (AddArraySlider) ---
+  Cycles through a list of values.
+
+    self AddArraySlider("Menu", "Map", ::changeMap,
+        strTok("mp_afghan,mp_rust,mp_terminal", ","), "mapselect");
+
+  The function receives the currently selected array value:
+    changeMap(map)
+    {
+        setDvar("sv_maprotation", "gametype sd map " + map);
+        self iPrintLn("Next map: " + map);
+    }
+
+  --- BIND SLIDER (AddBindSliders) ---
+  Lets the player choose which button activates a bind.
+  Cycles through: Off, +smoke, +frag, +actionslot 1-4
+
+    self AddBindSliders("Menu", "My Bind", ::myBind, "mybindkey");
+
+  Initialize:
+    self setupBind("mybindkey", "Off", ::myBind);
+
+  The bind function:
+    myBind(button, pers)
+    {
+        self endon("disconnect");
+        self endon("death");
+        self notify("stop" + pers);
+        self endon("stop" + pers);
+        self notifyOnPlayerCommand("mybindaction", button);
+        for (;;)
+        {
+            self waittill("mybindaction");
+            // Your code here - runs when the bound button is pressed
+            self iPrintLn("Bind activated!");
+        }
+    }
+
+
+================================================================================
+  8. CFG COMMANDS & +COMMANDS
+================================================================================
+
+  CFG commands let you trigger functions from outside the menu, using the
+  game console or .cfg files.
+
+  --- WHAT IS A +COMMAND ---
+
+  A +command is a console command that you bind to a key. When the key is
+  pressed, the + fires. When released, the - fires.
+
+  In your IW4x console or .cfg file:
+    bind X "+mycommand"
+
+  This makes pressing X execute +mycommand and releasing X execute -mycommand.
+
+  --- SETTING UP A +COMMAND IN GSC ---
+
+  Step 1: Register the command in your function file:
+
+    self notifyOnPlayerCommand("myaction", "+mycommand");
+
+  This tells the game: when "+mycommand" is received, fire the "myaction"
+  notify on this player.
+
+  Step 2: Wait for it:
+
+    self waittill("myaction");
+
+  --- COMPLETE +COMMAND EXAMPLE ---
+
+  In _functions.gsc, add a function that listens for the command:
+
+    myCommandListener()
+    {
+        self endon("disconnect");
+        self endon("death");
+        self notifyOnPlayerCommand("do_mycommand", "+mycommand");
+        for (;;)
+        {
+            self waittill("do_mycommand");
+            self iPrintLn("Command activated!");
+            // Your code here
+        }
+    }
+
+  In _main.gsc, inside the spawned section, thread it:
+
+    self thread myCommandListener();
+
+  Now in your .cfg file or console:
+    bind F "+mycommand"
+
+  Pressing F will print "Command activated!" and run your code.
+
+  --- CFG FILE EXAMPLE ---
+
+  Create a file like mycfg.cfg in the IW4x players/profiles folder:
+
+    bind F "+mycommand"
+    bind G "+anothercommand"
+    bind H "+thirdcommand"
+
+  Load it in console with: exec mycfg.cfg
+
+
+================================================================================
+  9. MAKING A BIND CALLABLE WITH A +COMMAND
+================================================================================
+
+  This is how you take a function that normally requires pressing a button
+  in-game and make it callable with a +command from a .cfg file.
+
+  --- THE PATTERN ---
+
+  Normally a bind function uses notifyOnPlayerCommand to listen for a
+  specific button. To make it also work as a +command, you just register
+  the +command string as the button.
+
+  Here's the step-by-step:
+
+  Step 1: Write the function that does the action:
+
+    doSomethingCool()
+    {
+        self iPrintLn("Something cool happened!");
+        // your actual logic
+    }
+
+  Step 2: Write a cfg listener that calls it on +command:
+
+    coolCfg()
+    {
+        self endon("disconnect");
+        self endon("death");
+        self notifyOnPlayerCommand("do_cool", "+cool");
+        for (;;)
+        {
+            self waittill("do_cool");
+            self thread doSomethingCool();
+        }
+    }
+
+  Step 3: Thread the listener on spawn (in _main.gsc):
+
+    self thread coolCfg();
+
+  Step 4: In your .cfg file:
+
+    bind X "+cool"
+
+  Now pressing X triggers doSomethingCool().
+
+  --- MAKING IT WORK FROM BOTH MENU AND +COMMAND ---
+
+  If you want the same function accessible from the menu AND a +command:
+
+  In _structure.gsc:
+    self AddOption("Submenu 1", "Do Cool Thing", ::doSomethingCool);
+
+  In _functions.gsc, define the function AND the cfg listener:
+
+    doSomethingCool()
+    {
+        self iPrintLn("Cool!");
+    }
+
+    coolCfg()
+    {
+        self endon("disconnect");
+        self endon("death");
+        self notifyOnPlayerCommand("do_cool", "+cool");
+        for (;;)
+        {
+            self waittill("do_cool");
+            self thread doSomethingCool();
+        }
+    }
+
+  In _main.gsc:
+    self thread coolCfg();
+
+  Now selecting it from the menu OR pressing the bound key both work.
+
+  --- TOGGLE WITH +COMMAND ---
+
+  For a toggle that can be activated by +command:
+
+    myToggleCfg()
+    {
+        self endon("disconnect");
+        self endon("death");
+        self notifyOnPlayerCommand("toggle_mine", "+mytoggle");
+        for (;;)
+        {
+            self waittill("toggle_mine");
+            self thread myToggle();
+        }
+    }
+
+    myToggle()
+    {
+        if (self getPers("mytoggle") == "Off")
+        {
+            self setPers("mytoggle", "On");
+            self iPrintLn("My Toggle: ^2On");
+        }
+        else
+        {
+            self setPers("mytoggle", "Off");
+            self iPrintLn("My Toggle: ^1Off");
+        }
+    }
+
+  In _structure.gsc:
+    self AddOption("Submenu 1", "My Toggle", ::myToggle, self getPers("mytoggle"));
+
+  In _main.gsc:
+    self thread myToggleCfg();
+
+  In your .cfg:
+    bind T "+mytoggle"
+
+
+================================================================================
+  10. FULL EXAMPLE: BUILDING A COMPLETE SUBMENU
+================================================================================
+
+  Let's build a "Player Settings" submenu with multiple option types.
+
+  --- STEP 1: _structure.gsc ---
+
+  Add to Main menu:
+    self AddOption("Main", "Player Settings", ::LoadMenu, undefined, "Player Settings");
+
+  Create the submenu:
+    self CreateMenu("Player Settings", "Main");
+    self AddOption("Player Settings", "God Mode", ::godmode, self getPers("god"));
+    self AddOption("Player Settings", "Refill Ammo", ::refillAmmo);
+    self AddDvarSlider("Player Settings", "Speed", undefined, "g_speed", 100, 1000, 50);
+    self AddDvarSlider("Player Settings", "Jump Height", undefined, "jump_height", 19, 99, 5);
+    self AddArraySlider("Player Settings", "Give Weapon", ::giveWeap,
+        strTok("cheytac,barrett,m4,ak47,ump45", ","), "give_weapon");
+    self AddBindSliders("Player Settings", "Save Location", ::saveLocBind, "saveloc");
+
+  --- STEP 2: _functions.gsc ---
+
+  Add initializations to functions_calls():
+
+    self setPersIfUni("god", "Off");
+
+  Add the functions:
+
+    godmode()
+    {
+        if (self getPers("god") == "Off")
+        {
+            self setPers("god", "On");
+            self enableInvulnerability();
+            self iPrintLn("God Mode: ^2On");
+        }
+        else
+        {
+            self setPers("god", "Off");
+            self disableInvulnerability();
+            self iPrintLn("God Mode: ^1Off");
+        }
+    }
+
+    refillAmmo()
+    {
+        weapons = self getWeaponsList();
+        for (i = 0; i < weapons.size; i++)
+        {
+            self giveMaxAmmo(weapons[i]);
+        }
+        self iPrintLn("Ammo Refilled");
+    }
+
+    giveWeap(weapon)
+    {
+        self giveWeapon(weapon + "_mp");
+        self switchToWeapon(weapon + "_mp");
+        self iPrintLn("Gave: " + weapon);
+    }
+
+    saveLocBind(button, pers)
+    {
+        self endon("disconnect");
+        self endon("death");
+        self notify("stop" + pers);
+        self endon("stop" + pers);
+        self notifyOnPlayerCommand("dosaveLoc", button);
+        for (;;)
+        {
+            self waittill("dosaveLoc");
+            self.pers["saved_origin"] = self getOrigin();
+            self.pers["saved_angles"] = self getPlayerAngles();
+            self iPrintLn("Location Saved");
+        }
+    }
+
+  --- STEP 3: Initialize bind in functions_calls() ---
+
+    self setupBind("saveloc", "Off", ::saveLocBind);
+
+  --- STEP 4: Add +command cfg versions ---
+
+  In _functions.gsc:
+
+    godmodeCfg()
+    {
+        self endon("disconnect");
+        self endon("death");
+        self notifyOnPlayerCommand("cfg_godmode", "+godmode");
+        for (;;)
+        {
+            self waittill("cfg_godmode");
+            self thread godmode();
+        }
+    }
+
+  In _main.gsc, in the spawned section:
+
+    self thread godmodeCfg();
+
+  In your .cfg file:
+
+    bind G "+godmode"
+
+  --- DONE ---
+
+  That gives you a submenu with:
+    - God Mode toggle (menu + cfg)
+    - Refill Ammo button
+    - Speed dvar slider
+    - Jump Height dvar slider
+    - Weapon selector array
+    - Save Location bind slider
+
+
+================================================================================
+  QUICK REFERENCE
+================================================================================
+
+  AddOption(menu, text, ::func, booltext, input, input2)
+    -> Calls func(input, input2) on select
+
+  AddSlider(menu, text, ::func, pers, min, max, step)
+    -> Slider that changes a pers value
+
+  AddDvarSlider(menu, text, ::func, dvar, min, max, step)
+    -> Slider that changes a dvar directly
+
+  AddArraySlider(menu, text, ::func, array, arrayname)
+    -> Cycles through array values
+
+  AddBindSliders(menu, text, ::func, pers)
+    -> Player picks which button activates the bind
+
+  CreateMenu(name, parent)
+    -> Creates a submenu. parent = which menu to go back to
+
+  LoadMenu
+    -> Use as ::LoadMenu to make an option open a submenu
+
+  setPers(key, value) / getPers(key)
+    -> Store/read player-specific values that persist across deaths
+
+  setPersIfUni(key, value)
+    -> Only sets if not already defined (use for initialization)
+
+  setDvarIfUni(dvar, value)
+    -> Only sets dvar if empty/undefined
+
+  setupBind(pers, default, ::func)
+    -> Initialize a bind slider and auto-start if not "Off"
+
+  notifyOnPlayerCommand(notify, command)
+    -> Register a +command to fire a notify
+
+  self endon("disconnect") / self endon("death")
+    -> ALWAYS put these at the top of looping functions
+
+================================================================================
