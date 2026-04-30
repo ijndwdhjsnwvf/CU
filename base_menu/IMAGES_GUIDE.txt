@@ -1,0 +1,1358 @@
+================================================================================
+              IMAGES AND SHADERS GUIDE
+              Every Visual Element in IW4x — Menu, HUD, and Game
+================================================================================
+
+This guide maps out every image/shader in the game and the menu.
+For each one: what it is, what it looks like, its name in code,
+where it lives, and how to replace it with a custom image.
+
+
+================================================================================
+  TABLE OF CONTENTS
+================================================================================
+
+  PART 1 - HOW IMAGES WORK IN IW4x
+    1.  What Is a Shader
+    2.  How Shaders Are Used in Code
+    3.  Stock vs Custom Shaders
+    4.  Finding Stock Shader Names
+
+  PART 2 - MENU ELEMENTS (YOUR GSC MENU)
+    5.  Menu Background
+    6.  Left Bar (Accent Edge)
+    7.  Top Bar
+    8.  Header Line
+    9.  Right Bar
+    10. Bottom Bar
+    11. Title Text
+    12. Subtitle Text
+    13. Scroll Highlight Bar
+    14. Select Bar (Left Edge of Selected)
+    15. Option Text
+    16. Bool/Value Text
+    17. Coordinates Display
+    18. Instructions Bar
+    19. Footer
+    20. Menu Visual Map (ASCII Layout)
+
+  PART 3 - STOCK GAME HUD ELEMENTS
+    21. Crosshair / Reticle
+    22. Hitmarker
+    23. Health/Damage Overlay
+    24. Minimap / Compass
+    25. Scoreboard
+    26. Killfeed Icons
+    27. Objective Markers
+    28. Waypoint Icons
+    29. Headicons (Above Players)
+
+  PART 4 - WEAPON IMAGES
+    30. Weapon HUD Icons (Bottom Right)
+    31. Weapon Killfeed Icons
+    32. Equipment Icons
+    33. Ammo Counter Background
+
+  PART 5 - PERK AND KILLSTREAK IMAGES
+    34. Perk Icons
+    35. Killstreak Icons
+    36. Deathstreak Icons
+    37. Challenge/Unlock Icons
+
+  PART 6 - UI OVERLAY IMAGES
+    38. Loading Screen Images
+    39. Map Preview Images
+    40. Gametype Icons
+    41. Team Icons
+    42. Rank/Prestige Icons
+    43. Calling Cards
+    44. Emblems / Playercard
+
+  PART 7 - COMMON STOCK SHADERS
+    45. Solid Colors (white, black)
+    46. Gradients
+    47. Scanlines
+    48. Vignette / Borders
+    49. Status Effect Overlays
+
+  PART 8 - REPLACING ANY IMAGE
+    50. How to Replace a Stock Shader
+    51. How to Add a Brand New Shader
+    52. Replacing Menu Elements with Custom Images
+    53. Image Sizes and Formats
+    54. Testing and Troubleshooting
+
+
+================================================================================
+================================================================================
+  PART 1 - HOW IMAGES WORK IN IW4x
+================================================================================
+================================================================================
+
+
+================================================================================
+  1. WHAT IS A SHADER
+================================================================================
+
+  In IW4x/CoD, "shader" means any 2D image used in the HUD or UI.
+  It's not a 3D shader — it's just an image displayed on screen.
+
+  Shaders are referenced by NAME in GSC code. The engine finds
+  the actual image file automatically.
+
+  Example:
+    precacheShader("white");     // A solid white square
+    elem setShader("white", 100, 50);  // Display it at 100x50 pixels
+
+  The name "white" maps to images/white.iwi in the game files.
+
+
+================================================================================
+  2. HOW SHADERS ARE USED IN CODE
+================================================================================
+
+  --- PRECACHING (required for custom, optional for stock) ---
+    // In init() - before any player spawns:
+    precacheShader("my_custom_image");
+
+  --- DISPLAYING ON HUD ---
+    // Create a HUD element and set its shader:
+    elem = newClientHudElem(self);
+    elem setShader("shader_name", width, height);
+    elem setPoint("CENTER", "CENTER", x, y);
+    elem.alpha = 1;
+    elem.sort = 5;
+
+  --- WITH createRectangle (menu helper) ---
+    // The menu uses "white" shader tinted with color:
+    self createRectangle("white", "TOP", "CENTER", x, y, w, h, color, sort, alpha);
+    // "white" is the shader, color tints it to any RGB value
+
+  --- CHANGING AN EXISTING ELEMENT ---
+    elem setShader("new_shader_name", width, height);
+
+
+================================================================================
+  3. STOCK vs CUSTOM SHADERS
+================================================================================
+
+  STOCK SHADERS:
+  - Already in the game files (main/*.iwd and .ff files)
+  - Don't need precaching (but it doesn't hurt to precache them)
+  - Use them by name directly
+
+  CUSTOM SHADERS:
+  - You create them and put them in your .iwd file
+  - MUST be precached in init() before use
+  - Must be .iwi format (see IWD_AND_FF_GUIDE.txt Section 8)
+  - Go in: images/your_name.iwi inside your .iwd
+
+  To replace a stock shader with custom art:
+  - Name your .iwi the same as the stock shader
+  - Put it in images/ in your .iwd
+  - The engine loads yours instead of the stock one
+
+
+================================================================================
+  4. FINDING STOCK SHADER NAMES
+================================================================================
+
+  METHOD 1 - Extract from game files:
+    Use a tool like "IW4x Asset Extractor" or similar to extract
+    the contents of main/iw_00.iwd through iw_23.iwd.
+    Look in the images/ folder for all .iwi files.
+    The filename (minus .iwi) is the shader name.
+
+  METHOD 2 - Common names listed below:
+    This guide lists hundreds of shader names organized by category.
+
+  METHOD 3 - Dvar dumping:
+    In IW4x console:
+      imageList
+    This lists all loaded images/shaders.
+
+  METHOD 4 - Look at stock GSC scripts:
+    The game's own scripts reference shader names.
+    Search stock .gsc files for "precacheShader" or "setShader".
+
+
+================================================================================
+================================================================================
+  PART 2 - MENU ELEMENTS (YOUR GSC MENU)
+================================================================================
+================================================================================
+
+
+================================================================================
+  5. MENU BACKGROUND
+================================================================================
+
+  WHAT IT IS:
+    The dark semi-transparent rectangle behind all menu options.
+
+  CODE (in _menuutils.gsc CreateMenuHud):
+    self.hud["background"] = self createRectangle(
+        "white",          // Shader name (white square, tinted by color)
+        "TOP", "CENTER",  // Alignment
+        278, -150,        // X, Y position
+        155, 200,         // Width, Height (resized dynamically)
+        self.menu.color["background"],  // Color: (0,0,0) = black
+        0,                // Sort order (behind everything)
+        0.84              // Alpha (84% opacity)
+    );
+
+  HOW TO CUSTOMIZE:
+    Change color:  self.menu.color["background"] = (0.1, 0, 0.2);  // dark purple
+    Change opacity: 0.84 → 0.5 (more transparent) or 1.0 (solid)
+    Custom image:  Replace "white" with "my_bg_image"
+      - precacheShader("my_bg_image") in init()
+      - Put images/my_bg_image.iwi in your .iwd
+
+  TO USE A CUSTOM BACKGROUND IMAGE:
+    // Replace the createRectangle call with:
+    self.hud["background"] = newClientHudElem(self);
+    self.hud["background"] setShader("my_background", 155, 200);
+    self.hud["background"] setPoint("TOP", "CENTER", 278, -150);
+    self.hud["background"].alpha = 0.84;
+    self.hud["background"].sort = 0;
+
+
+================================================================================
+  6. LEFT BAR (ACCENT EDGE)
+================================================================================
+
+  WHAT IT IS:
+    The thin colored vertical line on the left edge of the menu.
+    This is the accent bar that cycles through rainbow colors.
+
+  CODE:
+    self.hud["left_bar"] = self createRectangle(
+        "white", "TOP", "CENTER",
+        202, -150,        // X position (left edge of menu)
+        2, 200,           // 2 pixels wide, full height
+        self.menu.color["accent"],  // Accent color
+        3, 1              // Sort 3, fully opaque
+    );
+
+  HOW TO CUSTOMIZE:
+    Width:     Change 2 to something wider (e.g. 4)
+    Color:     Set in _setupmenu.gsc: self.menu.color["accent"] = (R, G, B);
+    Image:     Replace "white" with a custom gradient or pattern
+
+  RAINBOW EFFECT:
+    The color cycles in updateBarColors() function.
+    To disable rainbow: remove the self.hud["left_bar"].color = rgb; line.
+    To change speed: modify hue += 0.004; (higher = faster)
+
+
+================================================================================
+  7. TOP BAR
+================================================================================
+
+  WHAT IT IS:
+    A thin horizontal line at the very top of the menu.
+
+  CODE:
+    self.hud["top_bar"] = self createRectangle(
+        "white", "TOP", "CENTER",
+        278, -150,        // X centered on menu, Y at top
+        155, 1,           // Full width, 1 pixel tall
+        self.menu.color["accent"],
+        5, 0.7
+    );
+
+  HOW TO CUSTOMIZE:
+    Thickness:  Change 1 to 2, 3, etc.
+    Color:      Part of rainbow cycle (updateBarColors)
+    Remove:     Delete this line and the .foreground line
+
+
+================================================================================
+  8. HEADER LINE
+================================================================================
+
+  WHAT IT IS:
+    The horizontal divider line between the title area and the options.
+
+  CODE:
+    self.hud["header_box"] = self createRectangle(
+        "white", "TOP", "CENTER",
+        278, -132,        // Y = -132 (below title, above options)
+        155, 1,           // Full width, 1 pixel
+        self.menu.color["accent"],
+        1, 0.9
+    );
+
+  HOW TO CUSTOMIZE:
+    Move it:    Change Y (-132) to adjust position
+    Thickness:  Change 1 to desired pixel height
+    Color:      Part of rainbow cycle
+
+
+================================================================================
+  9. RIGHT BAR
+================================================================================
+
+  WHAT IT IS:
+    A thin vertical line on the right edge of the menu. Subtle, low opacity.
+
+  CODE:
+    self.hud["right_bar"] = self createRectangle(
+        "white", "TOP", "CENTER",
+        356, -150,        // X = right edge
+        1, 200,           // 1 pixel wide
+        self.menu.color["white"],
+        5, 0.2            // Very transparent (20%)
+    );
+
+
+================================================================================
+  10. BOTTOM BAR
+================================================================================
+
+  WHAT IT IS:
+    A thin horizontal line at the bottom of the menu.
+
+  CODE:
+    self.hud["bottom_bar"] = self createRectangle(
+        "white", "TOP", "CENTER",
+        278, 150,         // Y position (moves dynamically)
+        155, 1,
+        self.menu.color["white"],
+        5, 0.2
+    );
+
+
+================================================================================
+  11. TITLE TEXT
+================================================================================
+
+  WHAT IT IS:
+    The main title at the top of the menu: "B A S E   M E N U"
+
+  CODE:
+    self.hud["title"] = self createText(
+        "bigfixed",       // Font name
+        0.20,             // Font scale (size)
+        "CENTER", "CENTER",
+        278, -145,        // Position
+        self.menu.color["white"],
+        5, 1,             // Sort, Alpha
+        "B A S E   M E N U"  // The text
+    );
+
+  HOW TO CUSTOMIZE:
+    Change text:    Replace "B A S E   M E N U" with your name
+    Change size:    0.20 → larger number = bigger text
+    Change font:    "bigfixed", "default", "objective", "small"
+    Change color:   Part of rainbow cycle
+    Use image:      See the IMAGE TITLE block in _menuutils.gsc
+
+
+================================================================================
+  12. SUBTITLE TEXT
+================================================================================
+
+  WHAT IT IS:
+    Smaller text below the title: "IW4x GSC Menu"
+
+  CODE:
+    self.hud["subtitle"] = self createText(
+        "bigfixed", 0.17,
+        "CENTER", "CENTER",
+        278, -137,
+        self.menu.color["white"],
+        5, 0.88,
+        "IW4x GSC Menu"
+    );
+
+  HOW TO CUSTOMIZE:
+    Change text, size, or remove entirely.
+
+
+================================================================================
+  13. SCROLL HIGHLIGHT BAR
+================================================================================
+
+  WHAT IT IS:
+    The highlighted rectangle behind the currently selected option.
+    Moves up and down as you scroll through the menu.
+
+  CODE:
+    self.hud["scroll"] = self createRectangle(
+        "white", "CENTER", "CENTER",
+        278, -128,        // Y moves with scroll position
+        151, 14,          // Width covers options, height = 1 option
+        self.menu.color["accent"],
+        2, 0.10           // Low opacity highlight
+    );
+
+  HOW TO CUSTOMIZE:
+    Opacity:    0.10 → higher = more visible highlight
+    Height:     14 → match to option spacing
+    Color:      Part of rainbow cycle
+    Image:      Replace "white" with a custom highlight texture
+
+
+================================================================================
+  14. SELECT BAR (LEFT EDGE OF SELECTED)
+================================================================================
+
+  WHAT IT IS:
+    A small vertical accent bar on the left side of the selected option.
+
+  CODE:
+    self.hud["select_bar"] = self createRectangle(
+        "white", "CENTER", "CENTER",
+        204, -128,        // Left edge of options area
+        3, 14,            // 3px wide, 14px tall
+        self.menu.color["accent"],
+        4, 1
+    );
+
+  HOW TO CUSTOMIZE:
+    Width:     3 → bigger = thicker indicator
+    Color:     Part of rainbow cycle
+
+
+================================================================================
+  15. OPTION TEXT
+================================================================================
+
+  WHAT IT IS:
+    The text for each menu option (e.g. "God Mode", "UFO Mode", etc.)
+
+  CODE (created in a loop):
+    self.hud["text"][i] = self createText(
+        "bigfixed", 0.27,     // Font, size
+        "LEFT", "CENTER",     // Left-aligned
+        209,                  // X position (left side of option area)
+        -129 + (i * 15),      // Y position (15px spacing per option)
+        self.menu.color["white"],
+        6, 1,
+        "Option " + (i + 1)  // Placeholder text (replaced when loading menu)
+    );
+
+  HOW TO CUSTOMIZE:
+    Font size:    0.27 → change size
+    Spacing:      15 → change gap between options
+    X position:   209 → move text left or right
+    Color:        White by default, not part of rainbow cycle
+
+
+================================================================================
+  16. BOOL/VALUE TEXT
+================================================================================
+
+  WHAT IT IS:
+    The right-side text showing toggle state: [On], [Off], [500], >
+
+  CODE (created in a loop):
+    self.hud["bool_text"][i] = self createText(
+        "bigfixed", 0.27,
+        "RIGHT", "CENTER",   // Right-aligned
+        349,                  // X position (right side of option area)
+        -129 + (i * 15),
+        self.menu.color["accent"],  // Accent color
+        6, 1,
+        "[OFF]"              // Placeholder (replaced when loading menu)
+    );
+
+  HOW TO CUSTOMIZE:
+    Color:     Part of rainbow cycle (accent color)
+    Position:  349 → move left/right
+
+
+================================================================================
+  17. COORDINATES DISPLAY
+================================================================================
+
+  WHAT IT IS:
+    Shows player position (origin + angles) in top-left corner.
+
+  CODE:
+    self.hud["cords"] = self createText(
+        "bigfixed", 0.35,
+        "LEFT", "CENTER",
+        -255, -190,           // Top-left corner
+        self.menu.color["white"],
+        4, 1, " "
+    );
+
+  Updated by cordsUpdate() while menu is open.
+
+
+================================================================================
+  18. INSTRUCTIONS BAR
+================================================================================
+
+  WHAT IT IS:
+    The control instructions at the bottom of the screen:
+    "Open [DPAD]  Close [Knife]  Scroll [UP][DOWN]  Value [L][R]  Select [Use]"
+
+  CODE:
+    self.hud["instruc"] = self createText(
+        "bigfixed", 0.24,
+        "CENTER", "CENTER",
+        0, 210,               // Bottom center
+        self.menu.color["white"],
+        4, 0.65, " "
+    );
+    self.hud["instruc"] setSafeText("Open [{+actionslot 2}] ...");
+
+
+================================================================================
+  19. FOOTER
+================================================================================
+
+  WHAT IT IS:
+    A small area below the options (mostly empty, for future use).
+
+  CODE:
+    self.hud["footer_box"] = self createRectangle(...)
+    self.hud["footer"] = self createText(...)
+
+
+================================================================================
+  20. MENU VISUAL MAP (ASCII LAYOUT)
+================================================================================
+
+  Here's what each element looks like in the menu:
+
+    ╔══════════════ top_bar ══════════════╗
+    ║                                     ║
+    ║     B A S E   M E N U  (title)      ║
+    ║     IW4x GSC Menu  (subtitle)       ║
+    ║                                     ║
+    ╠══════════ header_box ═══════════════╣ ← left_bar
+    ║  ┃ God Mode              [On]  ┃    ║    (runs
+    ║  ┃ UFO Mode              [Off] ┃    ║    full
+    ║  ┃▐█ Speed Boost         [Off] █▌   ║    height)
+    ║  ┃ Max Ammo              [On]  ┃    ║
+    ║  ┃ ESP                   [Off] ┃    ║
+    ║  ┃ Refill Ammo                 ┃    ║ ← right_bar
+    ║  ┃ Full Heal                   ┃    ║    (subtle)
+    ║  ┃ Suicide                     ┃    ║
+    ╠══════════ bottom_bar ═══════════════╣
+    ║          (footer area)              ║
+    ╚═════════════════════════════════════╝
+
+    █ select_bar (left accent on selected option)
+    █ scroll (highlight behind selected option)
+
+    background = the dark rectangle behind everything
+    text[] = left-aligned option names
+    bool_text[] = right-aligned values/states
+
+  Bottom of screen:
+    Open [DPAD DOWN]  Close [Knife]  Scroll [DPAD]  ...  (instruc)
+
+  Top left:
+    (123, 456, 789)
+    (0, 90, 0)       (cords - player position)
+
+
+================================================================================
+================================================================================
+  PART 3 - STOCK GAME HUD ELEMENTS
+================================================================================
+================================================================================
+
+
+================================================================================
+  21. CROSSHAIR / RETICLE
+================================================================================
+
+  WHAT IT IS:
+    The aiming crosshair in the center of screen.
+
+  SHADER NAMES:
+    crosshair_center              Default center dot
+    crosshair_alt                 Alternative crosshair
+
+  RELATED DVARS:
+    cg_drawCrosshair              0 = off, 1 = on
+    cg_crosshairAlpha             Opacity (0.0 - 1.0)
+    cg_crosshairDynamic           Dynamic spread
+
+  HOW TO REPLACE:
+    Create images/crosshair_center.iwi in your .iwd.
+    The game will use your version instead.
+
+  HOW TO ADD CUSTOM CROSSHAIR IN GSC:
+    precacheShader("my_crosshair");
+    // In a player function:
+    ch = newClientHudElem(self);
+    ch setShader("my_crosshair", 24, 24);
+    ch setPoint("CENTER", "CENTER", 0, 0);
+    ch.alpha = 0.8;
+    ch.sort = 10;
+    ch.foreground = true;
+
+
+================================================================================
+  22. HITMARKER
+================================================================================
+
+  WHAT IT IS:
+    The X that flashes when you hit an enemy.
+
+  SHADER NAME:
+    damage_feedback              The hitmarker X image
+
+  RELATED DVARS:
+    cg_drawDamageDirection        Damage direction indicator
+    cg_drawDamageFeedback         0 = off, 1 = on
+
+  HOW TO REPLACE:
+    Create images/damage_feedback.iwi in your .iwd.
+    Make it 64x64, transparent background, with your custom X design.
+
+  CUSTOM HITMARKER IN GSC:
+    // Track kills and show custom hitmarker:
+    precacheShader("my_hitmarker");
+    // On damage callback, display briefly:
+    hm = newClientHudElem(self);
+    hm setShader("my_hitmarker", 24, 24);
+    hm setPoint("CENTER", "CENTER", 0, 0);
+    hm.alpha = 1;
+    hm.foreground = true;
+    wait 0.15;
+    hm destroy();
+
+
+================================================================================
+  23. HEALTH / DAMAGE OVERLAY
+================================================================================
+
+  WHAT IT IS:
+    The red blood screen when you take damage.
+    The red directional arrows showing damage direction.
+
+  SHADER NAMES:
+    overlay_low_health            Red blood screen overlay
+    hud_painDirection              Directional damage indicator
+    hud_bloodOverlay              Blood splatter overlay
+    overlay_goggles               Night vision overlay
+
+  HOW TO REPLACE:
+    Create your custom version at images/overlay_low_health.iwi
+    Make it the screen resolution or 1024x1024 with red pattern.
+
+
+================================================================================
+  24. MINIMAP / COMPASS
+================================================================================
+
+  WHAT IT IS:
+    The minimap in the top-left corner of the screen.
+
+  SHADER NAMES:
+    Per-map compass images:
+      compass_map_mp_rust          Rust minimap
+      compass_map_mp_afghan        Afghan minimap
+      compass_map_mp_terminal      Terminal minimap
+      compass_map_mp_highrise      Highrise minimap
+      compass_map_mp_favela        Favela minimap
+      compass_map_mp_invasion      Invasion minimap
+      compass_map_mp_checkpoint    Karachi minimap
+      compass_map_mp_quarry        Quarry minimap
+      compass_map_mp_rundown       Rundown minimap
+      compass_map_mp_estate        Estate minimap
+      compass_map_mp_skidrow       Skidrow minimap
+      compass_map_mp_underpass     Underpass minimap
+      compass_map_mp_wasteland     Wasteland minimap
+      compass_map_mp_boneyard      Scrapyard minimap
+      compass_map_mp_nightshift    Skidrow minimap
+      compass_map_mp_subbase       Sub Base minimap
+      compass_map_mp_derail        Derail minimap
+      compass_map_mp_brecourt      Wasteland minimap
+
+    Compass elements:
+      minimap_scanlines            Scanline overlay on minimap
+      compass_tickertape_arrow     Compass direction arrows
+      hud_compass_objectiveA       Objective A marker
+      hud_compass_objectiveB       Objective B marker
+      headicon_dead                Dead player marker
+
+  RELATED DVARS:
+    cg_drawCompass                0 = off, 1 = on
+    compassSize                   Minimap size multiplier
+
+
+================================================================================
+  25. SCOREBOARD
+================================================================================
+
+  WHAT IT IS:
+    The scoreboard shown when pressing Tab/Select.
+
+  SHADER NAMES:
+    scorebar_bg                   Scoreboard background
+    scorebar_team1_bg             Team 1 header
+    scorebar_team2_bg             Team 2 header
+    scorebar_allies               Allies bar
+    scorebar_axis                 Axis bar
+    hud_scorebar_overlay          Overlay on top
+
+  The scoreboard is mostly handled by the engine's .menu system,
+  not directly in GSC. Custom scoreboards require mod.ff with
+  custom .menu files.
+
+
+================================================================================
+  26. KILLFEED ICONS
+================================================================================
+
+  WHAT IT IS:
+    The weapon icons shown in the kill feed (top right).
+
+  SHADER NAMES (weapon killfeed icons):
+    hud_icon_ak47                 AK-47
+    hud_icon_m4carbine            M4A1
+    hud_icon_m16a4                M16A4
+    hud_icon_famas                FAMAS
+    hud_icon_scar                 SCAR-H
+    hud_icon_tar21                TAR-21
+    hud_icon_fal                  FAL
+    hud_icon_acr                  ACR
+    hud_icon_mp5k                 MP5K
+    hud_icon_ump45                UMP45
+    hud_icon_p90                  P90
+    hud_icon_kriss                Vector
+    hud_icon_uzi_mp               Mini Uzi
+    hud_icon_rpd                  RPD
+    hud_icon_mg4                  MG4
+    hud_icon_aug                  AUG HBAR
+    hud_icon_sa80                 L86 LSW
+    hud_icon_m240                 M240
+    hud_icon_cheytac              Intervention
+    hud_icon_wa2000               WA2000
+    hud_icon_m21                  M21 EBR
+    hud_icon_barrett50cal         Barrett .50cal
+    hud_icon_spas12               SPAS-12
+    hud_icon_aa12                 AA-12
+    hud_icon_striker              Striker
+    hud_icon_ranger               Ranger
+    hud_icon_model1887            Model 1887
+    hud_icon_m1014               M1014
+    hud_icon_rpg                  RPG-7
+    hud_icon_at4                  AT4
+    hud_icon_javelin              Javelin
+    hud_icon_stinger              Stinger
+    hud_icon_beretta              M9
+    hud_icon_usp                  USP .45
+    hud_icon_desert_eagle         Desert Eagle
+    hud_icon_coltanaconda         .44 Magnum
+    hud_icon_pp2000               PP2000
+    hud_icon_glock                G18
+    hud_icon_m93raffica           Raffica
+    hud_icon_tmp                  TMP
+
+  HOW TO REPLACE:
+    Name your .iwi the same (e.g. images/hud_icon_ak47.iwi) in your .iwd.
+    Make it 128x64 or 256x64, white silhouette on transparent background.
+
+
+================================================================================
+  27. OBJECTIVE MARKERS
+================================================================================
+
+  WHAT IT IS:
+    The icons that appear over objectives (capture points, bombs, HQ, etc.)
+
+  SHADER NAMES:
+    hud_compass_objectiveA        Objective A (bomb/domination)
+    hud_compass_objectiveB        Objective B
+    hud_compass_objectiveC        Objective C
+    waypoint_bomb                 Bomb/explosive marker
+    waypoint_defend               Defend marker
+    waypoint_capture              Capture marker
+    waypoint_target               Target marker
+    waypoint_kill                 Kill target marker
+    hud_objective_red             Red objective
+    hud_objective_green           Green objective
+
+
+================================================================================
+  28. WAYPOINT ICONS
+================================================================================
+
+  WHAT IT IS:
+    Icons that float in 3D space to mark locations.
+
+  SHADER NAMES:
+    waypoint_targetneutral        Neutral waypoint
+    waypoint_flag_friendly        Friendly flag
+    waypoint_flag_enemy           Enemy flag
+    objective                     Generic objective marker
+    hud_arrow_down                Down arrow
+
+  USED IN GSC:
+    // Create a waypoint at a position:
+    precacheShader("waypoint_bomb");
+    wp = newHudElem();
+    wp setShader("waypoint_bomb", 16, 16);
+    wp setWaypoint(true);
+    wp.x = pos[0];
+    wp.y = pos[1];
+    wp.z = pos[2];
+
+
+================================================================================
+  29. HEADICONS (ABOVE PLAYERS)
+================================================================================
+
+  WHAT IT IS:
+    Icons that float above player heads (team icons, dead icons, etc.)
+
+  SHADER NAMES:
+    headicon_dead                 Skull (dead teammate)
+    headiconallies                Ally marker
+    headiconaxis                  Axis marker
+    headicon_yourteam             Your team marker
+
+  USED IN GSC:
+    player.headicon = "headicon_dead";
+    player.headiconteam = "none";      // Show to all teams
+    player.headiconteam = "allies";    // Show only to allies
+
+  HOW TO REPLACE:
+    Create images/headicon_dead.iwi in your .iwd.
+    32x32 or 64x64, transparent background.
+
+
+================================================================================
+================================================================================
+  PART 4 - WEAPON IMAGES
+================================================================================
+================================================================================
+
+
+================================================================================
+  30. WEAPON HUD ICONS (BOTTOM RIGHT)
+================================================================================
+
+  WHAT IT IS:
+    The weapon icon shown in the bottom-right of your screen next to ammo.
+
+  SHADER NAMES (format: hud_weapon_name):
+    These are the same icons as the killfeed but displayed at the
+    bottom of the screen. The engine handles this automatically
+    based on the current weapon.
+
+  HOW TO REPLACE:
+    Override the specific weapon icon .iwi in your .iwd.
+
+
+================================================================================
+  31. WEAPON KILLFEED ICONS
+================================================================================
+
+  See Section 26 above — same images used for both HUD and killfeed.
+
+
+================================================================================
+  32. EQUIPMENT ICONS
+================================================================================
+
+  WHAT IT IS:
+    Icons for grenades, tacticals, and equipment.
+
+  SHADER NAMES:
+    hud_icon_frag_grenade         Frag grenade
+    hud_icon_flash_grenade        Flash grenade
+    hud_icon_smoke_grenade        Smoke grenade
+    hud_icon_stun_grenade         Stun grenade
+    hud_icon_semtex               Semtex
+    hud_icon_c4                   C4
+    hud_icon_claymore             Claymore
+    hud_icon_throwing_knife       Throwing knife
+    hud_icon_tactical_insertion   Tac insert
+    hud_icon_blast_shield         Blast shield
+
+
+================================================================================
+  33. AMMO COUNTER BACKGROUND
+================================================================================
+
+  WHAT IT IS:
+    The background behind the ammo counter (if any).
+    Mostly handled by the engine's built-in HUD.
+
+  The ammo count itself is text, not an image.
+  The background area is controlled by the engine.
+
+
+================================================================================
+================================================================================
+  PART 5 - PERK AND KILLSTREAK IMAGES
+================================================================================
+================================================================================
+
+
+================================================================================
+  34. PERK ICONS
+================================================================================
+
+  WHAT IT IS:
+    Icons shown on the perk selection screen and in-game HUD.
+
+  SHADER NAMES (Tier 1 / Blue):
+    specialty_marathon             Marathon
+    specialty_lightweight          Lightweight
+    specialty_scavenger            Scavenger
+    specialty_bling                Bling
+    specialty_onemanarmy           One Man Army
+
+  SHADER NAMES (Tier 2 / Red):
+    specialty_bulletdamage         Stopping Power
+    specialty_coldblooded          Cold-Blooded
+    specialty_hardline             Hardline
+    specialty_explosivedamage      Danger Close
+    specialty_twoprimaries         Overkill
+
+  SHADER NAMES (Tier 3 / Yellow):
+    specialty_extendedmelee        Commando
+    specialty_fastreload           Sleight of Hand
+    specialty_bulletaccuracy       Steady Aim
+    specialty_quieter              Ninja
+    specialty_localjammer          Scrambler
+    specialty_heartbreaker         SitRep
+    specialty_laststand            Last Stand
+
+  SHADER NAMES (Pro versions):
+    Same name + _pro, e.g.:
+    specialty_marathon_pro
+    specialty_lightweight_pro
+
+  HOW TO REPLACE:
+    Create images/specialty_marathon.iwi in your .iwd.
+    Typical size: 128x128, with transparent background.
+
+
+================================================================================
+  35. KILLSTREAK ICONS
+================================================================================
+
+  WHAT IT IS:
+    Icons for killstreak rewards.
+
+  SHADER NAMES:
+    hud_killstreaks_uav            UAV
+    hud_killstreaks_airdrop        Care Package
+    hud_killstreaks_counteruav     Counter-UAV
+    hud_killstreaks_sentry         Sentry Gun
+    hud_killstreaks_predator       Predator Missile
+    hud_killstreaks_airstrike      Precision Airstrike
+    hud_killstreaks_harrier        Harrier Strike
+    hud_killstreaks_helicopter     Attack Helicopter
+    hud_killstreaks_pavelow        Pave Low
+    hud_killstreaks_stealth        Stealth Bomber
+    hud_killstreaks_chopper        Chopper Gunner
+    hud_killstreaks_ac130          AC-130
+    hud_killstreaks_emp            EMP
+    hud_killstreaks_nuke           Tactical Nuke
+
+
+================================================================================
+  36. DEATHSTREAK ICONS
+================================================================================
+
+  SHADER NAMES:
+    specialty_copycat              Copycat
+    specialty_c4death              Martyrdom
+    specialty_finalstand           Final Stand
+    specialty_grenadedeath         Painkiller
+
+
+================================================================================
+  37. CHALLENGE / UNLOCK ICONS
+================================================================================
+
+  SHADER NAMES:
+    cardicon_default               Default emblem
+    (Most challenge icons are handled internally by the engine
+    and aren't easily accessible via GSC shaders.)
+
+
+================================================================================
+================================================================================
+  PART 6 - UI OVERLAY IMAGES
+================================================================================
+================================================================================
+
+
+================================================================================
+  38. LOADING SCREEN IMAGES
+================================================================================
+
+  WHAT IT IS:
+    The images shown during map loading.
+
+  SHADER NAMES (per map):
+    loadscreen_mp_rust
+    loadscreen_mp_afghan
+    loadscreen_mp_terminal
+    loadscreen_mp_highrise
+    loadscreen_mp_favela
+    loadscreen_mp_invasion
+    loadscreen_mp_checkpoint
+    loadscreen_mp_quarry
+    loadscreen_mp_rundown
+    loadscreen_mp_estate
+    loadscreen_mp_skidrow
+    loadscreen_mp_underpass
+    loadscreen_mp_wasteland
+    loadscreen_mp_boneyard
+    loadscreen_mp_subbase
+    loadscreen_mp_derail
+
+  Size: Usually 1024x512 or 2048x1024.
+
+
+================================================================================
+  39. MAP PREVIEW IMAGES
+================================================================================
+
+  WHAT IT IS:
+    Small preview images shown in map voting and selection screens.
+
+  SHADER NAMES:
+    preview_mp_rust
+    preview_mp_afghan
+    preview_mp_terminal
+    (Same pattern: preview_mp_MAPNAME)
+
+  Size: 256x128 or similar.
+
+
+================================================================================
+  40. GAMETYPE ICONS
+================================================================================
+
+  WHAT IT IS:
+    Icons for each game mode.
+
+  SHADER NAMES:
+    gametype_tdm                   Team Deathmatch
+    gametype_dm                    Free-for-All
+    gametype_dom                   Domination
+    gametype_sd                    Search and Destroy
+    gametype_ctf                   Capture the Flag
+    gametype_sab                   Sabotage
+    gametype_hq                    Headquarters
+    gametype_dem                   Demolition
+    gametype_arena                 Arena
+
+
+================================================================================
+  41. TEAM ICONS
+================================================================================
+
+  SHADER NAMES:
+    faction_marines                Marines
+    faction_opfor                  OpFor
+    faction_seals                  Navy SEALs
+    faction_spetsnaz               Spetsnaz
+    faction_tf141                  Task Force 141
+
+
+================================================================================
+  42. RANK / PRESTIGE ICONS
+================================================================================
+
+  WHAT IT IS:
+    The rank and prestige emblems next to player names.
+
+  SHADER NAMES:
+    Ranks: rank_prestige0 through rank_prestige10
+    Individual ranks: rank_pvt, rank_cpl, rank_sgt, etc.
+
+  These are mostly handled by the engine. Custom prestige icons
+  would need to override the specific .iwi in your .iwd.
+
+
+================================================================================
+  43. CALLING CARDS
+================================================================================
+
+  WHAT IT IS:
+    The banner shown behind your name on leaderboards and after kills.
+
+  SHADER NAMES:
+    cardtitle_default              Default calling card
+    (Each calling card has a unique name like cardtitle_NAME)
+
+  Replacing calling cards requires mod.ff or overriding the .iwi.
+
+
+================================================================================
+  44. EMBLEMS / PLAYERCARD
+================================================================================
+
+  WHAT IT IS:
+    The small square icon next to your name.
+
+  SHADER NAMES:
+    cardicon_default               Default emblem
+    (Each emblem has a unique name like cardicon_NAME)
+
+
+================================================================================
+================================================================================
+  PART 7 - COMMON STOCK SHADERS
+================================================================================
+================================================================================
+
+
+================================================================================
+  45. SOLID COLORS
+================================================================================
+
+  The most commonly used shaders for creating colored rectangles:
+
+    white                  Solid white pixel (tint with .color)
+    black                  Solid black pixel
+
+  USAGE:
+    "white" is the MOST USED shader in GSC menus.
+    You create colored shapes by using "white" and setting .color:
+
+    elem setShader("white", 100, 50);
+    elem.color = (1, 0, 0);    // Red rectangle
+    elem.color = (0, 1, 0);    // Green rectangle
+    elem.color = (0, 0, 1);    // Blue rectangle
+    elem.color = (0.5, 0, 1);  // Purple rectangle
+
+  This is how the entire menu is built — "white" rectangles
+  tinted to different colors.
+
+
+================================================================================
+  46. GRADIENTS
+================================================================================
+
+  SHADER NAMES:
+    gradient                       Horizontal gradient (white to transparent)
+    gradient_fadein                 Fade in
+    gradient_fadeout                Fade out
+    line_horizontal                Horizontal line
+    line_vertical                  Vertical line
+
+  USAGE:
+    Instead of solid "white" for backgrounds, use "gradient" for
+    a fading effect:
+    elem setShader("gradient", 200, 100);
+
+
+================================================================================
+  47. SCANLINES
+================================================================================
+
+  SHADER NAMES:
+    minimap_scanlines              CRT-style scanline overlay
+
+  USAGE:
+    Often overlaid on top of menu backgrounds for a stylized look:
+    scanlines = newClientHudElem(self);
+    scanlines setShader("minimap_scanlines", 155, 200);
+    scanlines setPoint("TOP", "CENTER", 278, -150);
+    scanlines.alpha = 0.3;
+    scanlines.sort = 1;
+
+
+================================================================================
+  48. VIGNETTE / BORDERS
+================================================================================
+
+  SHADER NAMES:
+    overlay_low_health             Dark/red screen edges (damage)
+    vignette                       Dark edges overlay
+    hud_flashbang                  Flashbang white overlay
+    hud_stunoverlay                Stun effect overlay
+
+
+================================================================================
+  49. STATUS EFFECT OVERLAYS
+================================================================================
+
+  SHADER NAMES:
+    overlay_goggles                Night vision green tint
+    hud_flashbang                  Flashbang (full screen white)
+    hud_stunoverlay                Stun grenade (blurred overlay)
+    overlay_low_health             Low health blood screen
+
+  These are full-screen overlays the engine applies automatically.
+  You can override them with custom .iwi files in your .iwd.
+
+
+================================================================================
+================================================================================
+  PART 8 - REPLACING ANY IMAGE
+================================================================================
+================================================================================
+
+
+================================================================================
+  50. HOW TO REPLACE A STOCK SHADER
+================================================================================
+
+  To replace ANY stock image in the game:
+
+  1. IDENTIFY the shader name (use this guide or imageList command)
+  2. CREATE your replacement image:
+     - Same dimensions as original (or power-of-2)
+     - Save as .dds then convert to .iwi (see IWD_AND_FF_GUIDE.txt)
+  3. NAME it exactly the same as the stock shader:
+     e.g. damage_feedback.iwi for the hitmarker
+  4. PUT it in images/ inside your .iwd:
+     z_custom.iwd → images/damage_feedback.iwi
+  5. LOAD your mod — the engine uses your version automatically
+
+  NO CODE CHANGES NEEDED for stock replacements.
+  The engine finds your .iwd version first and uses it.
+
+
+================================================================================
+  51. HOW TO ADD A BRAND NEW SHADER
+================================================================================
+
+  To add a completely new image:
+
+  1. CREATE your image (power-of-2 dimensions)
+  2. CONVERT to .iwi format
+  3. PUT at images/your_name.iwi inside your .iwd
+  4. PRECACHE in _main.gsc init():
+       precacheShader("your_name");
+  5. USE in GSC code:
+       elem setShader("your_name", width, height);
+
+  You MUST precache new shaders. Stock shaders are already cached
+  by the engine, but yours aren't.
+
+
+================================================================================
+  52. REPLACING MENU ELEMENTS WITH CUSTOM IMAGES
+================================================================================
+
+  To replace any colored rectangle in the menu with a custom image:
+
+  --- EXAMPLE: CUSTOM MENU BACKGROUND ---
+
+  BEFORE (colored rectangle):
+    self.hud["background"] = self createRectangle(
+        "white", "TOP", "CENTER", 278, -150, 155, 200,
+        self.menu.color["background"], 0, 0.84
+    );
+
+  AFTER (custom image):
+    self.hud["background"] = newClientHudElem(self);
+    self.hud["background"] setShader("my_menu_bg", 155, 200);
+    self.hud["background"] setPoint("TOP", "CENTER", 278, -150);
+    self.hud["background"].alpha = 0.84;
+    self.hud["background"].sort = 0;
+
+  Don't forget: precacheShader("my_menu_bg") in init()!
+
+  --- EXAMPLE: CUSTOM SCROLL HIGHLIGHT ---
+
+  BEFORE:
+    self.hud["scroll"] = self createRectangle(
+        "white", "CENTER", "CENTER", 278, -128, 151, 14,
+        self.menu.color["accent"], 2, 0.10
+    );
+
+  AFTER:
+    self.hud["scroll"] = newClientHudElem(self);
+    self.hud["scroll"] setShader("my_highlight", 151, 14);
+    self.hud["scroll"] setPoint("CENTER", "CENTER", 278, -128);
+    self.hud["scroll"].alpha = 0.10;
+    self.hud["scroll"].sort = 2;
+
+  --- GENERAL PATTERN ---
+  For ANY menu element:
+    1. Remove the createRectangle line
+    2. Replace with newClientHudElem(self)
+    3. Set shader, point, alpha, sort to match originals
+    4. Precache your custom shader in init()
+
+
+================================================================================
+  53. IMAGE SIZES AND FORMATS
+================================================================================
+
+  ALL IMAGES MUST BE POWER-OF-2 DIMENSIONS:
+    16x16      Tiny icons, dots
+    32x32      Small icons (headicons, emblems)
+    64x64      Medium icons (hitmarker, equipment)
+    128x128    Perk icons, large icons
+    128x64     Weapon killfeed icons
+    256x128    Map previews
+    256x256    Large textures
+    512x256    Wide textures
+    512x512    Large textures
+    1024x512   Loading screens
+    1024x1024  Full screen overlays
+    2048x2048  Maximum practical size
+
+  NON-SQUARE IS OK — both dimensions just need to be powers of 2:
+    128x32     Good for menu title banner
+    256x64     Good for wide banners
+    512x128    Good for loading bars
+
+  FORMAT:
+    Final format: .iwi (IW Image)
+    Working format: .dds (DirectDraw Surface) → convert to .iwi
+    DDS settings:
+      With transparency: DXT5 / BC3
+      Without transparency: DXT1 / BC1
+    See IWD_AND_FF_GUIDE.txt Section 8 for conversion tools.
+
+
+================================================================================
+  54. TESTING AND TROUBLESHOOTING
+================================================================================
+
+  IMAGE DOESN'T SHOW UP:
+    - Is it in .iwi format? (not .png, not .dds)
+    - Is it in images/ inside your .iwd? (not a subfolder of images/)
+    - Did you precache it? precacheShader("name") in init()
+    - Is the .iwd in your mod folder?
+    - Is the image power-of-2 dimensions?
+
+  IMAGE SHOWS AS WHITE SQUARE:
+    - Wrong .iwi format or corrupted conversion
+    - Try re-converting from .dds to .iwi
+
+  IMAGE SHOWS BUT WRONG SIZE:
+    - The setShader(name, width, height) width/height controls
+      the DISPLAY size, not the image resolution
+    - Adjust width/height in setShader to get desired screen size
+
+  STOCK IMAGE NOT BEING REPLACED:
+    - Is your .iwi named EXACTLY the same as the stock shader?
+    - Is it in images/ at the root of your .iwd?
+    - Is your .iwd named with z_ prefix? (loads last, wins conflicts)
+    - Try: imageList in console to see what's loaded
+
+  IMAGE IS BLURRY:
+    - Your source image resolution is too low
+    - Use a higher resolution (256x256 minimum for icons)
+    - Make sure mipmaps are generated when saving .dds
+
+  TRANSPARENCY NOT WORKING:
+    - Save .dds as DXT5/BC3 (supports alpha channel)
+    - DXT1/BC1 only has 1-bit alpha (fully transparent or fully opaque)
+    - Make sure your source image has a proper alpha channel
+
+  TESTING WORKFLOW:
+    1. Create image in Photoshop/GIMP
+    2. Export as .dds (DXT5 with mipmaps)
+    3. Convert .dds → .iwi with iwi_x_dds tool
+    4. Put in images/ inside your .iwd
+    5. Load mod, check in-game
+    6. If wrong: edit image, re-export, re-convert, replace in .iwd
+    7. Use fast_restart to reload (no need to restart game)
+
+================================================================================
