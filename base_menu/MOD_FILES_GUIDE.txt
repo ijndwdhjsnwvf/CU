@@ -1,0 +1,2059 @@
+================================================================================
+              MOD FILES GUIDE
+              Every Folder, File, Modification, and Animation
+              in the COUNTER UAV Mod
+================================================================================
+
+This guide explains every single folder and file in the mod.
+For each file: what it does, what was modified from stock, and
+how to change or add to it. Also covers all available animations.
+
+
+================================================================================
+  TABLE OF CONTENTS
+================================================================================
+
+  PART 1 - MOD FOLDER STRUCTURE
+    1.  Complete File Map
+    2.  Which Folders Are Required vs Optional
+    3.  How the Engine Loads Everything
+
+  PART 2 - ANIMTREES (Animation Tree Definitions)
+    4.  What Animtrees Are
+    5.  destructibles.atr — All Destructible Animations
+    6.  destructibles_dlc.atr and destructibles_dlc2.atr
+    7.  All Animation Names and What They Do
+
+  PART 3 - COMMON_SCRIPTS (Destructible Object System)
+    8.  _destructible.gsc — Main Destructible Engine
+    9.  _destructible_types.gsc — Object Definitions
+    10. DLC Destructible Files
+
+  PART 4 - IMAGES (Custom Visual Assets)
+    11. Button Images
+    12. Menu Background Images
+    13. Playercard/Emblem Images
+    14. Compass/Minimap Images
+    15. HUD Images
+    16. Custom Logo (wish_logo)
+
+  PART 5 - MAPS/MP (Modified Map Scripts)
+    17. _destructables.gsc — Map Destructible Loader
+    18. _events.gsc — Kill Events and Score System
+    19. _flashgrenades.gsc — Flash Grenade System
+
+  PART 6 - MAPS/MP/GAMETYPES (Core Game Logic Modifications)
+    20. _class.gsc — Class/Loadout System
+    21. _damage.gsc — Damage, Death, and Last Stand System
+    22. _damageFeedback.gsc — Hitmarker Display
+    23. _gamelogic.gsc — Game Flow and Round Logic
+    24. _killcam.gsc — Killcam System
+    25. _menus.gsc — Team/Class Selection Menus
+    26. _rank.gsc — XP and Ranking System
+    27. _teams.gsc — Team Setup and Balancing
+
+  PART 7 - MAPS/MP/KILLSTREAKS (Killstreak Modifications)
+    28. _killstreaks.gsc — Killstreak Master Controller
+    29. _ac130.gsc — AC-130 Gunship
+    30. _airdrop.gsc — Care Package / Emergency Airdrop
+    31. _airstrike.gsc — Precision Airstrike
+    32. _autosentry.gsc — Sentry Gun
+    33. _harrier.gsc — Harrier Strike
+    34. _helicopter.gsc — Attack Helicopter / Pave Low / Chopper Gunner
+    35. _nuke.gsc — Tactical Nuke
+    36. _predscreen.gsc — Predator Missile HUD
+    37. _remotemissile.gsc — Predator Missile Flight
+
+  PART 8 - MAPS/MP/PERKS (Perk Modifications)
+    38. _perks.gsc — Perk Initialization
+    39. _perkfunctions.gsc — Perk Behavior Functions
+
+  PART 9 - SOUND (Custom Audio)
+    40. menu_music.mp3 — Main Menu Music
+    41. hz_t_oilrig_themestealth_v1.mp3 — Custom Theme
+
+  PART 10 - SOUNDALIASES (Sound Configuration)
+    42. What Sound Aliases Are
+    43. How to Add Custom Sounds
+
+  PART 11 - UI_MP (Engine Menu System)
+    44. What .menu and .inc Files Are
+    45. bg.inc — Main Background Template
+    46. menustyle.inc — Menu Style Definitions
+    47. logo.inc — Logo Configuration
+    48. main_text.menu — Main Menu with DevMap
+    49. menu_xboxlive.menu — Xbox Live / Lobby Menu
+    50. scoreboard.menu — Scoreboard Layout
+    51. Other .menu Files
+    52. scriptmenus/ Folder
+    53. weapons/mp/ Folder — Weapon Definition Files
+
+  PART 12 - ROOT FILES
+    54. bots.txt — Bot Names
+    55. cfg_commands.txt — CFG Command Reference
+    56. weap_defs.txt — Weapon Field Reference
+    57. missingasset.csv — Missing Asset Tracking
+    58. scripts.cfg — Script Configuration
+
+  PART 13 - ALL ANIMATIONS REFERENCE
+    59. Vehicle Animations
+    60. Environmental Object Animations
+    61. Weapon Animations (All Fields)
+    62. Player Animations
+    63. How to Add Custom Animations
+
+
+================================================================================
+================================================================================
+  PART 1 - MOD FOLDER STRUCTURE
+================================================================================
+================================================================================
+
+
+================================================================================
+  1. COMPLETE FILE MAP
+================================================================================
+
+  COUNTER UAV/
+  |
+  |-- animtrees/                    ← Animation tree definitions
+  |   |-- destructibles.atr         ← Base game destructible anims
+  |   |-- destructibles_dlc.atr     ← DLC 1 destructible anims
+  |   |-- destructibles_dlc2.atr    ← DLC 2 destructible anims
+  |
+  |-- common_scripts/               ← Shared utility scripts
+  |   |-- _destructible.gsc         ← Destructible object engine (3247 lines)
+  |   |-- _destructible_dlc.gsc     ← DLC 1 destructible init (180 lines)
+  |   |-- _destructible_dlc2.gsc    ← DLC 2 destructible init (180 lines)
+  |   |-- _destructible_types.gsc   ← Object type definitions (4005 lines)
+  |   |-- _destructible_types_dlc.gsc  ← DLC 1 types (100 lines)
+  |   |-- _destructible_types_dlc2.gsc ← DLC 2 types (365 lines)
+  |
+  |-- images/                       ← Custom .iwi image files
+  |   |-- button_a.iwi              ← Xbox A button icon
+  |   |-- button_b.iwi              ← Xbox B button icon
+  |   |-- button_y.iwi              ← Xbox Y button icon
+  |   |-- cardicon_expert_m21.iwi   ← Custom playercard emblem
+  |   |-- cardicon_expert_m21.png   ← Source PNG for above
+  |   |-- cardicon_xray.iwi         ← Custom X-ray emblem
+  |   |-- cardtitle_horsemen_famine.iwi  ← Custom calling card
+  |   |-- cardtitle_horsemen_war.iwi     ← Custom calling card
+  |   |-- compassping_green_hollow_mp.iwi ← Minimap ping (hollow)
+  |   |-- compassping_green_mp.iwi  ← Minimap ping (solid)
+  |   |-- gamefonts_gamepad.iwi     ← Gamepad font icons
+  |   |-- hud_weaponbar.iwi         ← Weapon bar HUD element
+  |   |-- menu_background.iwi       ← Custom menu background
+  |   |-- menu_background1.iwi      ← Alternate menu background
+  |   |-- menu_mp_image.iwi         ← Multiplayer menu image
+  |   |-- menu_screenbg.iwi         ← Screen background overlay
+  |   |-- menu_screenbg.png         ← Source PNG for above
+  |   |-- mockup_bg_glow.iwi        ← Glowing background effect
+  |   |-- mw2_main_background.iwi   ← Main menu background
+  |   |-- wish_logo.iwi             ← Custom mod logo
+  |
+  |-- maps/mp/                      ← Modified map scripts
+  |   |-- _destructables.gsc        ← Destructible map object loader
+  |   |-- _destructible_dlc.gsc     ← DLC 1 map destructibles
+  |   |-- _destructible_dlc2.gsc    ← DLC 2 map destructibles
+  |   |-- _events.gsc               ← Kill events, scoring, medals
+  |   |-- _flashgrenades.gsc        ← Flash grenade handling
+  |   |-- gametypes/                ← Core gametype overrides
+  |   |   |-- _class.gsc            ← Class/loadout system
+  |   |   |-- _damage.gsc           ← Damage, death, last stand (HEAVILY MODDED)
+  |   |   |-- _damageFeedback.gsc   ← Hitmarker display system
+  |   |   |-- _gamelogic.gsc        ← Game flow, round logic, spawning
+  |   |   |-- _killcam.gsc          ← Killcam playback system
+  |   |   |-- _menus.gsc            ← Team/class selection engine menus
+  |   |   |-- _rank.gsc             ← XP, ranks, promotions
+  |   |   |-- _teams.gsc            ← Team setup, auto-balance, models
+  |   |-- killstreaks/              ← Killstreak overrides
+  |   |   |-- _ac130.gsc            ← AC-130 gunship
+  |   |   |-- _airdrop.gsc          ← Care package / emergency airdrop
+  |   |   |-- _airstrike.gsc        ← Precision airstrike
+  |   |   |-- _autosentry.gsc       ← Sentry gun
+  |   |   |-- _harrier.gsc          ← Harrier strike
+  |   |   |-- _helicopter.gsc       ← Attack heli / Pave Low / Chopper Gunner
+  |   |   |-- _killstreaks.gsc      ← Master killstreak controller
+  |   |   |-- _nuke.gsc             ← Tactical nuke
+  |   |   |-- _predscreen.gsc       ← Predator missile HUD overlay
+  |   |   |-- _remotemissile.gsc    ← Predator missile flight controls
+  |   |-- perks/                    ← Perk overrides
+  |       |-- _perkfunctions.gsc    ← Perk behavior (blast shield, etc.)
+  |       |-- _perks.gsc            ← Perk initialization
+  |
+  |-- scripts/mp/                   ← YOUR custom mod scripts
+  |   |-- _main.gsc                 ← Entry point (init)
+  |   |-- _aimbot.gsc               ← Aimbot system
+  |   |-- _binds.gsc                ← Button bindings
+  |   |-- _bolt.gsc                 ← Bolt/projectile system
+  |   |-- _cfg.gsc                  ← CFG command listeners
+  |   |-- _functions.gsc            ← Feature functions
+  |   |-- _oldaimbot.gsc            ← Legacy aimbot
+  |   |-- _presets.gsc              ← Preset configurations
+  |   |-- _util.gsc                 ← Utility helpers
+  |   |-- menu/                     ← Menu system
+  |       |-- _menulogic.gsc        ← Menu input handling
+  |       |-- _menuutils.gsc        ← Menu HUD creation
+  |       |-- _setupmenu.gsc        ← Menu initialization
+  |       |-- _structure.gsc        ← Menu layout
+  |
+  |-- sound/music/                  ← Custom audio files
+  |   |-- menu_music.mp3            ← Main menu music
+  |   |-- hz_t_oilrig_themestealth_v1.mp3  ← Custom theme
+  |
+  |-- soundaliases/                 ← Sound alias definitions
+  |   |-- (alias files)             ← Maps sound names to audio files
+  |
+  |-- ui_mp/                        ← Engine menu definitions
+  |   |-- *.menu                    ← Menu layout files
+  |   |-- *.inc                     ← Include/style templates
+  |   |-- scriptmenus/              ← In-game popup menus
+  |   |-- weapons/mp/               ← Weapon stat/definition files (36 weapons)
+  |
+  |-- bots.txt                      ← Bot name list
+  |-- cfg_commands.txt              ← CFG command reference (your notes)
+  |-- missingasset.csv              ← Missing asset tracker
+  |-- scripts.cfg                   ← Script configuration
+  |-- weap_defs.txt                 ← Weapon field reference (your notes)
+  |-- README.md                     ← Repo readme
+
+
+================================================================================
+  2. WHICH FOLDERS ARE REQUIRED vs OPTIONAL
+================================================================================
+
+  REQUIRED (mod won't work without these):
+    scripts/mp/          Your mod code. The engine loads _main.gsc first.
+
+  REQUIRED IF YOU MODIFIED THEM (override stock behavior):
+    maps/mp/             Stock scripts you changed. If present, the engine
+                         loads YOUR version instead of the stock one.
+    common_scripts/      Same — your destructible overrides.
+    ui_mp/               Your custom menus override the stock ones.
+    images/              Custom images override stock images by name.
+    sound/               Custom sounds.
+    soundaliases/        Custom sound alias mappings.
+    weapons/             Only in ui_mp/weapons/mp/ — weapon stat overrides.
+    animtrees/           Required if destructible scripts reference them.
+
+  OPTIONAL (reference only, not loaded by the game):
+    bots.txt             Bot names (loaded if dedicated server uses it)
+    cfg_commands.txt     Your personal reference — not read by the engine
+    weap_defs.txt        Your personal reference — not read by the engine
+    missingasset.csv     Asset tracker — not used at runtime
+    README.md            Not used by the engine
+    base_menu/           The template menu — separate from this mod
+
+
+================================================================================
+  3. HOW THE ENGINE LOADS EVERYTHING
+================================================================================
+
+  LOAD ORDER:
+    1. Engine reads main/ folder (stock .iwd and .ff files)
+    2. Engine reads mods/YOUR_MOD/ folder
+    3. For ANY file that exists in both, YOUR version WINS
+    4. GSC scripts: your scripts/mp/_main.gsc replaces stock
+    5. Images: your images/ override stock images with same name
+    6. Menus: your ui_mp/ menus override stock menus
+    7. Sounds: your sound/ files override stock sounds
+    8. Weapon files: your weapons/mp/ override stock weapon stats
+
+  WHY THIS MATTERS:
+    The entire mod works by REPLACING stock files.
+    If you put _damage.gsc in maps/mp/gametypes/, the engine
+    uses YOUR damage code instead of the stock damage code.
+    This is how the mod adds custom features like fake last stand,
+    aimbot killcam timing, and bot behavior changes.
+
+
+================================================================================
+================================================================================
+  PART 2 - ANIMTREES (Animation Tree Definitions)
+================================================================================
+================================================================================
+
+
+================================================================================
+  4. WHAT ANIMTREES ARE
+================================================================================
+
+  An animtree (.atr file) is a list of animation names that a script
+  can use. The GSC script says:
+    #using_animtree("destructibles");
+  This tells the engine to load animtrees/destructibles.atr and make
+  all the animations in that file available to the script.
+
+  The .atr file is just a plain text list of animation names, one per line.
+  The engine then knows to load these animations from the .ff file.
+
+  You CANNOT use an animation in GSC unless it's listed in an animtree
+  that your script includes.
+
+
+================================================================================
+  5. destructibles.atr — ALL DESTRUCTIBLE ANIMATIONS
+================================================================================
+
+  FILE: animtrees/destructibles.atr (50 lines)
+
+  This lists every animation that destructible objects can play.
+  Here's every animation and what it does:
+
+  --- VEHICLE ANIMATIONS ---
+
+  vehicle_80s_sedan1_flattire_LB     Left-back tire goes flat
+  vehicle_80s_sedan1_flattire_LF     Left-front tire goes flat
+  vehicle_80s_sedan1_flattire_RB     Right-back tire goes flat
+  vehicle_80s_sedan1_flattire_RF     Right-front tire goes flat
+  vehicle_80s_sedan1_destroy         Car explodes and crumples
+
+  vehicle_mig29_destroy              MiG-29 jet destroyed animation
+  vehicle_motorcycle_destroy_01      Motorcycle knocked over (variant 1)
+  vehicle_motorcycle_destroy_02      Motorcycle knocked over (variant 2)
+  vehicle_snowmobile_destroy_01      Snowmobile destroyed
+
+  --- LIGHT FIXTURES ---
+
+  light_fluorescent_swing            Double fluorescent light swings
+  light_fluorescent_null             Double fluorescent light stops/resets
+  light_fluorescent_swing_02         Double fluorescent light alt swing
+
+  light_fluorescent_single_null      Single fluorescent light stops
+  light_fluorescent_single_swing     Single fluorescent light swings
+  light_fluorescent_single_swing_02  Single light swings (variant 2)
+  light_fluorescent_single_swing_03  Single light swings (variant 3)
+
+  --- ENVIRONMENTAL OBJECTS ---
+
+  gaspump01_hose                     Gas pump hose swings when shot
+
+  locker_broken_both_doors_1         Locker both doors fly open (variant 1)
+  locker_broken_both_doors_2         Locker both doors fly open (variant 2)
+  locker_broken_both_doors_3         Locker both doors fly open (variant 3)
+  locker_broken_both_doors_4         Locker both doors fly open (variant 4)
+  locker_broken_door1_fast           Locker door 1 flies open fast
+  locker_broken_door1_slow           Locker door 1 opens slowly
+  locker_broken_door2_fast           Locker door 2 flies open fast
+  locker_broken_door2_slow           Locker door 2 opens slowly
+
+  --- FANS AND SPINNING OBJECTS ---
+
+  ex_airconditioner_fan              Air conditioner fan spins/breaks
+  me_fanceil1_spin                   Ceiling fan spinning
+  me_fanceil1_spin_stop              Ceiling fan slowing to stop
+  wall_fan_rotate                    Wall fan rotating
+  wall_fan_wobble                    Wall fan wobbling (damaged)
+  wall_fan_stop                      Wall fan stopping
+
+  --- ANIMAL CAGES ---
+
+  chicken_cage_loop_01               Chickens in cage - loop animation 1
+  chicken_cage_loop_02               Chickens in cage - loop animation 2
+  chicken_cage_death                 Chickens die (variant 1)
+  chicken_cage_death_02              Chickens die (variant 2)
+
+  --- GENERATORS ---
+
+  generator_vibration                Generator vibrating (running)
+  generator_explode                  Generator exploding (variant 1)
+  generator_explode_02               Generator exploding (variant 2)
+  generator_explode_03               Generator exploding (variant 3)
+
+  HOW TO USE IN GSC:
+    #using_animtree("destructibles");
+    model setAnim(%generator_vibration);
+
+
+================================================================================
+  6. destructibles_dlc.atr and destructibles_dlc2.atr
+================================================================================
+
+  destructibles_dlc.atr (3 lines):
+    DLC 1 destructible animations. Typically has a small set of
+    animations for the DLC 1 maps (Stimulus/Resurgence).
+
+  destructibles_dlc2.atr (8 lines):
+    DLC 2 destructible animations. A slightly larger set for
+    the DLC 2 maps.
+
+  These work the same way — just more animation names for DLC content.
+  The GSC files reference them with:
+    #using_animtree("destructibles_dlc");
+    #using_animtree("destructibles_dlc2");
+
+
+================================================================================
+  7. ALL ANIMATION NAMES AND WHAT THEY DO
+================================================================================
+
+  See Section 5 above for the complete destructibles list.
+  See PART 13 (Sections 59-63) for ALL animation types including
+  weapon animations, player animations, and how to add custom ones.
+
+
+================================================================================
+================================================================================
+  PART 3 - COMMON_SCRIPTS (Destructible Object System)
+================================================================================
+================================================================================
+
+
+================================================================================
+  8. _destructible.gsc — MAIN DESTRUCTIBLE ENGINE (3247 lines)
+================================================================================
+
+  WHAT IT DOES:
+    This is the core engine that handles all destructible objects in the game.
+    Cars that explode, windows that break, lights that swing, lockers that
+    open when shot — all controlled by this file.
+
+  KEY FUNCTIONS:
+    init()
+      Sets up destructible system. Loads damage bias values.
+      SP_DAMAGE_BIAS = 0.5       (single player damage modifier)
+      MP_DAMAGE_BIAS = 1.0       (multiplayer damage modifier)
+      SP_EXPLOSIVE_DAMAGE_BIAS = 9.0   (explosive damage in SP)
+      MP_EXPLOSIVE_DAMAGE_BIAS = 13.0  (explosive damage in MP)
+
+    setupDestructibles()
+      Finds all destructible objects on the map and initializes them.
+      Each destructible has states, health, and animations.
+
+    damageDestructible(damage, attacker, direction_vec, point, type, ...)
+      Called when a destructible takes damage. Handles health reduction,
+      state transitions (damaged → destroyed), playing animations,
+      spawning effects, and dropping physics pieces.
+
+    changeState(stateName)
+      Transitions a destructible from one state to another.
+      e.g. "default" → "damaged" → "destroyed"
+      Each state can play different animations and effects.
+
+  CUSTOMIZABLE VALUES:
+    MAX_SIMULTANEOUS_CAR_ALARMS = 2    Max car alarms at once
+    CAR_ALARM_TIMEOUT = 25             Seconds before alarm stops
+    level.destructibleSpawnedEntsLimit = 50   Max spawned debris pieces
+
+  HOW TO MODIFY:
+    To make cars harder to destroy:
+      Change MP_DAMAGE_BIAS from 1.0 to 0.5 (takes 2x damage)
+    To make explosions more effective on objects:
+      Change MP_EXPLOSIVE_DAMAGE_BIAS from 13.0 to 20.0
+
+
+================================================================================
+  9. _destructible_types.gsc — OBJECT DEFINITIONS (4005 lines)
+================================================================================
+
+  WHAT IT DOES:
+    Defines every type of destructible object in the game.
+    Each object type specifies:
+    - How much health it has per state
+    - What animations play when damaged/destroyed
+    - What effects (fire, smoke, sparks) spawn
+    - What physics pieces break off
+    - What sounds play
+
+  OBJECT TYPES DEFINED:
+    Vehicles:
+      - 80s sedan (4 flat tires + explosion + burn)
+      - Pickup trucks
+      - Motorcycles (tip over)
+      - Snowmobiles
+      - Jets (MiG-29 on the ground)
+
+    Environmental:
+      - Fluorescent lights (swing then break)
+      - Gas pumps (hose swings, then explosion)
+      - Lockers (doors fly open)
+      - Ceiling fans (spin, wobble, stop)
+      - Wall fans (rotate, wobble, stop)
+      - Generators (vibrate, explode)
+      - Chicken cages (chickens react, then die)
+      - Windows (crack then shatter)
+      - Fences (bend then break)
+
+  HOW TO READ A TYPE DEFINITION:
+    // Example: ceiling fan
+    me_fanceil1()
+    {
+        destructible_create("me_fanceil1", 200);  // Name, total health
+        destructible_state("default");            // Starting state
+          destructible_anim(%me_fanceil1_spin);   // Spinning animation
+        destructible_state("damaged");            // When shot
+          destructible_anim(%me_fanceil1_spin_stop);  // Slows down
+          destructible_health(0);                 // Dies at 0 HP
+        destructible_state("destroyed");
+          destructible_fx("smoke");               // Smoke effect
+    }
+
+  HOW TO MODIFY:
+    To change how much health a car has:
+      Find the vehicle type function, change the health value.
+    To change what effect plays when something is destroyed:
+      Change the destructible_fx() call to a different effect.
+
+
+================================================================================
+  10. DLC DESTRUCTIBLE FILES
+================================================================================
+
+  _destructible_dlc.gsc (180 lines):
+    Adds destructible objects for DLC 1 maps.
+    Same structure as _destructible_types.gsc but for DLC content.
+
+  _destructible_dlc2.gsc (180 lines):
+    Adds destructible objects for DLC 2 maps.
+
+  _destructible_types_dlc.gsc (100 lines):
+    Type definitions for DLC 1 destructibles.
+
+  _destructible_types_dlc2.gsc (365 lines):
+    Type definitions for DLC 2 destructibles.
+
+  These files exist in the mod because if you modify any destructible
+  behavior, you need the DLC files too or DLC map objects won't work.
+
+
+================================================================================
+================================================================================
+  PART 4 - IMAGES (Custom Visual Assets)
+================================================================================
+================================================================================
+
+
+================================================================================
+  11. BUTTON IMAGES
+================================================================================
+
+  button_a.iwi     Xbox A button icon (green circle with A)
+  button_b.iwi     Xbox B button icon (red circle with B)
+  button_y.iwi     Xbox Y button icon (yellow circle with Y)
+
+  WHAT THEY'RE FOR:
+    Displayed in prompts like "Press [A] to pick up" when using
+    a controller. The UI menu system references these in
+    menu definitions.
+
+  TO REPLACE:
+    Create your own button icons (32x32 or 64x64 .iwi).
+    Name them the same and put them in images/.
+    The game will show your icons instead of the stock ones.
+
+
+================================================================================
+  12. MENU BACKGROUND IMAGES
+================================================================================
+
+  mw2_main_background.iwi     The main menu background image.
+                               Used in bg.inc: background "mw2_main_background"
+                               Shows behind the main menu when not in-game.
+
+  menu_background.iwi          Custom menu background (alternate).
+  menu_background1.iwi         Second alternate background.
+
+  menu_mp_image.iwi            Multiplayer menu image.
+                               Used in bg.inc: BACKGROUND_IMAGE("mw2_main_mp_image")
+                               Shows the MP-specific background overlay.
+
+  menu_screenbg.iwi            Screen background overlay.
+  menu_screenbg.png            Source PNG for menu_screenbg (for editing).
+
+  mockup_bg_glow.iwi           Pulsing glow effect on main menu.
+                               Used in bg.inc with animated alpha:
+                               exp forecolor a (((sin(milliseconds()/1500)+1)*0.25)+0.25)
+                               Creates a breathing purple glow effect.
+                               Color is set to (0.35, 0.0, 1.0) = purple.
+
+  WHERE THEY'RE REFERENCED:
+    ui_mp/bg.inc — This file creates the layered menu background.
+    The layers from back to front:
+      1. Black overlay (in-game) or mw2_main_background (main menu)
+      2. Background image (mw2_main_mp_image for MP)
+      3. Cloud overlay (scrolling clouds, animated)
+      4. mockup_bg_glow (pulsing purple glow, 2 layers)
+      5. Sidebar gradient (gradient_bottom or gradient_fadein_fadebottom)
+
+  TO CUSTOMIZE THE MAIN MENU BACKGROUND:
+    1. Create your background image (1024x512 or 2048x1024)
+    2. Convert to .iwi format
+    3. Name it mw2_main_background.iwi
+    4. Put it in images/ folder
+    5. The main menu will show your image
+
+  TO CHANGE THE GLOW COLOR:
+    Edit ui_mp/bg.inc, find:
+      forecolor 0.35 0.0 1.0
+    Change RGB values (0-1 range). Examples:
+      0.0 1.0 0.0 = green glow
+      1.0 0.0 0.0 = red glow
+      1.0 0.5 0.0 = orange glow
+
+  TO REMOVE THE GLOW:
+    Delete or comment out the two mockup_bg_glow itemDef blocks in bg.inc.
+
+
+================================================================================
+  13. PLAYERCARD / EMBLEM IMAGES
+================================================================================
+
+  cardicon_expert_m21.iwi      Custom emblem — M21 expert icon
+  cardicon_expert_m21.png      Source PNG for editing
+  cardicon_xray.iwi            Custom emblem — X-ray icon
+
+  cardtitle_horsemen_famine.iwi    Custom calling card — Horsemen: Famine
+  cardtitle_horsemen_war.iwi       Custom calling card — Horsemen: War
+
+  WHAT THEY DO:
+    These OVERRIDE stock playercard elements. When a player has the
+    stock emblem/calling card with the same name, YOUR version shows instead.
+
+  TO ADD MORE:
+    1. Find the stock name of the emblem/card you want to replace
+       (use imageList in console to see loaded names)
+    2. Create your custom version
+    3. Convert to .iwi (power-of-2 dimensions)
+    4. Name it the same as the stock one
+    5. Put it in images/
+
+
+================================================================================
+  14. COMPASS / MINIMAP IMAGES
+================================================================================
+
+  compassping_green_hollow_mp.iwi   Hollow green dot on minimap
+  compassping_green_mp.iwi          Solid green dot on minimap
+
+  WHAT THEY DO:
+    These are the blips that appear on the minimap/compass when
+    enemies fire or when UAV is active. The hollow version is for
+    general pings, the solid version is for confirmed locations.
+
+  ALSO REFERENCED IN:
+    ui_mp/compassping_green_hollow_mp.iwi  (duplicate in ui_mp/ folder)
+    ui_mp/compassping_green_mp.iwi         (duplicate in ui_mp/ folder)
+
+  TO CUSTOMIZE:
+    Replace with custom colored dots. Make them 16x16 or 32x32.
+    To change minimap blip color from green to red:
+    Create a red dot, name it compassping_green_mp.iwi.
+
+
+================================================================================
+  15. HUD IMAGES
+================================================================================
+
+  hud_weaponbar.iwi    The weapon bar background in the bottom-right HUD.
+                        Sits behind the weapon icon and ammo counter.
+
+  gamefonts_gamepad.iwi    Font atlas for gamepad button icons.
+                            Contains all controller button glyphs used
+                            when showing button prompts.
+
+
+================================================================================
+  16. CUSTOM LOGO (wish_logo)
+================================================================================
+
+  wish_logo.iwi    Custom mod logo image.
+
+  REFERENCED IN:
+    missingasset.csv lists "material,wish_logo" as a tracked asset.
+    This image is likely displayed somewhere in the mod's menu or
+    loading screen. It's a custom branding image for the mod.
+
+  TO REPLACE:
+    Create your own logo, convert to .iwi, name it wish_logo.iwi.
+    Put in images/ to override.
+
+
+================================================================================
+================================================================================
+  PART 5 - MAPS/MP (Modified Map Scripts)
+================================================================================
+================================================================================
+
+
+================================================================================
+  17. _destructables.gsc — MAP DESTRUCTIBLE LOADER (100 lines)
+================================================================================
+
+  WHAT IT DOES:
+    Loads and initializes all destructible objects on the current map.
+    Called when a map starts. Scans for destructible entities and
+    sets up their damage handlers.
+
+  KEY FUNCTION:
+    init()
+      Calls common_scripts\_destructible::init() to start the system.
+      Then processes all destructible entities on the map.
+
+
+================================================================================
+  18. _events.gsc — KILL EVENTS AND SCORE SYSTEM (692 lines)
+================================================================================
+
+  WHAT IT DOES:
+    Handles all kill-related events: headshots, backstabs, revenge kills,
+    multi-kills, buzzkills, longshots, comebacks, etc.
+    Also sets up the scoring values for each event type.
+
+  CUSTOM MODIFICATIONS:
+    Score values are set here. You can change XP rewards:
+      registerScoreInfo("headshot", 50);     ← 50 XP for headshot
+      registerScoreInfo("execution", 100);   ← 100 XP for execution
+      registerScoreInfo("buzzkill", 100);    ← 100 XP for buzzkill
+      registerScoreInfo("firstblood", 0);    ← 0 XP for first blood
+
+    Adrenaline values (affects gameplay pacing):
+      registerAdrenalineInfo("kill", 50);
+      registerAdrenalineInfo("killed", 20);
+      registerAdrenalineInfo("comeback", 50);
+
+  PRECACHED SHADERS:
+    precacheShader("crosshair_red");   ← Red crosshair (line 50)
+
+  HOW TO MODIFY:
+    To change headshot XP from 50 to 200:
+      registerScoreInfo("headshot", 200);
+    To disable first blood announcement:
+      Already set to 0 XP.
+
+
+================================================================================
+  19. _flashgrenades.gsc — FLASH GRENADE SYSTEM (133 lines)
+================================================================================
+
+  WHAT IT DOES:
+    Handles flashbang grenades: the blinding effect, rumble feedback,
+    duration calculation based on distance and angle to the flash.
+
+  KEY FUNCTIONS:
+    main()
+      Precaches the "flashbang_mp" shellshock effect.
+
+    monitorFlash()
+      Runs continuously on each player. When a flashbang goes off:
+      - Calculates how much the player should be blinded
+      - Based on distance from flash + angle facing
+      - Applies shellshock and screen effects
+
+    flashRumbleLoop(duration)
+      Makes the controller rumble during flash effect.
+
+  FRIENDLY FIRE HANDLING:
+    Line 70: Checks if the flasher and victim are on the same team.
+    If friendly fire mode is "reflect" (mode 2), the flash reflects
+    back to the thrower.
+
+  HOW TO MODIFY:
+    To make flashbangs last longer:
+      Find the shellshock duration and increase it.
+    To disable friendly flash:
+      Add a return; after the team check on line 70.
+
+
+================================================================================
+================================================================================
+  PART 6 - MAPS/MP/GAMETYPES (Core Game Logic Modifications)
+================================================================================
+================================================================================
+
+
+================================================================================
+  20. _class.gsc — CLASS/LOADOUT SYSTEM (1212 lines)
+================================================================================
+
+  WHAT IT DOES:
+    Handles the Create-a-Class system: loading loadouts, giving weapons,
+    applying perks, setting up equipment.
+
+  CUSTOM MODIFICATIONS:
+    Line 5:  #include scripts\mp\_functions;
+      This is CUSTOM — it includes your mod's functions file so the
+      class system can access your custom functions.
+
+    Line 6:  //#include scripts\mp\_util;
+      Commented out — was previously included but removed.
+
+    level.classMap defines 15 custom class slots (class0-class14)
+    plus 10 custom slots (custom1-custom10) and copycat.
+
+  HOW TO MODIFY:
+    To add more custom class slots:
+      Add more level.classMap entries with higher numbers.
+    To change the default class:
+      level.defaultClass = "CLASS_ASSAULT";  ← Change to CLASS_SMG, etc.
+
+
+================================================================================
+  21. _damage.gsc — DAMAGE, DEATH, AND LAST STAND (2563 lines)
+       *** HEAVILY MODIFIED — MOST IMPORTANT OVERRIDE ***
+================================================================================
+
+  WHAT IT DOES:
+    This is the most heavily modified stock file. It controls ALL damage
+    dealing, death handling, last stand mechanics, and kill processing.
+
+  CUSTOM MODIFICATIONS:
+
+  --- AIMBOT KILLCAM TIMING (lines 491-511) ---
+    When self.aimbotkill == "true", the killcam timing is adjusted
+    based on self.pers["killcamtime"]:
+      killcamtime 3 → delay = (getTime() - deathTime) / 1020
+      killcamtime 2 → delay = (getTime() - deathTime) / 900
+      killcamtime 1 → delay = (getTime() - deathTime) / 1000
+    When aimbotkill == "false", normal timing is used (/ 1000).
+
+    WHAT THIS DOES:
+      Changes how much of the killcam the victim sees.
+      Setting 3 (÷1020) = slightly shorter replay
+      Setting 2 (÷900) = noticeably shorter replay (hides snapping)
+      Setting 1 (÷1000) = normal replay timing
+
+  --- FAKE LAST STAND (lines 1639-1729) ---
+    The mod adds a "fake last stand" system (self.fakeLS).
+    When fakeLS is true:
+      - Bots skip last stand entirely (die instantly)
+      - Human players get forced into last stand
+      - Shows "Final Stand" notification with specialty_finalstand icon
+      - Players can use weapons in fake final stand
+      - Has its own timer and revive logic
+
+    self.fakeLS = true   Player has fake last stand enabled
+    self.fakeLS = false  Normal last stand behavior
+
+    Bot handling:
+      if (self.pers["isBot"] == true)
+        mayDoLastStand = false;    ← Bots never go to last stand
+      if (self.fakeLS == true && self.pers["isBot"] == false)
+        mayDoLastStand = true;     ← Humans with fakeLS always get last stand
+
+  OTHER CUSTOM CHANGES:
+    - self.pers["isBot"] checks throughout to give bots different behavior
+    - Custom killcam delay calculations
+    - Modified last stand weapon handling
+
+  HOW TO MODIFY:
+    To change killcam timing:
+      Adjust the divisor values (900, 1000, 1020).
+      Lower number = shorter killcam replay.
+
+    To disable fake last stand:
+      Set self.fakeLS = false for all players, or remove the
+      fakeLS checks and use stock last stand behavior.
+
+
+================================================================================
+  22. _damageFeedback.gsc — HITMARKER DISPLAY (93 lines)
+================================================================================
+
+  WHAT IT DOES:
+    Displays the hitmarker X icon when you damage an enemy.
+    Also handles the scavenger pickup icon.
+
+  PRECACHED SHADERS:
+    damage_feedback         Standard hitmarker X
+    damage_feedback_j       Juggernaut/body armor hitmarker
+    damage_feedback_endgame End-game hitmarker
+    scavenger_pickup        Scavenger ammo pickup icon
+
+  HOW IT WORKS:
+    On player connect: creates a HUD element at screen center.
+    On damage: sets shader to damage_feedback, alpha to 1, fades out.
+    Duration: 1 second fade for normal hits, 2.5 seconds for scavenger.
+
+  HOW TO MODIFY:
+    To change hitmarker size:
+      Line 24: setShader("damage_feedback", 24, 48);
+      Change 24 (width) and 48 (height).
+
+    To change hitmarker duration:
+      Line 82: fadeOverTime(1);  ← Change 1 to longer/shorter.
+
+    To use custom hitmarker image:
+      Replace images/damage_feedback.iwi in your .iwd.
+      See IMAGES_GUIDE.txt Section 22.
+
+
+================================================================================
+  23. _gamelogic.gsc — GAME FLOW AND ROUND LOGIC (2322 lines)
+================================================================================
+
+  WHAT IT DOES:
+    Controls the overall game flow: game start, round transitions,
+    time limits, score limits, forfeit handling, overtime, team switching,
+    spawn logic, and game ending conditions.
+
+  KEY SYSTEMS:
+    - Forfeit system: when a team has no players, countdown to forfeit
+    - Round switching: halftime team swaps in Search & Destroy
+    - Score tracking: team scores, player scores
+    - Spawn system: selecting spawn points, spawn protection
+    - Game ending: checks score/time limits, announces winner
+
+  FACTION DEFINITIONS (lines 6-21):
+    Constants for reading the faction CSV table:
+    FACTION_REF_COL = 0         Faction reference name
+    FACTION_ICON_COL = 8        Faction icon image
+    FACTION_HUD_ICON_COL = 9    Faction HUD icon
+    FACTION_SPAWN_MUSIC_COL = 11  Music at round start
+
+  THIS FILE IS MOSTLY STOCK — minimal modifications.
+  Changes are primarily to support the mod's custom features
+  being available through the game flow.
+
+
+================================================================================
+  24. _killcam.gsc — KILLCAM SYSTEM (596 lines)
+================================================================================
+
+  WHAT IT DOES:
+    Manages the killcam (deathcam) replay after you die.
+    Handles camera positioning, timing, HUD display during killcam,
+    skip controls, and copycat class selection.
+
+  KEY FEATURES:
+    - Camera follows the killer's position
+    - Shows "Press [F] to skip" text
+    - Copycat class option (steal killer's loadout)
+    - Final killcam at game end
+    - Timer-based duration
+
+  CUSTOM MODIFICATIONS:
+    Works with the aimbot killcam timing changes in _damage.gsc.
+    The predelay and camtime parameters are adjusted by the custom
+    killcam timing code to show more or less of the replay.
+
+  PRECACHED ASSETS:
+    precacheString(&"PLATFORM_PRESS_TO_SKIP")
+    precacheString(&"PLATFORM_PRESS_TO_COPYCAT")
+    precacheShader("specialty_copycat")
+
+  HOW TO MODIFY:
+    To change default killcam duration:
+      Line 43: camtime = 4.0;   ← For final killcam
+      Lines 48-50: camtime = 5.0;  ← For normal kills
+
+    To disable killcam entirely:
+      Set level.killcam = 0; in init().
+
+    Custom killcam durations per weapon are already defined:
+      Javelin = 8 seconds
+      Remote missile = 5 seconds
+      Grenade = 4.5 seconds
+      Throwing knife = 5 seconds
+
+
+================================================================================
+  25. _menus.gsc — TEAM/CLASS SELECTION MENUS (538 lines)
+================================================================================
+
+  WHAT IT DOES:
+    Handles the engine-level team selection and class selection menus
+    (the ones that pop up at game start, not your GSC menu).
+    Processes team assignment, class choice, and spawn requests.
+
+  KEY FUNCTIONS:
+    onMenuResponse()
+      Listens for menu responses from the engine UI.
+      When player picks a team: assigns them, sets up their class.
+      When player picks a class: loads their loadout.
+      Handles autoassign (put on team with fewer players).
+
+
+================================================================================
+  26. _rank.gsc — XP AND RANKING SYSTEM (687 lines)
+================================================================================
+
+  WHAT IT DOES:
+    Manages the XP, rank, and prestige system.
+    Handles XP gain from kills/objectives, rank-up notifications,
+    unlock tracking, and score information registration.
+
+  KEY VALUES:
+    level.xpScale = getDvarInt("scr_xpscale");
+      XP multiplier. Must be 0-4. If > 4 or < 0, exits the level.
+
+    Score values (team-based):
+      Kill = 100 XP
+      Headshot = 100 XP
+      Assist = 20 XP
+    Score values (free-for-all):
+      Kill = 50 XP
+      Headshot = 50 XP
+
+    Match results:
+      Win = 1 (multiplier)
+      Loss = 0.5
+      Tie = 0.75
+      Capture = 300 XP
+
+  PRECACHED:
+    precacheShader("white");
+
+  HOW TO MODIFY:
+    To change XP for kills:
+      registerScoreInfo("kill", 200);  ← 200 XP per kill
+    To change match XP:
+      registerScoreInfo("win", 2);     ← Double win XP
+
+
+================================================================================
+  27. _teams.gsc — TEAM SETUP AND BALANCING (871 lines)
+================================================================================
+
+  WHAT IT DOES:
+    Sets up teams (allies/axis), assigns player models based on faction,
+    handles team balancing (auto-switch), and manages team-specific
+    assets like flags, icons, and spawn effects.
+
+  KEY SYSTEMS:
+    - Player model assignment per faction
+    - Team balancing (auto-switch players to smaller team)
+    - Thermal beacon effects for player visibility
+    - Flag and crate models for objectives
+    - Team HUD icons
+
+  PRECACHED:
+    level._effect["thermal_beacon"]
+    Precaches team-specific player models and faction assets.
+
+
+================================================================================
+================================================================================
+  PART 7 - MAPS/MP/KILLSTREAKS (Killstreak Modifications)
+================================================================================
+================================================================================
+
+
+================================================================================
+  28. _killstreaks.gsc — MASTER CONTROLLER (714 lines)
+================================================================================
+
+  WHAT IT DOES:
+    The main killstreak system. Initializes all killstreak types,
+    manages the killstreak queue per player, handles earning and
+    using killstreaks.
+
+  INITIALIZES THESE KILLSTREAKS:
+    _ac130        → AC-130 gunship
+    _remotemissile → Predator missile
+    _uav          → UAV (not in your mod — uses stock)
+    _airstrike    → Precision airstrike
+    _airdrop      → Care package / Emergency airdrop
+    _helicopter   → Attack heli / Pave Low / Chopper Gunner
+    _autosentry   → Sentry gun
+    _tank         → NOT in your mod (uses stock)
+    _emp          → NOT in your mod (uses stock)
+    _nuke         → Tactical nuke
+
+  KEY VALUES:
+    level.killStreakMod = 0;   ← Modifier to kill requirements
+    level.killstreakRoundDelay = 0;  ← Delay before killstreaks available
+
+  HOW TO MODIFY:
+    To change kill requirements:
+      Modify level.killStreakMod (adds/subtracts from all requirements).
+    To disable a killstreak:
+      Comment out its init() thread.
+
+
+================================================================================
+  29. _ac130.gsc — AC-130 GUNSHIP (1853 lines)
+================================================================================
+
+  WHAT IT DOES:
+    Controls the AC-130 killstreak: the player enters a gunship view
+    and can fire 3 weapons (25mm, 40mm, 105mm cannons).
+
+  KEY VALUES:
+    level.ac130_use_duration = 40;  ← 40 seconds of AC-130 time
+    level.ac130_num_flares = 2;     ← 2 countermeasure flares
+
+  PRECACHED ASSETS:
+    Model: vehicle_ac130_coop
+    Weapons: ac130_25mm_mp, ac130_40mm_mp, ac130_105mm_mp
+    Minimap icons: compass_objpoint_ac130_friendly/enemy
+    Shader: "black" (for the thermal overlay)
+    Effects: clouds, IR beacons, explosions, flares, lights
+
+  HOW TO MODIFY:
+    To extend AC-130 duration:
+      level.ac130_use_duration = 60;   ← 60 seconds
+    To add more flares:
+      level.ac130_num_flares = 5;
+    To change the weapons:
+      Modify the precacheItem lines and the weapon switch logic.
+
+
+================================================================================
+  30. _airdrop.gsc — CARE PACKAGE / EMERGENCY AIRDROP (1559 lines)
+================================================================================
+
+  WHAT IT DOES:
+    Handles care packages and emergency airdrops. A helicopter flies in,
+    drops a crate, players can capture it to receive a random killstreak.
+
+  PRECACHED ASSETS:
+    Models: com_plasticcase_friendly/enemy, vehicle_little_bird_armed,
+            vehicle_ac130_low_mp, sentry_minigun_folded
+    Shaders: waypoint_ammo_friendly, compass_objpoint_ammo_friendly/enemy,
+             compass_objpoint_c130_friendly/enemy
+    Strings: ammo/uav/counter_uav/sentry/predator/airstrike pickup hints
+
+  KEY FEATURES:
+    - Random killstreak from crate contents table
+    - Capture mechanic (hold use button)
+    - Enemy can steal your care package
+    - Helicopter flight path system
+    - Crate physics and landing detection
+
+
+================================================================================
+  31. _airstrike.gsc — PRECISION AIRSTRIKE (1171 lines)
+================================================================================
+
+  WHAT IT DOES:
+    Controls precision airstrikes: player selects a location on the map,
+    jets fly over and drop bombs along a line.
+
+  KEY FEATURES:
+    - Location selector (tablet view)
+    - Jet fly-by animation
+    - Bomb drop pattern (line of explosions)
+    - Team-based damage (doesn't hurt friendlies in some modes)
+
+
+================================================================================
+  32. _autosentry.gsc — SENTRY GUN (716 lines)
+================================================================================
+
+  WHAT IT DOES:
+    Controls the sentry gun killstreak. Player places a turret that
+    auto-targets and shoots enemies within range.
+
+  KEY FEATURES:
+    - Placement system (select location and direction)
+    - Auto-targeting AI (scans for enemies in cone)
+    - Health and destruction system
+    - Can be picked up and moved
+
+
+================================================================================
+  33. _harrier.gsc — HARRIER STRIKE (1155 lines)
+================================================================================
+
+  WHAT IT DOES:
+    Controls the Harrier killstreak. Jets do a bombing run, then one
+    Harrier hovers and provides air support with its gun.
+
+  KEY FEATURES:
+    - Initial bombing run (3 jets)
+    - Hover phase (1 jet stays and shoots enemies)
+    - Duration timer
+    - Can be shot down
+
+
+================================================================================
+  34. _helicopter.gsc — ATTACK HELICOPTER / PAVE LOW / CHOPPER GUNNER (2187 lines)
+================================================================================
+
+  WHAT IT DOES:
+    Controls all helicopter killstreaks: Attack Helicopter, Pave Low,
+    and Chopper Gunner. The largest killstreak file.
+
+  HELICOPTER TYPES:
+    cobra       → Attack Helicopter / Little Bird
+    hind        → Mi-24P Hind (OpFor attack heli)
+    mi28        → Mi-28 (alternate OpFor heli)
+    apache      → AH-64 Apache (US attack heli)
+    pavelow     → MH-53 Pave Low (heavy escort heli)
+
+  PRECACHED VEHICLES:
+    vehicle_cobra_helicopter_fly_low
+    vehicle_mi24p_hind_mp
+    vehicle_mi-28_mp
+    vehicle_apache_mp
+    vehicle_pavelow
+    vehicle_pavelow_opfor
+    vehicle_little_bird_armed
+
+  KEY FEATURES:
+    - Flight path following (heli_start / heli_loop nodes on map)
+    - Targeting and engaging enemies
+    - Flare countermeasures vs lock-on missiles
+    - Chopper Gunner player control mode
+    - Health and destruction (can be shot down)
+    - Crash animation when destroyed
+
+  HOW TO MODIFY:
+    To change helicopter health:
+      Find the health assignment in the helicopter type setup.
+    To change Pave Low weapon:
+      Modify the precacheditem("cobra_FFAR_mp") lines.
+
+
+================================================================================
+  35. _nuke.gsc — TACTICAL NUKE (312 lines)
+================================================================================
+
+  WHAT IT DOES:
+    Controls the Tactical Nuke killstreak (25 kills). When activated,
+    a 10-second countdown starts, then everyone dies and the game ends.
+
+  KEY VALUES:
+    setDvarIfUninitialized("scr_nukeTimer", 10);
+      Timer before nuke detonates (default: 10 seconds).
+
+    setDvarIfUninitialized("scr_nukeCancelMode", 0);
+      0 = nuke cannot be cancelled
+      1 = nuke can be cancelled (custom feature)
+
+  PRECACHED ASSETS:
+    Item: nuke_mp
+    Location selector: map_nuke_selector
+    Effects: player_death_nuke, player_death_nuke_flash, nuke_aftermath_mp
+    Strings: MP_TACTICAL_NUKE_CALLED, MP_FRIENDLY_TACTICAL_NUKE
+
+  CUSTOM MODIFICATIONS:
+    Line 6: self endon("disconnect");
+      Added to prevent errors if the nuke caller disconnects.
+    Line 36: self endon("disconnect");
+      Same protection in tryUseNuke.
+
+  HOW TO MODIFY:
+    To change nuke timer:
+      Set scr_nukeTimer dvar to desired seconds.
+    To allow nuke cancellation:
+      Set scr_nukeCancelMode to 1.
+    To change the kill requirement:
+      Modify the killstreak table (mp/killstreakTable.csv).
+
+
+================================================================================
+  36. _predscreen.gsc — PREDATOR MISSILE HUD (378 lines)
+================================================================================
+
+  WHAT IT DOES:
+    Creates the predator missile targeting screen overlay.
+    When the player uses a predator missile, this draws the green
+    targeting reticle and altitude display on screen.
+
+
+================================================================================
+  37. _remotemissile.gsc — PREDATOR MISSILE FLIGHT (361 lines)
+================================================================================
+
+  WHAT IT DOES:
+    Controls the actual flight of the predator missile.
+    Player steers the missile in first person as it flies down
+    toward the target location.
+
+  KEY FEATURES:
+    - First-person missile camera
+    - Player-controlled steering
+    - Boost mechanic (speed up to target)
+    - Explosion on impact
+    - Kill attribution to the missile user
+
+
+================================================================================
+================================================================================
+  PART 8 - MAPS/MP/PERKS (Perk Modifications)
+================================================================================
+================================================================================
+
+
+================================================================================
+  38. _perks.gsc — PERK INITIALIZATION (409 lines)
+================================================================================
+
+  WHAT IT DOES:
+    Initializes all perks in the game: precaches their assets,
+    sets up perk functions, and defines script-only perks.
+
+  CUSTOM MODIFICATIONS:
+    Line 6: #include scripts\mp\_functions;
+      CUSTOM — includes your mod's functions so perk code can
+      access your custom functions.
+
+  PRECACHED ASSETS:
+    precacheShader("combathigh_overlay");   ← Painkiller effect
+    precacheShader("specialty_painkiller");  ← Painkiller icon
+    precacheModel("weapon_riot_shield_mp"); ← Riot shield world model
+    precacheModel("viewmodel_riot_shield_mp"); ← Riot shield view model
+
+  EFFECTS:
+    level.spawnGlow["enemy"] = loadfx("misc/flare_ambient");     ← Red enemy spawn glow
+    level.spawnGlow["friendly"] = loadfx("misc/flare_ambient_green"); ← Green friendly spawn glow
+    level.c4Death = loadfx("explosions/oxygen_tank_explosion");  ← Martyrdom explosion
+    level._effect["ricochet"] = loadfx("impacts/large_metalhit_1"); ← Riot shield ricochet
+
+  SCRIPT PERKS (handled by GSC, not the engine):
+    specialty_blastshield    Blast Shield
+    specialty_akimbo         Akimbo (dual wield)
+    specialty_siege          Riot Shield speed
+    specialty_falldamage     Commando Pro (no fall damage)
+
+  HOW TO MODIFY:
+    To add a new perk:
+      1. Add it to level.scriptPerks["perk_name"] = true;
+      2. Create set/unset functions
+      3. Register them in level.perkSetFuncs/level.perkUnsetFuncs
+
+
+================================================================================
+  39. _perkfunctions.gsc — PERK BEHAVIOR FUNCTIONS (1060 lines)
+================================================================================
+
+  WHAT IT DOES:
+    Contains all the actual perk behavior functions:
+    - Blast Shield toggle
+    - Sleight of Hand (fast ADS)
+    - Steady Aim
+    - Commando (extended melee, no fall damage)
+    - Scavenger (ammo pickup)
+    - Stopping Power (extra damage)
+    - Cold Blooded (invisible to thermals/killstreaks)
+    - Marathon/Lightweight (movement speed)
+    - And all other perks
+
+  CUSTOM MODIFICATIONS:
+    Line 14: #include scripts\mp\_functions;
+      CUSTOM — includes your mod's functions.
+
+  KEY FUNCTIONS:
+    blastshieldUseTracker() — Monitors blast shield toggle
+    setRearView() / unsetRearView() — Rear view perk (commented out)
+    setSleightOfHand() — Fast reload perk
+    setCommando() — Extended melee range
+    cac_modified_damage() — Damage modification by perks (Stopping Power, etc.)
+
+
+================================================================================
+================================================================================
+  PART 9 - SOUND (Custom Audio)
+================================================================================
+================================================================================
+
+
+================================================================================
+  40. menu_music.mp3 — MAIN MENU MUSIC
+================================================================================
+
+  FILE: sound/music/menu_music.mp3
+
+  WHAT IT IS:
+    The background music that plays on the main menu screen.
+    Referenced in ui_mp/menu_xboxlive.menu:
+      soundLoop "music_mainmenu_mp"
+
+  TO REPLACE:
+    1. Create your MP3 file (any length, it will loop)
+    2. Name it menu_music.mp3
+    3. Put it in sound/music/
+    4. The sound alias system maps "music_mainmenu_mp" to this file
+
+  NOTE: You may also need to update the sound alias to point to
+  your new file. See Section 42 (soundaliases).
+
+
+================================================================================
+  41. hz_t_oilrig_themestealth_v1.mp3 — CUSTOM THEME
+================================================================================
+
+  FILE: sound/music/hz_t_oilrig_themestealth_v1.mp3
+
+  WHAT IT IS:
+    A custom theme song. The name suggests it's from the Oil Rig
+    mission in the MW2 campaign (stealth theme). This could be used
+    as round start music, victory music, or ambient background.
+
+  TO USE IN GSC:
+    // Play music for a player:
+    self playLocalSound("custom_theme_alias");
+    // You'd need to set up a sound alias mapping this to the file.
+
+  TO REPLACE:
+    Same as above — replace the .mp3 file with your custom audio.
+
+
+================================================================================
+================================================================================
+  PART 10 - SOUNDALIASES (Sound Configuration)
+================================================================================
+================================================================================
+
+
+================================================================================
+  42. WHAT SOUND ALIASES ARE
+================================================================================
+
+  Sound aliases are a mapping system. The GSC code doesn't reference
+  audio files directly — it references a NAME (alias), and the sound
+  alias file maps that name to an actual audio file.
+
+  Example:
+    GSC code:        self playLocalSound("music_mainmenu_mp");
+    Sound alias:     music_mainmenu_mp → sound/music/menu_music.mp3
+    Result:          menu_music.mp3 plays
+
+  SOUND ALIAS FILE FORMAT:
+    Comma-separated values (CSV-like). Each row defines one alias.
+    Fields include: alias name, file path, volume, pitch, loop, etc.
+
+
+================================================================================
+  43. HOW TO ADD CUSTOM SOUNDS
+================================================================================
+
+  1. CREATE your audio file (.mp3 or .wav)
+  2. PUT it in sound/ folder (any subfolder)
+  3. CREATE a sound alias entry mapping a name to your file
+  4. USE the alias name in GSC:
+       self playLocalSound("my_custom_sound");
+
+  For simple overrides, just name your file the same as the stock
+  file and put it in the same sound/ path. The engine loads yours.
+
+
+================================================================================
+================================================================================
+  PART 11 - UI_MP (Engine Menu System)
+================================================================================
+================================================================================
+
+
+================================================================================
+  44. WHAT .MENU AND .INC FILES ARE
+================================================================================
+
+  .menu files:
+    Define the game's engine-level menus. These are NOT GSC — they're
+    a separate menu definition language used by the IW engine.
+    They control things like:
+    - Main menu layout
+    - Scoreboard
+    - Create-a-Class screen
+    - Team selection
+    - Settings menus
+    - In-game HUD elements
+
+  .inc files:
+    Include files — reusable templates that .menu files reference.
+    Work like #include in C — the contents get pasted into the .menu.
+
+  HEADER COMMENT:
+    Many files have: "Dumped by aerosoul94"
+    This means they were extracted (dumped) from the game's compiled
+    .ff files using a decompiler tool. The dumped files can then be
+    modified and recompiled.
+
+  THESE FILES REQUIRE mod.ff:
+    Unlike GSC scripts which can be loaded raw, .menu files must be
+    compiled into a mod.ff file for the engine to read them.
+    See IWD_AND_FF_GUIDE.txt for how to compile mod.ff.
+
+
+================================================================================
+  45. bg.inc — MAIN BACKGROUND TEMPLATE (259 lines)
+================================================================================
+
+  WHAT IT DOES:
+    Defines the layered background used on ALL main menus.
+    Every menu that shows a background includes this file.
+
+  LAYERS (back to front):
+    1. In-game darkening:
+       When in-game, shows a semi-transparent black overlay (alpha 0.4).
+
+    2. Main background image:
+       background "mw2_main_background"
+       Shows the MW2 main menu background when not in-game.
+
+    3. Mode-specific background:
+       BACKGROUND_IMAGE("mw2_main_mp_image")  ← Multiplayer
+       BACKGROUND_IMAGE("mw2_main_sp_image")  ← Single player
+       BACKGROUND_IMAGE("mw2_main_co_image")  ← Co-op (Spec Ops)
+       BACKGROUND_IMAGE("animbg_blur_front")  ← IW4x custom
+
+    4. Cloud overlay (ANIMATED):
+       Two cloud layers scrolling in opposite directions.
+       Layer 1: scrolls left over 60 seconds
+       Layer 2: scrolls right over 50 seconds
+       Both use "mw2_main_cloud_overlay" shader.
+
+    5. Glow effect (ANIMATED):
+       Two mockup_bg_glow layers with pulsing alpha.
+       Color: purple (0.35, 0.0, 1.0)
+       Pulse speed: one at 1500ms cycle, one at 480ms cycle
+       Creates a breathing purple glow effect.
+
+    6. Sidebar gradient:
+       gradient_bottom or gradient_fadein_fadebottom on the left side.
+
+  HOW TO CUSTOMIZE:
+    Change background image:
+      Replace "mw2_main_background" with your image name.
+    Change glow color:
+      Find forecolor 0.35 0.0 1.0 and change RGB (0-1).
+    Change glow speed:
+      Find milliseconds() / 1500 and change 1500 (lower = faster).
+    Remove clouds:
+      Delete the two mw2_main_cloud_overlay itemDef blocks.
+    Remove glow:
+      Delete the two mockup_bg_glow itemDef blocks.
+
+
+================================================================================
+  46. menustyle.inc — MENU STYLE DEFINITIONS
+================================================================================
+
+  WHAT IT DOES:
+    Defines the visual style for all menus: button sizes, text alignment,
+    separator spacing, text colors, and positioning.
+
+  KEY DEFINITIONS:
+    CHOICE_SIZE_X = 220         Menu button width
+    CHOICE_SIZE_Y = 22          Menu button height
+    CHOICE_TEXTALIGN = MIDDLE_RIGHT    Text alignment
+    CHOICE_SEP_OFFSET_Y = -2    Separator line offset
+    TEXTBUTTON_COLOR = 0.9 0.9 0.92 0.75    Button text color
+    TEXTSIZE_BUTTON_PC = 0.4    Button text size
+    ORIGIN_OPTIONS_FRAME = 220 0    Options frame position
+
+  HOW TO MODIFY:
+    Change button size:
+      CHOICE_SIZE_X and CHOICE_SIZE_Y
+    Change text color:
+      TEXTBUTTON_COLOR = R G B A (0-1 range)
+    Change text size:
+      TEXTSIZE_BUTTON_PC = 0.5 (bigger) or 0.3 (smaller)
+
+
+================================================================================
+  47. logo.inc — LOGO CONFIGURATION (1 line)
+================================================================================
+
+  FILE CONTENTS:
+    #define LOGO_GAME
+
+  WHAT IT DOES:
+    Sets a preprocessor flag that tells other menu files to show
+    the game logo. Other files check #ifdef LOGO_GAME to decide
+    whether to display the logo.
+
+
+================================================================================
+  48. main_text.menu — MAIN MENU WITH DEVMAP (1016 lines)
+================================================================================
+
+  WHAT IT DOES:
+    The main menu text/button layout. Also includes the "devmap"
+    quick-launch feature — maps every map name to a devmap command.
+
+  DEVMAP FEATURE:
+    The SETUP_ACTION_STARTDEV macro checks dvarstring("ui_mapname")
+    and launches the appropriate map in developer mode:
+      mp_afghan, mp_boneyard, mp_brecourt, mp_checkpoint, mp_derail,
+      mp_estate, mp_favela, mp_highrise, mp_invasion, mp_nightshift,
+      mp_quarry, mp_rundown, mp_rust, mp_terminal, mp_underpass,
+      mp_vacant, mp_subbase, mp_complex, mp_compact, mp_storm,
+      mp_overgrown, mp_crash, mp_abandon, mp_trailerpark, mp_salvage,
+      mp_fuel2, mp_strike, mp_carnival, mp_trailer
+
+  HOW TO MODIFY:
+    To add a new map to devmap:
+      Add another if block:
+        if (dvarstring(ui_mapname) == "mp_newmap") \
+        { \
+            exec "devmap mp_newmap"; \
+        } \
+
+
+================================================================================
+  49. menu_xboxlive.menu — XBOX LIVE / LOBBY MENU (1199 lines)
+================================================================================
+
+  WHAT IT DOES:
+    The main lobby/Xbox Live menu. This is the menu you see when you
+    launch multiplayer and are in the lobby.
+
+  KEY FEATURES:
+    soundLoop "music_mainmenu_mp"   ← Background music
+    Party list management
+    Player options
+    Server browser integration
+    Match settings
+
+
+================================================================================
+  50. scoreboard.menu — SCOREBOARD LAYOUT (343 lines)
+================================================================================
+
+  WHAT IT DOES:
+    The scoreboard shown when pressing Tab/Select during a game.
+    Shows player names, scores, kills, deaths, ping, etc.
+
+  KEY ELEMENTS:
+    - Team icons (using dvarstring "g_TeamIcon_Allies" / "g_TeamIcon_Axis")
+    - Score columns
+    - Player name list
+    - Gradient backgrounds
+    - "Dumped by aerosoul94" — extracted and customized
+
+  HOW TO MODIFY:
+    To change scoreboard width:
+      Modify the rect values (e.g. rect 0 0 640 480).
+    To change team icon size:
+      Modify rect 0 -4 36 36 (36x36 pixels).
+    To change text color:
+      Modify forecolor values.
+
+
+================================================================================
+  51. OTHER .MENU FILES
+================================================================================
+
+  cac_popup.menu              Create-a-Class popup (edit class)
+  menu_cac_assault.menu       Assault class loadout
+  menu_cas_popup.menu         CAS (custom assault) popup
+  menu_challenges.menu        Challenges/achievements screen
+  menu_online_barracks.menu   Online barracks (stats)
+  menu_playercard_icon_popup.menu   Emblem selection popup
+  menu_playercard_title_popup.menu  Calling card selection popup
+  menu_xboxlive_privatelobby.menu   Private lobby menu
+  controls_multi.menu         Multiplayer controls settings
+  createserver.menu           Create server / host game
+  connect.menu                Server connection screen
+  dpad_hd.menu                D-pad HUD display
+  hold_breath_hint.menu       Sniper hold breath hint
+  leavelobbywarning.menu      Leave lobby confirmation
+  main_options.menu           Main options menu
+  pc_options_advanced_video.menu    Advanced video settings
+  pc_options_voice.menu       Voice chat settings
+  popup_callsign.menu         Callsign/emblem popup
+  popup_gamesetup.menu        Game setup popup
+  settings_bonus_map.menu     Bonus map settings
+  settings_gametype.menu      Gametype settings
+  settings_map.menu           Map selection settings
+  settings_quick_sd*.menu     Quick S&D rule settings
+  team_marinesopfor.menu      Team selection (Marines/OpFor)
+  weaponbar_hd.menu           Weapon bar HUD
+  weaponinfo.menu             Weapon info display
+  xpbar_hd.menu               XP bar HUD
+  xpbar_sd.menu               XP bar (S&D mode)
+  FONTplayercard_killedby_hd.menu   Killed-by playercard font
+
+  INCLUDE FILES (.inc):
+    cac_loadout.inc             Create-a-Class loadout template
+    cacmain.inc                 CaC main layout template
+    ingamebg.inc                In-game background overlay
+    main.inc                    Main menu layout template
+    navcontrols.inc             Navigation controls template
+    popup_cac_background.inc    CaC popup background
+    popupstyle.inc              Popup style template
+
+
+================================================================================
+  52. SCRIPTMENUS/ FOLDER
+================================================================================
+
+  scriptmenus/ contains menus that are opened by GSC scripts
+  (using openMenu/closeMenu engine functions).
+
+  changeclass.menu        Change class during game
+  class.menu              Class selection
+  hostmigration.menu      Host migration screen
+  main_text.menu          In-game main text menu
+  onemanarmy.menu         One Man Army class switch
+  team_marinesopfor.menu  Team selection popup
+
+
+================================================================================
+  53. WEAPONS/MP/ FOLDER — WEAPON DEFINITION FILES
+================================================================================
+
+  Contains 36 weapon definition files. Each file defines ALL properties
+  of one weapon variant (attachments included).
+
+  FILE FORMAT:
+    Plain text, one line per file. Fields separated by \fieldName\value\.
+    Every property of the weapon is defined here.
+
+  WEAPONS INCLUDED:
+    aa12_fmj_mp               AA-12 with FMJ
+    aa12_grip_mp              AA-12 with Grip
+    airdrop_marker_mp         Airdrop marker (care package)
+    at4_mp                    AT4 launcher
+    barrett_mp                Barrett .50 cal
+    c4_mp                     C4 explosive
+    cheytac_fmj_mp            Intervention with FMJ
+    cheytac_silencer_mp       Intervention with Silencer
+    cheytac_thermal_mp        Intervention with Thermal
+    cheytac_xmags_mp          Intervention with Extended Mags
+    claymore_mp               Claymore mine
+    concussion_grenade_mp     Stun grenade
+    deserteagle_akimbo_fmj_mp Desert Eagle akimbo FMJ
+    flare_mp                  Flare (signal flare)
+    flash_grenade_mp          Flashbang
+    frag_grenade_mp           Frag grenade
+    gl_m4_mp                  M4 grenade launcher
+    gl_mp                     Standalone grenade launcher
+    glock_akimbo_mp           G18 akimbo
+    killstreak_ac130_mp       AC-130 weapon
+    killstreak_predator_missile_mp   Predator missile weapon
+    m16_thermal_mp            M16 with Thermal
+    m21_mp                    M21 EBR
+    m21_silencer_mp           M21 with Silencer
+    m4_gl_thermal_mp          M4 GL with Thermal
+    m4_shotgun_attach_mp      M4 with Shotgun attachment
+    m4_shotgun_thermal_mp     M4 Shotgun + Thermal
+    model1887_akimbo_fmj_mp   Model 1887 akimbo FMJ
+    model1887_akimbo_mp       Model 1887 akimbo
+    onemanarmy_mp             One Man Army bag
+    ranger_akimbo_mp          Ranger akimbo
+    semtex_mp                 Semtex grenade
+    smoke_grenade_mp          Smoke grenade
+    spas12_grip_mp            SPAS-12 with Grip
+    spas12_grip_silencer_mp   SPAS-12 Grip + Silencer
+    stinger_mp                Stinger missile
+
+  WEAPON FILE FIELDS (see weap_defs.txt for full reference):
+    See PART 13, Section 61 for all animation fields.
+
+
+================================================================================
+================================================================================
+  PART 12 - ROOT FILES
+================================================================================
+================================================================================
+
+
+================================================================================
+  54. bots.txt — BOT NAMES
+================================================================================
+
+  FILE CONTENTS:
+    A list of names that bots use in-game.
+    The server reads this file to name bots when they join.
+
+  TO MODIFY:
+    Add one name per line. The game picks randomly from the list.
+
+
+================================================================================
+  55. cfg_commands.txt — CFG COMMAND REFERENCE
+================================================================================
+
+  YOUR PERSONAL REFERENCE FILE.
+  Not read by the game engine.
+  Contains documentation on how to write CFG strings in Notepad++,
+  how + commands work, semicolon syntax, wait timing, and tilt commands.
+
+
+================================================================================
+  56. weap_defs.txt — WEAPON FIELD REFERENCE
+================================================================================
+
+  YOUR PERSONAL REFERENCE FILE.
+  Not read by the game engine.
+  Documents all fields in weapon definition files:
+  animation fields, sound fields, damage values, etc.
+
+
+================================================================================
+  57. missingasset.csv — MISSING ASSET TRACKING
+================================================================================
+
+  Lists assets that the game looked for but couldn't find.
+  Useful for debugging.
+
+  CURRENT ENTRIES:
+    material,wish_logo           ← The custom logo (listed 4 times)
+    xmodel,stimshot_vm           ← Stimshot view model (not in MW2)
+    xmodel,stimshot_wm           ← Stimshot world model (not in MW2)
+    material,hud_us_shockcharge  ← Shock charge HUD icon (not in MW2)
+    material,animbg_blur_front   ← Animated blur background
+    xanim,viewmodel_tazor_spike_idle   ← Taser spike idle animation
+    xanim,viewmodel_tazor_spike_throw  ← Taser spike throw animation
+    xanim,viewmodel_tazor_spike_pull_pin ← Taser spike pull pin animation
+
+  WHAT THIS MEANS:
+    The mod references some assets from newer CoD games (stimshot,
+    shock charge, taser spike) that don't exist in MW2. These won't
+    cause crashes — the game just shows nothing for missing assets.
+
+  TO FIX:
+    Either create the missing assets and add them to your .iwd,
+    or remove the code that references them.
+
+
+================================================================================
+  58. scripts.cfg — SCRIPT CONFIGURATION
+================================================================================
+
+  FILE CONTENTS:
+    Empty (just a newline).
+
+  WHAT IT'S FOR:
+    A .cfg file that gets executed to set script-related dvars.
+    Currently unused. You could add dvar settings here like:
+      set scr_xpscale 4
+      set scr_nukeTimer 5
+
+
+================================================================================
+================================================================================
+  PART 13 - ALL ANIMATIONS REFERENCE
+================================================================================
+================================================================================
+
+
+================================================================================
+  59. VEHICLE ANIMATIONS
+================================================================================
+
+  These animations are defined in the animtrees and used by the
+  destructible system when vehicles are damaged.
+
+  SEDANS:
+    vehicle_80s_sedan1_flattire_LB     Left-back tire deflates
+    vehicle_80s_sedan1_flattire_LF     Left-front tire deflates
+    vehicle_80s_sedan1_flattire_RB     Right-back tire deflates
+    vehicle_80s_sedan1_flattire_RF     Right-front tire deflates
+    vehicle_80s_sedan1_destroy         Full car destruction (crumple + explode)
+
+  AIRCRAFT:
+    vehicle_mig29_destroy              MiG-29 jet destruction
+
+  MOTORCYCLES:
+    vehicle_motorcycle_destroy_01      Motorcycle falls over (variant 1)
+    vehicle_motorcycle_destroy_02      Motorcycle falls over (variant 2)
+
+  SNOWMOBILES:
+    vehicle_snowmobile_destroy_01      Snowmobile destruction
+
+  HOW TO TRIGGER IN GSC:
+    #using_animtree("destructibles");
+    vehicle useAnimTree(#animtree);
+    vehicle setAnim(%vehicle_80s_sedan1_destroy, 1, 0);
+    // Parameters: animation, weight (1=full), time (0=start immediately)
+
+
+================================================================================
+  60. ENVIRONMENTAL OBJECT ANIMATIONS
+================================================================================
+
+  LIGHTS:
+    light_fluorescent_swing            Double tube light swings back and forth
+    light_fluorescent_null             Double tube light returns to rest
+    light_fluorescent_swing_02         Double tube light alternate swing
+    light_fluorescent_single_null      Single tube light returns to rest
+    light_fluorescent_single_swing     Single tube light swings
+    light_fluorescent_single_swing_02  Single tube swing variant 2
+    light_fluorescent_single_swing_03  Single tube swing variant 3
+
+  GAS PUMPS:
+    gaspump01_hose                     Pump hose swings when shot
+
+  LOCKERS:
+    locker_broken_both_doors_1         Both locker doors burst open (var 1)
+    locker_broken_both_doors_2         Both doors burst open (var 2)
+    locker_broken_both_doors_3         Both doors burst open (var 3)
+    locker_broken_both_doors_4         Both doors burst open (var 4)
+    locker_broken_door1_fast           Door 1 bursts open quickly
+    locker_broken_door1_slow           Door 1 swings open slowly
+    locker_broken_door2_fast           Door 2 bursts open quickly
+    locker_broken_door2_slow           Door 2 swings open slowly
+
+  FANS:
+    ex_airconditioner_fan              AC unit fan spins/breaks
+    me_fanceil1_spin                   Ceiling fan spinning normally
+    me_fanceil1_spin_stop              Ceiling fan winding down
+    wall_fan_rotate                    Wall-mounted fan rotating
+    wall_fan_wobble                    Wall fan wobbling (damaged bearing)
+    wall_fan_stop                      Wall fan grinding to a halt
+
+  CHICKEN CAGES:
+    chicken_cage_loop_01               Chickens pecking/moving (loop 1)
+    chicken_cage_loop_02               Chickens pecking/moving (loop 2)
+    chicken_cage_death                 Chickens killed (variant 1)
+    chicken_cage_death_02              Chickens killed (variant 2)
+
+  GENERATORS:
+    generator_vibration                Generator running, vibrating
+    generator_explode                  Generator exploding (variant 1)
+    generator_explode_02               Generator exploding (variant 2)
+    generator_explode_03               Generator exploding (variant 3)
+
+
+================================================================================
+  61. WEAPON ANIMATIONS (ALL FIELDS)
+================================================================================
+
+  Every weapon file in weapons/mp/ has these animation fields.
+  Each field specifies which animation to play for that action.
+
+  --- IDLE ANIMATIONS ---
+  \idleAnim\               Standing idle, hip-fire position
+  \emptyIdleAnim\          Standing idle with empty magazine
+
+  --- FIRE ANIMATIONS ---
+  \fireAnim\               Normal firing (per shot)
+  \lastShotAnim\           Firing the last bullet in magazine
+  \rechamberAnim\          Bolt/pump cycle after shot (bolt actions, shotguns)
+
+  --- ADS (Aim Down Sights) FIRE ---
+  \adsFireAnim\            Firing while aimed down sights
+  \adsLastShotAnim\        Last shot while ADS
+  \adsRechamberAnim\       Bolt cycle while ADS
+
+  --- ADS TRANSITION ---
+  \adsUpAnim\              Raising weapon to aim down sights
+  \adsDownAnim\            Lowering weapon from ADS to hip
+
+  --- RELOAD ANIMATIONS ---
+  \reloadAnim\             Reload with ammo remaining in magazine
+  \reloadEmptyAnim\        Reload from completely empty (includes bolt catch)
+
+  --- WEAPON SWAP ---
+  \raiseAnim\              Pulling out weapon (swap in)
+  \dropAnim\               Putting away weapon (swap out)
+  \quickRaiseAnim\         Fast swap in (after quick-swap)
+  \quickDropAnim\          Fast swap out (before quick-swap)
+  \firstRaiseAnim\         First time equipping at spawn
+  \emptyRaiseAnim\         Raising weapon when magazine is empty
+  \emptyDropAnim\          Putting away weapon when empty
+
+  --- SPRINT ---
+  \sprintInAnim\           Transition from normal to sprinting
+  \sprintLoopAnim\         Sprinting loop (arms and weapon bouncing)
+  \sprintOutAnim\          Transition from sprinting back to normal
+
+  --- MELEE ---
+  \meleeAnim\              Standard melee attack (knife swipe)
+  \meleeChargeAnim\        Charged melee / stab attack
+
+  EXAMPLE (Intervention / cheytac):
+    \idleAnim\viewmodel_cheytac_idle
+    \fireAnim\viewmodel_cheytac_fire
+    \rechamberAnim\viewmodel_cheytac_rechamber
+    \reloadAnim\viewmodel_cheytac_reload
+    \reloadEmptyAnim\viewmodel_cheytac_reload_empty
+    \raiseAnim\viewmodel_cheytac_pullout
+    \quickRaiseAnim\viewmodel_cheytac_pullout_quick
+    \sprintInAnim\viewmodel_cheytac_sprint_in
+    \sprintLoopAnim\viewmodel_cheytac_sprint_loop
+    \sprintOutAnim\viewmodel_cheytac_sprint_out
+    \adsUpAnim\viewmodel_cheytac_ADS_up
+    \adsDownAnim\viewmodel_cheytac_ADS_down
+    \adsRechamberAnim\viewmodel_cheytac_rechamber_ads
+    \meleeAnim\viewmodel_knife_melee_slice
+    \meleeChargeAnim\viewmodel_knife_melee_stab
+
+  HOW TO MODIFY:
+    Open the weapon file in a text editor. Find the field you want
+    to change. Replace the animation name with a different one.
+    The animation must exist in the game files or your mod.ff.
+
+  EXAMPLE — SWAP INTERVENTION RELOAD WITH BARRETT RELOAD:
+    Change \reloadAnim\viewmodel_cheytac_reload
+    To     \reloadAnim\viewmodel_barrett_reload
+    This makes the Intervention use the Barrett's reload animation.
+
+  NOTE: Cross-weapon animation swaps may look wrong if the models
+  are very different. Best results when swapping between similar weapons.
+
+
+================================================================================
+  62. PLAYER ANIMATIONS
+================================================================================
+
+  Player animations are handled by the engine automatically based on
+  weapon type (playerAnimType field in weapon files).
+
+  PLAYER ANIM TYPES:
+    autorifle       Assault rifles, LMGs
+    sniper          Sniper rifles
+    smg             Submachine guns
+    shotgun         Shotguns
+    rocketlauncher  Launchers (RPG, AT4, Javelin)
+    pistol          Handguns
+    machinegun      Machine guns (turrets)
+    grenade         Grenades
+    turret          Mounted turrets
+    c4              C4 / equipment
+    hold            Holding object (airdrop marker)
+    briefcase       Briefcase (nuke)
+    riotshield      Riot shield
+
+  EACH TYPE HAS:
+    - Stand/Crouch/Prone idle
+    - Walk/Run/Sprint
+    - Jump/Land
+    - ADS stand/crouch/prone
+    - Reload stand/crouch/prone
+    - Melee
+    - Climb
+    - Mantle (vault over objects)
+    - Last stand (crawling)
+    - Death (multiple variants)
+
+  TO CHANGE PLAYER ANIM TYPE FOR A WEAPON:
+    In the weapon file, change:
+      \playerAnimType\sniper
+    To:
+      \playerAnimType\autorifle
+    This makes the player hold and move with the weapon as if
+    it were an assault rifle (different run animation, etc.)
+
+
+================================================================================
+  63. HOW TO ADD CUSTOM ANIMATIONS
+================================================================================
+
+  ADDING CUSTOM ANIMATIONS REQUIRES:
+    1. The animation file (.xanim format)
+    2. An animtree listing the animation name
+    3. A mod.ff that includes the animation
+
+  STEP-BY-STEP:
+    1. CREATE your animation in a 3D tool (Maya, 3ds Max, Blender)
+       Export as .xanim format using CoD modtools export plugins.
+
+    2. ADD the animation name to an animtree (.atr file):
+       Either add to an existing .atr or create a new one.
+       animtrees/my_custom_anims.atr:
+         my_custom_idle
+         my_custom_taunt
+         my_custom_dance
+
+    3. REFERENCE in your .zone file for mod.ff compilation:
+       xanim,my_custom_idle
+       xanim,my_custom_taunt
+       xanim,my_custom_dance
+
+    4. BUILD mod.ff with the zone compiler.
+
+    5. USE IN GSC:
+       #using_animtree("my_custom_anims");
+       self setAnim(%my_custom_idle, 1, 0);
+
+  FOR WEAPON ANIMATIONS ONLY:
+    You can swap existing weapon animations without creating new ones.
+    Just change the animation name in the weapon file to point to
+    a different existing animation.
+
+  MISSING ANIMATIONS:
+    Your missingasset.csv shows these missing animations:
+      viewmodel_tazor_spike_idle
+      viewmodel_tazor_spike_throw
+      viewmodel_tazor_spike_pull_pin
+    These are from a newer CoD game and don't exist in MW2.
+    To fix: either create these animations or remove the code
+    that references them.
+
+================================================================================
