@@ -1,0 +1,724 @@
+================================================================================
+          IW4x MOD SETUP FROM SCRATCH - COMPLETE GUIDE
+================================================================================
+
+This guide explains how to create an IW4x mod from nothing, how the
+game loads your files, how to test, and how to debug errors.
+
+
+================================================================================
+  TABLE OF CONTENTS
+================================================================================
+
+  1.  What Is an IW4x Mod
+  2.  IW4x Folder Structure
+  3.  Where Mods Go
+  4.  How the Game Loads Your Mod
+  5.  Creating a Mod From Scratch
+  6.  The Minimum Viable Mod
+  7.  File Naming Rules
+  8.  The #include System
+  9.  The init() Entry Point
+  10. Loading Order and Execution Flow
+  11. Stock Files vs Mod Files
+  12. Overriding Stock Files
+  13. Testing Your Mod
+  14. Reading Error Messages
+  15. Common Errors and Fixes
+  16. Console Commands for Debugging
+  17. Hot Reloading and Fast Restart
+  18. Mod.ff and IWD Files
+  19. Precaching Resources
+  20. Multiple Mods
+
+
+================================================================================
+  1. WHAT IS AN IW4x MOD
+================================================================================
+
+  IW4x is a community client for Call of Duty: Modern Warfare 2.
+  It lets you run modded servers and load custom GSC scripts.
+
+  GSC (Game SCript) is the scripting language built into the CoD engine.
+  It controls gameplay logic: spawning, weapons, damage, HUD, and more.
+
+  A "mod" is a folder containing .gsc script files that the IW4x client
+  loads when you start a match. Your scripts can modify game behavior,
+  add menus, create custom features, etc.
+
+
+================================================================================
+  2. IW4x FOLDER STRUCTURE
+================================================================================
+
+  Your IW4x installation looks like this:
+
+  IW4x/
+    iw4x.exe                     <- The IW4x client
+    mods/                         <- ALL mods go here
+      my_mod/                     <- Your mod folder
+        scripts/                  <- Your scripts
+          mp/                     <- Multiplayer scripts
+            _main.gsc             <- Main entry point
+            _util.gsc             <- Utilities
+            ...
+    userraw/                      <- Alternative script location
+      scripts/                    <- Scripts loaded for ALL mods
+    players/                      <- Player data
+      profiles/                   <- .cfg files go here
+    main/                         <- Stock game data (don't touch)
+    zone/                         <- Stock zone files (don't touch)
+
+  The two places the game looks for scripts:
+    1. mods/<modname>/scripts/     <- Mod-specific scripts
+    2. userraw/scripts/            <- Global scripts (all mods)
+
+
+================================================================================
+  3. WHERE MODS GO
+================================================================================
+
+  Every mod is a folder inside the "mods" directory:
+
+    IW4x/mods/my_mod_name/
+
+  The folder name IS your mod name. It can contain:
+    - scripts/ folder with .gsc files (required)
+    - mod.ff (optional, compiled fast file)
+    - .iwd files (optional, for custom assets)
+
+  To load a mod:
+    1. Launch IW4x
+    2. Open console (~)
+    3. Type: fs_game mods/my_mod_name
+    4. Start or join a match
+
+  Or from command line:
+    iw4x.exe +set fs_game mods/my_mod_name +map mp_rust
+
+  To unload a mod:
+    fs_game ""
+
+
+================================================================================
+  4. HOW THE GAME LOADS YOUR MOD
+================================================================================
+
+  When a match starts with your mod loaded, the engine does this:
+
+  1. Loads all stock game scripts from fastfiles (.ff files)
+     These include the base game logic: spawning, damage, killstreaks, etc.
+
+  2. Scans your mod's scripts/ folder for .gsc files
+     Each file is compiled (text -> bytecode) one at a time.
+     If ANY file has a syntax error, compilation stops and you get an error.
+
+  3. For each loaded script, the engine checks if it has an init() function
+     If it does, init() is called when the match starts.
+
+  4. Your scripts can override stock scripts
+     If your mod has a file at the same path as a stock script,
+     YOUR version replaces the stock version.
+
+  The loading order you see in the console:
+    Loading script console_dvars.gsc...
+    Script scripts/console_dvars.gsc loaded successfully.
+    Loading script _main.gsc...
+    Script scripts/mp/_main.gsc loaded successfully.
+    Loading script _cfg.gsc...
+    Error: unknown function @ XXXXXX    <- Compilation failed here
+
+
+================================================================================
+  5. CREATING A MOD FROM SCRATCH
+================================================================================
+
+  Step by step, creating a brand new mod:
+
+  Step 1 - Create the folder structure:
+
+    IW4x/mods/my_mod/
+    IW4x/mods/my_mod/scripts/
+    IW4x/mods/my_mod/scripts/mp/
+
+  Step 2 - Create your main script file:
+
+    IW4x/mods/my_mod/scripts/mp/_main.gsc
+
+  Step 3 - Write the minimum code:
+
+    #include common_scripts\utility;
+    #include maps\mp\_utility;
+
+    init()
+    {
+        level thread onPlayerConnect();
+    }
+
+    onPlayerConnect()
+    {
+        while (true)
+        {
+            level waittill("connected", player);
+            player thread onPlayerSpawned();
+        }
+    }
+
+    onPlayerSpawned()
+    {
+        while (true)
+        {
+            self waittill("spawned_player");
+            self iPrintLn("My mod is working!");
+        }
+    }
+
+  Step 4 - Load the mod and test:
+
+    In IW4x console:
+      fs_game mods/my_mod
+      map mp_rust
+
+    You should see "My mod is working!" on screen when you spawn.
+
+
+================================================================================
+  6. THE MINIMUM VIABLE MOD
+================================================================================
+
+  The absolute minimum you need is ONE file with an init() function:
+
+  scripts/mp/_main.gsc:
+
+    init()
+    {
+        iPrintLnBold("Hello World");
+    }
+
+  That's it. This prints "Hello World" centered on screen when the
+  match starts. Everything else builds on top of this.
+
+  A more practical minimum with player spawning:
+
+    #include common_scripts\utility;
+    #include maps\mp\_utility;
+
+    init()
+    {
+        level thread onPlayerConnect();
+    }
+
+    onPlayerConnect()
+    {
+        while (true)
+        {
+            level waittill("connected", player);
+            player thread onPlayerSpawned();
+        }
+    }
+
+    onPlayerSpawned()
+    {
+        while (true)
+        {
+            self waittill("spawned_player");
+            // Your per-spawn code goes here
+        }
+    }
+
+  This gives you a hook that runs code every time any player spawns.
+
+
+================================================================================
+  7. FILE NAMING RULES
+================================================================================
+
+  - Files MUST have the .gsc extension
+  - File names are case-sensitive on some systems
+  - Convention: prefix files with underscore (_main.gsc, _util.gsc)
+  - Files go in scripts/mp/ for multiplayer scripts
+  - Subdirectories are fine: scripts/mp/menu/_menuutils.gsc
+  - File path in #include uses backslashes and NO .gsc extension:
+      File: scripts/mp/menu/_menuutils.gsc
+      Include: #include scripts\mp\menu\_menuutils;
+
+  The game will try to load every .gsc file it finds in your scripts/
+  folder. You don't need to register them anywhere - just put them in
+  the folder and include them where needed.
+
+
+================================================================================
+  8. THE #include SYSTEM
+================================================================================
+
+  #include tells the compiler to make functions from another file
+  available in the current file.
+
+    #include scripts\mp\_util;
+
+  After this line, the current file can call any function defined in
+  _util.gsc directly by name (like setPers(), getPers(), etc.)
+
+  --- STOCK INCLUDES ---
+
+  These are files built into the game that you can always include:
+
+    #include common_scripts\utility;
+      -> Basic utility functions (waittill, notify, etc.)
+
+    #include maps\mp\_utility;
+      -> MP-specific utilities (isAlive, getOtherTeam, etc.)
+
+    #include maps\mp\gametypes\_hud_util;
+      -> HUD creation functions (createFontString, setPoint, etc.)
+
+    #include maps\mp\perks\_perkfunctions;
+      -> Perk-related functions
+
+  --- YOUR INCLUDES ---
+
+  Include your own files the same way:
+
+    #include scripts\mp\_util;
+    #include scripts\mp\_functions;
+    #include scripts\mp\menu\_menuutils;
+
+  --- INCLUDE ORDER ---
+
+  Put stock includes first, then your includes:
+
+    #include common_scripts\utility;        // Stock
+    #include maps\mp\_utility;              // Stock
+    #include maps\mp\gametypes\_hud_util;   // Stock
+    #include scripts\mp\_util;              // Yours
+    #include scripts\mp\_functions;         // Yours
+
+  --- CIRCULAR INCLUDES ---
+
+  Be careful: if file A includes file B and file B includes file A,
+  you can get errors. Design your includes as a tree, not a circle.
+
+  Good:
+    _main includes _util and _functions
+    _functions includes _util
+    _structure includes _util and _functions
+
+  Bad:
+    _functions includes _main
+    _main includes _functions
+    (circular)
+
+  --- CROSS-FILE FUNCTION CALLS ---
+
+  If you don't want to include a whole file, you can call a specific
+  function from a specific file using the :: syntax:
+
+    self scripts\mp\menu\_setupmenu::SetupMenu();
+
+  This calls SetupMenu() from _setupmenu.gsc without needing to
+  #include that file. Useful when you only need one function.
+
+
+================================================================================
+  9. THE init() ENTRY POINT
+================================================================================
+
+  The game engine looks for a function called init() in each loaded
+  script file. If it finds one, it calls it when the match starts.
+
+  init() is called ONCE when the match begins, before any players spawn.
+
+  IMPORTANT: init() runs on the LEVEL entity, not on any player.
+  This means "self" inside init() is the level, NOT a player.
+  You cannot use player functions (like iPrintLn) directly in init().
+
+  To run code on players, you need the connect/spawn chain:
+
+    init()
+    {
+        // This runs once when match starts
+        // "self" here is the level
+        level thread onPlayerConnect();
+    }
+
+    onPlayerConnect()
+    {
+        while (true)
+        {
+            level waittill("connected", player);
+            // "player" is the player who just connected
+            player thread onPlayerSpawned();
+        }
+    }
+
+    onPlayerSpawned()
+    {
+        while (true)
+        {
+            self waittill("spawned_player");
+            // "self" here IS the player
+            // Now you can use player functions
+            self iPrintLn("Welcome!");
+        }
+    }
+
+
+================================================================================
+  10. LOADING ORDER AND EXECUTION FLOW
+================================================================================
+
+  1. Match starts
+  2. Game loads stock scripts from fastfiles
+  3. Game loads your mod scripts (alphabetical by file name)
+  4. All init() functions are called
+  5. Players connect -> "connected" event fires
+  6. Players spawn -> "spawned_player" event fires
+  7. Your spawn code runs
+
+  If you have multiple .gsc files with init(), they ALL get called.
+  The order is alphabetical by file path.
+
+  Scripts loaded alphabetically:
+    scripts/_aimassist.gsc      (loaded first)
+    scripts/mp/_binds.gsc
+    scripts/mp/_bolt.gsc
+    scripts/mp/_cfg.gsc
+    scripts/mp/_functions.gsc
+    scripts/mp/_main.gsc        (loaded somewhere in the middle)
+    scripts/mp/_util.gsc        (loaded last)
+
+  Each file's init() (if it has one) is called in this order.
+
+
+================================================================================
+  11. STOCK FILES vs MOD FILES
+================================================================================
+
+  Stock files are the game's built-in scripts, compiled into .ff files.
+  You cannot see their source code directly, but you can find decompiled
+  versions online (search for "IW4 GSC dump" or "MW2 script dump").
+
+  Stock file paths (these exist inside fastfiles):
+    maps\mp\_utility.gsc
+    maps\mp\gametypes\_damage.gsc
+    maps\mp\gametypes\_hud_util.gsc
+    maps\mp\perks\_perkfunctions.gsc
+    common_scripts\utility.gsc
+
+  Your mod files:
+    scripts\mp\_main.gsc
+    scripts\mp\_util.gsc
+
+  When you #include a stock file, you get access to all the engine's
+  built-in functions. These are always available and you don't need
+  to define them yourself.
+
+  Common stock functions you'll use:
+    isDefined(x)                  -> Check if variable exists
+    getOtherTeam(team)            -> Get opposing team name
+    isAlive(player)               -> Check if player is alive
+    createFontString(font, size)  -> Create text HUD element
+    waittill / notify             -> Event system
+    distance(a, b)                -> Distance between two points
+
+
+================================================================================
+  12. OVERRIDING STOCK FILES
+================================================================================
+
+  If your mod has a .gsc file at the same path as a stock script,
+  YOUR version replaces the stock version completely.
+
+  Example: To override the damage system:
+    Put your file at: scripts/mp/gametypes/_damage.gsc
+    (or maps/mp/gametypes/_damage.gsc depending on IW4x version)
+
+  WARNING: When you override a stock file, you must include ALL the
+  functions from the original that other stock files call. If you
+  only include some functions, other scripts that call the missing
+  ones will crash with "unknown function" errors.
+
+  For this reason, it's usually better to NOT override stock files
+  unless you know exactly what you're doing. Instead, hook into
+  events using waittill/notify to modify behavior.
+
+
+================================================================================
+  13. TESTING YOUR MOD
+================================================================================
+
+  --- QUICK TEST SETUP ---
+
+  1. Open IW4x
+  2. Open console (~)
+  3. Type:
+       fs_game mods/my_mod
+       map mp_rust
+
+  This starts a private match on Rust with your mod loaded.
+  You spawn alone and can test everything.
+
+  --- WITH BOTS ---
+
+  After loading the map:
+    testclients 1              // Spawn 1 bot
+    testclients 3              // Spawn 3 bots
+    testclients_domove 0       // Bots don't move
+    testclients_doattack 0     // Bots don't attack
+
+  --- USEFUL TEST DVARS ---
+
+    sv_cheats 1                // Enable cheats
+    god                        // God mode (host only)
+    noclip                     // Fly mode (host only)
+    give all                   // All weapons
+    timescale 0.5              // Slow motion
+    timescale 2                // Speed up
+
+  --- CHECKING IF YOUR MOD LOADED ---
+
+  In console, you should see:
+    Loading script _main.gsc...
+    Script scripts/mp/_main.gsc loaded successfully.
+
+  If you don't see your script listed, the mod isn't loading.
+  Check that fs_game is set correctly.
+
+
+================================================================================
+  14. READING ERROR MESSAGES
+================================================================================
+
+  --- COMPILE ERROR ---
+
+    Error:
+    ******* script compile error *******
+    Error: unknown function: @ 428010
+
+  This means the compiler found a function call that doesn't match
+  any defined function. The number after @ is the byte offset in the
+  compiled bytecode (not a line number).
+
+  To find the problem:
+  - The error occurs in the LAST file listed before the error
+  - Check all function calls in that file
+  - Make sure every called function is either:
+    a. Defined in the same file
+    b. Defined in a file you #include
+    c. A stock engine function
+    d. Called with the full path (scripts\mp\_file::func)
+
+  --- SYNTAX ERROR ---
+
+    Error: bad syntax
+
+  Missing semicolon, unmatched brace, or invalid syntax.
+  Check the last loaded file for typos.
+
+  --- UNDEFINED VARIABLE ---
+
+  Usually not a compile error but a runtime crash.
+  Check that all variables are initialized before use.
+
+
+================================================================================
+  15. COMMON ERRORS AND FIXES
+================================================================================
+
+  ERROR: "unknown function @ XXXXXX"
+  CAUSE: Calling a function that doesn't exist or isn't included
+  FIX:   Check function name spelling and #include lines
+
+  ERROR: "bad syntax"
+  CAUSE: Missing semicolon, brace, or parenthesis
+  FIX:   Check the last loaded file for syntax errors
+
+  ERROR: "@ XXXXXX" number changes after fixing
+  CAUSE: Compiler stops at FIRST error. Fixing one reveals the next.
+  FIX:   Keep fixing until no more errors. The number changing means
+         your fix worked but there are more issues.
+
+  ERROR: Game freezes/hangs
+  CAUSE: Infinite loop without wait statement
+  FIX:   Add "wait 0.05;" inside every for(;;) and while() loop
+
+  ERROR: Function works once then never again
+  CAUSE: Thread died from endon (death/disconnect) and wasn't restarted
+  FIX:   Re-thread the function in onPlayerSpawned
+
+  ERROR: Function stacks/doubles up
+  CAUSE: No notify/endon guard to prevent duplicate threads
+  FIX:   Add self notify("stop_x"); self endon("stop_x"); at top
+
+  ERROR: Menu doesn't open
+  CAUSE: SetupMenu() not called, or button notifys not registered
+  FIX:   Check onPlayerSpawned calls SetupMenu and CreateNotifys
+
+  ERROR: "cannot cast X to Y"
+  CAUSE: Using wrong type (string where number expected, etc.)
+  FIX:   Use int(), float(), or string concatenation as needed
+
+
+================================================================================
+  16. CONSOLE COMMANDS FOR DEBUGGING
+================================================================================
+
+  Print to console (visible to all):
+    iPrintLnBold("message");          // Large centered text
+    iPrintLn("message");              // Small bottom-left text
+    print("message\n");               // Console only (not on screen)
+
+  Print player info:
+    self iPrintLn("Pos: " + self getOrigin());
+    self iPrintLn("Weap: " + self getCurrentWeapon());
+    self iPrintLn("Pers: " + self getPers("mykey"));
+
+  Print dvar values:
+    self iPrintLn("Speed: " + getDvar("g_speed"));
+
+  Useful console commands:
+    developer 1                       // Enable developer mode
+    developer_script 1                // Script debugging
+    sv_cheats 1                       // Enable cheats
+    con_minicon 1                     // Show mini console on screen
+
+
+================================================================================
+  17. HOT RELOADING AND FAST RESTART
+================================================================================
+
+  GSC scripts are loaded when the map starts. To reload your changes:
+
+  Method 1 - Fast Restart:
+    In console: fast_restart
+    This restarts the current round and reloads scripts.
+    Players stay connected. Fastest way to test changes.
+
+  Method 2 - Map Restart:
+    In console: map_restart
+    Full map restart. Reloads everything.
+
+  Method 3 - Reload Map:
+    In console: map mp_rust
+    Completely reloads the map and all scripts.
+
+  The workflow:
+    1. Edit your .gsc file in a text editor
+    2. Save the file
+    3. In IW4x console: fast_restart
+    4. Test your changes
+    5. Repeat
+
+  NOTE: fast_restart does NOT always pick up new files. If you add
+  a brand new .gsc file, use "map mp_rust" to do a full reload.
+
+
+================================================================================
+  18. MOD.FF AND IWD FILES
+================================================================================
+
+  --- MOD.FF ---
+
+  A mod.ff is a compiled fast file that contains precompiled scripts
+  and precached assets. For simple GSC mods, you do NOT need a mod.ff.
+  The game loads raw .gsc files directly from your mod folder.
+
+  If you want to precache custom assets (images, sounds, models),
+  you may need a mod.ff. This requires the IW4x mod tools to compile.
+
+  --- IWD FILES ---
+
+  .iwd files are renamed .zip files that contain custom assets.
+  They go in your mod folder: mods/my_mod/z_myassets.iwd
+
+  Inside the iwd, use the same folder structure as the game:
+    images/my_custom_image.iwi
+    sound/my_custom_sound.wav
+
+  The game loads iwd files alphabetically. Prefix with z_ to load last.
+
+
+================================================================================
+  19. PRECACHING RESOURCES
+================================================================================
+
+  Some resources must be "precached" in init() before they can be used.
+  Precaching loads the resource into memory so it's ready when needed.
+
+  --- WEAPONS ---
+    precacheItem("deserteaglegold_mp");
+    // Must precache before using giveWeapon()
+
+  --- SHADERS (images/textures) ---
+    precacheShader("minimap_scanlines");
+    // Must precache before using setShader()
+
+  --- MODELS ---
+    precacheModel("com_plasticcase_friendly");
+    // Must precache before spawning the model
+
+  --- STRINGS ---
+    precacheString("My custom string");
+    // Must precache for some HUD text functions
+
+  Precaching MUST happen in init(), before any player spawns.
+  You cannot precache mid-game.
+
+    init()
+    {
+        precacheItem("deserteaglegold_mp");
+        precacheShader("my_shader");
+        level thread onPlayerConnect();
+    }
+
+
+================================================================================
+  20. MULTIPLE MODS
+================================================================================
+
+  You can only load ONE mod at a time. fs_game points to one folder.
+
+  To combine mods, you need to merge their scripts into one folder.
+
+  If two mods both have scripts/mp/_main.gsc with init(), you need
+  to combine them into one init() function.
+
+  Example: Combining Mod A and Mod B:
+
+    // Mod A's init
+    init()
+    {
+        modA_setup();
+        level thread onPlayerConnect();
+    }
+
+    // Mod B's init (in a different file)
+    // PROBLEM: Two init() functions will conflict
+
+  Solution: Put Mod B's init code into a different function name
+  and call it from Mod A's init:
+
+    // _main.gsc (combined)
+    init()
+    {
+        modA_setup();
+        modB_setup();
+        level thread onPlayerConnect();
+    }
+
+  Or give Mod B's file a different name so it has its own init():
+    scripts/mp/_main.gsc       (Mod A, has init)
+    scripts/mp/_modb.gsc       (Mod B, has init)
+    Both init() functions will be called by the engine.
+
+  --- USERRAW ---
+
+  Scripts in userraw/scripts/ load for ALL mods, regardless of
+  which mod is selected with fs_game. Use this for scripts you
+  always want active.
+
+    IW4x/userraw/scripts/mp/_always_on.gsc
+
+  This loads even with no mod selected.
+
+================================================================================
