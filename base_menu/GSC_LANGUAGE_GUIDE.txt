@@ -1,0 +1,2040 @@
+================================================================================
+              GSC LANGUAGE GUIDE - COMPLETE REFERENCE
+================================================================================
+
+This guide covers the entire GSC scripting language used in IW4x/CoD.
+Not just for menus - this is the full language from basics to advanced.
+
+
+================================================================================
+  TABLE OF CONTENTS
+================================================================================
+
+  PART 1 - BASICS
+    1.  What Is GSC
+    2.  File Structure
+    3.  Comments
+    4.  Variables
+    5.  Data Types
+    6.  Operators
+    7.  Strings
+    8.  Arrays
+    9.  Vectors (3D Coordinates)
+
+  PART 2 - CONTROL FLOW
+    10. If / Else / Else If
+    11. Switch / Case
+    12. For Loops
+    13. While Loops
+    14. Foreach Loops
+    15. Break and Continue
+    16. Return
+
+  PART 3 - FUNCTIONS
+    17. Defining Functions
+    18. Calling Functions
+    19. Function Parameters
+    20. Return Values
+    21. Self (The Calling Entity)
+    22. Threaded Functions
+    23. Function Pointers
+    24. Optional Parameters
+
+  PART 4 - THE EVENT SYSTEM
+    25. Notify and Waittill
+    26. Endon
+    27. notifyOnPlayerCommand
+    28. Common Events
+    29. Custom Events
+    30. Event Patterns
+
+  PART 5 - ENTITIES AND OBJECTS
+    31. What Is an Entity
+    32. The Level Entity
+    33. Player Entities
+    34. Spawned Entities
+    35. Structs
+    36. Entity Properties
+
+  PART 6 - HUD SYSTEM
+    37. Creating Text Elements
+    38. Creating Shader Elements (Boxes, Bars)
+    39. Positioning and Alignment
+    40. Animating HUD Elements
+    41. Destroying HUD Elements
+
+  PART 7 - DVARS
+    42. What Are Dvars
+    43. Getting and Setting Dvars
+    44. Client vs Server Dvars
+    45. Custom Dvars
+
+  PART 8 - PLAYER FUNCTIONS
+    46. Health and Damage
+    47. Weapons
+    48. Movement and Position
+    49. Player Properties
+    50. Player Input
+
+  PART 9 - ADVANCED
+    51. Level Variables
+    52. Callbacks
+    53. Time and Timing
+    54. Math Functions
+    55. Debugging Techniques
+    56. Performance Tips
+    57. Common Patterns
+
+
+================================================================================
+================================================================================
+  PART 1 - BASICS
+================================================================================
+================================================================================
+
+
+================================================================================
+  1. WHAT IS GSC
+================================================================================
+
+  GSC = Game SCript. It's the scripting language built into the Call of
+  Duty engine (IW engine). It controls all gameplay logic.
+
+  GSC is:
+  - Interpreted (compiled to bytecode at map load)
+  - Case-sensitive for user functions (YOUR function names)
+  - Case-insensitive for engine builtins (iPrintLn = iprintln)
+  - Semicolon-terminated (every statement ends with ;)
+  - Brace-delimited (code blocks use { })
+  - Event-driven (heavy use of notify/waittill)
+  - Threaded (multiple functions run concurrently)
+
+  GSC is NOT:
+  - Object-oriented (no classes, inheritance, or polymorphism)
+  - Strongly typed (variables can change type)
+  - A general-purpose language (only works inside CoD)
+
+
+================================================================================
+  2. FILE STRUCTURE
+================================================================================
+
+  Every .gsc file follows this structure:
+
+    // Includes at the top
+    #include common_scripts\utility;
+    #include maps\mp\_utility;
+
+    // Functions below
+    myFunction()
+    {
+        // code
+    }
+
+    anotherFunction(arg1, arg2)
+    {
+        // code
+    }
+
+  Rules:
+  - #include lines MUST be at the very top, before any functions
+  - Each function is defined at the file level (not nested)
+  - You cannot define a function inside another function
+  - No "main" function is required (but init() is special)
+  - You cannot have executable code outside of functions
+
+
+================================================================================
+  3. COMMENTS
+================================================================================
+
+  Single-line comment:
+    // This is a comment
+
+  Multi-line comment:
+    /* This is a
+       multi-line comment */
+
+  Comments are ignored by the compiler. Use them to explain your code.
+
+    speed()
+    {
+        // Toggle speed hack on/off
+        if (self getPers("speed") == "Off")
+        {
+            self setPers("speed", "On");
+            setDvar("g_speed", 500);   // 500 = fast
+        }
+    }
+
+
+================================================================================
+  4. VARIABLES
+================================================================================
+
+  Variables are created by assigning a value. No declaration keyword needed.
+
+    x = 5;
+    name = "hello";
+    pos = (100, 200, 300);
+    isActive = true;
+
+  --- VARIABLE SCOPE ---
+
+  LOCAL VARIABLES:
+    Defined inside a function. Only exist in that function.
+
+      myFunc()
+      {
+          x = 5;      // local to myFunc
+          return x;
+      }
+
+  SELF VARIABLES:
+    Attached to an entity. Accessible anywhere the entity is.
+
+      self.speed = 500;           // Attached to a player
+      self.menu.isopen = false;   // Nested property
+      self.pers["god"] = "On";    // Array property
+
+  LEVEL VARIABLES:
+    Attached to the level entity. Global to the whole server.
+
+      level.maxPlayers = 18;
+      level.strings = [];
+      level.debug = true;
+
+  There are no "global" variables. Use level.xxx for global state.
+
+  --- VARIABLE NAMING ---
+
+  - Can contain letters, numbers, underscores
+  - Cannot start with a number
+  - Case-sensitive (myVar and myvar are different)
+  - Convention: camelCase for local vars (myVariable)
+
+
+================================================================================
+  5. DATA TYPES
+================================================================================
+
+  GSC has these data types:
+
+  INTEGER:
+    x = 5;
+    y = -10;
+    z = 0;
+
+  FLOAT:
+    x = 5.0;
+    y = 0.05;
+    z = -3.14;
+
+  STRING:
+    name = "hello";
+    empty = "";
+    combo = "value: " + x;
+
+  BOOLEAN:
+    flag = true;
+    other = false;
+
+  VECTOR:
+    pos = (100, 200, 300);         // 3D vector (x, y, z)
+    color = (1.0, 0.5, 0.0);      // Also used for RGB colors
+
+  ARRAY:
+    arr = [];
+    arr[0] = "first";
+
+  UNDEFINED:
+    x = undefined;                 // No value assigned
+    // isDefined(x) returns false
+
+  ENTITY:
+    player = getEntByNum(0);       // Game entity reference
+    // Players, spawned objects, HUD elements
+
+  STRUCT:
+    obj = spawnStruct();           // Generic data container
+
+  FUNCTION POINTER:
+    ref = ::myFunction;            // Reference to a function
+
+  --- TYPE CHECKING ---
+
+    isDefined(x)         // true if x is not undefined
+    isString(x)          // true if x is a string
+    isInt(x)             // true if x is an integer
+    isFloat(x)           // true if x is a float
+    isArray(x)           // true if x is an array
+
+  --- TYPE CONVERSION ---
+
+    int(5.7)             // 5 (float to integer, truncates)
+    float(5)             // 5.0 (integer to float)
+    "" + 5               // "5" (number to string via concatenation)
+    int("5")             // 5 (string to integer)
+
+
+================================================================================
+  6. OPERATORS
+================================================================================
+
+  --- ARITHMETIC ---
+    a + b          // Addition
+    a - b          // Subtraction
+    a * b          // Multiplication
+    a / b          // Division
+    a % b          // Modulo (remainder)
+
+  --- ASSIGNMENT ---
+    a = b          // Assign
+    a += b         // Add and assign (a = a + b)
+    a -= b         // Subtract and assign
+    a *= b         // Multiply and assign
+    a /= b         // Divide and assign
+    a++            // Increment by 1
+    a--            // Decrement by 1
+
+  --- COMPARISON ---
+    a == b         // Equal
+    a != b         // Not equal
+    a > b          // Greater than
+    a < b          // Less than
+    a >= b         // Greater than or equal
+    a <= b         // Less than or equal
+
+  --- LOGICAL ---
+    a && b         // AND (both must be true)
+    a || b         // OR (either must be true)
+    !a             // NOT (inverts true/false)
+
+  --- STRING ---
+    a + b          // Concatenation: "hello" + " world" = "hello world"
+
+  --- PRECEDENCE ---
+  (highest to lowest)
+    !  (NOT)
+    *  /  %
+    +  -
+    <  >  <=  >=
+    ==  !=
+    &&
+    ||
+    =  +=  -=  *=  /=
+
+
+================================================================================
+  7. STRINGS
+================================================================================
+
+  Strings are sequences of characters enclosed in double quotes.
+
+    text = "Hello World";
+    empty = "";
+    number_as_text = "" + 42;        // "42"
+
+  --- CONCATENATION ---
+    first = "Hello";
+    last = "World";
+    full = first + " " + last;       // "Hello World"
+    mixed = "Value: " + 42;          // "Value: 42"
+
+  --- STRING FUNCTIONS ---
+
+    strTok(string, delimiter)
+      Splits a string by delimiter into an array.
+      parts = strTok("a,b,c,d", ",");
+      // parts[0] = "a", parts[1] = "b", parts[2] = "c", parts[3] = "d"
+
+    isSubStr(string, substring)
+      Checks if string contains substring.
+      isSubStr("hello world", "world")  // true
+      isSubStr("hello world", "xyz")    // false
+
+    getSubStr(string, start, end)
+      Gets part of a string.
+      getSubStr("hello", 0, 3)          // "hel"
+      getSubStr("hello", 2, 5)          // "llo"
+
+    toLower(string)
+      Converts to lowercase.
+      toLower("HELLO")                  // "hello"
+
+    string.size
+      Length of the string.
+      "hello".size                      // 5
+
+  --- COLOR CODES ---
+  Color codes in strings change text color (for iPrintLn, HUD, etc.):
+
+    ^0 = black     ^1 = red       ^2 = green     ^3 = yellow
+    ^4 = blue      ^5 = cyan      ^6 = pink/magenta  ^7 = white
+
+    self iPrintLn("Status: ^2ON");        // "ON" in green
+    self iPrintLn("^1WARNING: ^7message"); // "WARNING:" in red, rest white
+
+  --- LOCALIZED STRINGS ---
+  The game uses & prefix for localized string references:
+    &"MENU_YES"    // Resolves to "Yes" in the player's language
+
+
+================================================================================
+  8. ARRAYS
+================================================================================
+
+  Arrays are ordered collections of values.
+
+  --- CREATING ---
+    arr = [];                          // Empty array
+
+  --- ADDING ELEMENTS ---
+    arr[0] = "first";
+    arr[1] = "second";
+    arr[arr.size] = "appended";        // Append to end
+
+  --- READING ELEMENTS ---
+    value = arr[0];                    // "first"
+    last = arr[arr.size - 1];          // Last element
+
+  --- SIZE ---
+    count = arr.size;                  // Number of elements
+
+  --- REMOVING ---
+    arr = array_removeIndex(arr, 2);   // Remove index 2
+    arr = array_remove(arr, "value");  // Remove by value (stock func)
+
+  --- ASSOCIATIVE ARRAYS (HASH MAPS) ---
+  Arrays can use string keys instead of numbers:
+
+    data = [];
+    data["name"] = "Player1";
+    data["score"] = 100;
+    data["alive"] = true;
+
+    name = data["name"];               // "Player1"
+
+  --- NESTED ARRAYS ---
+    menu = [];
+    menu["options"] = [];
+    menu["options"][0] = "God Mode";
+    menu["options"][1] = "Speed";
+
+  --- LOOPING THROUGH ARRAYS ---
+
+    // By index
+    for (i = 0; i < arr.size; i++)
+        doSomething(arr[i]);
+
+    // By value
+    foreach (item in arr)
+        doSomething(item);
+
+    // By key and value
+    foreach (key, value in arr)
+        doSomething(key, value);
+
+  --- ARRAYS AS FUNCTION ARGUMENTS ---
+    weapons = strTok("ak47,m4,ump45", ",");
+    giveAll(weapons);
+
+    giveAll(list)
+    {
+        for (i = 0; i < list.size; i++)
+            self giveWeapon(list[i] + "_mp");
+    }
+
+
+================================================================================
+  9. VECTORS (3D COORDINATES)
+================================================================================
+
+  Vectors represent 3D positions, angles, velocities, and colors.
+
+    pos = (100, 200, 300);             // (x, y, z)
+    color = (1.0, 0.5, 0.0);          // (R, G, B)
+    angles = (0, 90, 0);              // (pitch, yaw, roll)
+
+  --- ACCESSING COMPONENTS ---
+    pos = (100, 200, 300);
+    x = pos[0];                        // 100
+    y = pos[1];                        // 200
+    z = pos[2];                        // 300
+
+  --- VECTOR MATH ---
+    a = (1, 2, 3);
+    b = (4, 5, 6);
+    c = a + b;                         // (5, 7, 9) -- currently this
+                                       // does NOT work in GSC
+    // Instead, do component-wise:
+    c = (a[0] + b[0], a[1] + b[1], a[2] + b[2]);
+
+    // Or use vectorScale from _util.gsc:
+    scaled = vectorScale(a, 2);        // (2, 4, 6)
+
+  --- COMMON VECTOR FUNCTIONS ---
+    distance(a, b)                     // Distance between two points
+    length(v)                          // Length of vector
+    vectorNormalize(v)                 // Unit vector (length 1)
+    anglesToForward(angles)            // Forward direction vector
+    anglesToRight(angles)              // Right direction vector
+    anglesToUp(angles)                 // Up direction vector
+
+  --- POSITION vs ANGLES ---
+    self getOrigin()                   // Position (x, y, z)
+    self getPlayerAngles()             // View direction (pitch, yaw, roll)
+    self setOrigin(pos)                // Teleport to position
+    self setPlayerAngles(angles)       // Force look direction
+
+
+================================================================================
+================================================================================
+  PART 2 - CONTROL FLOW
+================================================================================
+================================================================================
+
+
+================================================================================
+  10. IF / ELSE / ELSE IF
+================================================================================
+
+  --- BASIC IF ---
+    if (condition)
+        doSomething();
+
+  --- IF WITH BLOCK ---
+    if (condition)
+    {
+        doA();
+        doB();
+    }
+
+  --- IF / ELSE ---
+    if (self getPers("god") == "On")
+    {
+        self enableInvulnerability();
+        self iPrintLn("God: ^2On");
+    }
+    else
+    {
+        self disableInvulnerability();
+        self iPrintLn("God: ^1Off");
+    }
+
+  --- IF / ELSE IF / ELSE ---
+    if (value == 1)
+        doA();
+    else if (value == 2)
+        doB();
+    else if (value == 3)
+        doC();
+    else
+        doDefault();
+
+  --- COMPOUND CONDITIONS ---
+    if (self isHost() && self isAlive())
+        self iPrintLn("Host is alive");
+
+    if (weapon == "ak47_mp" || weapon == "m4_mp")
+        self iPrintLn("Has an AR");
+
+    if (!isDefined(self.pers["god"]))
+        self.pers["god"] = "Off";
+
+  --- SINGLE-LINE vs BLOCK ---
+  If the body is ONE statement, braces are optional:
+    if (x > 5)
+        doSomething();
+
+  If the body is MORE than one statement, braces are REQUIRED:
+    if (x > 5)
+    {
+        doA();
+        doB();
+    }
+
+
+================================================================================
+  11. SWITCH / CASE
+================================================================================
+
+  Switch checks a value against multiple cases:
+
+    switch (weapon)
+    {
+        case "ak47_mp":
+            self iPrintLn("AK-47");
+            break;
+        case "m4_mp":
+            self iPrintLn("M4A1");
+            break;
+        case "cheytac_mp":
+            self iPrintLn("Intervention");
+            break;
+        default:
+            self iPrintLn("Unknown weapon");
+            break;
+    }
+
+  IMPORTANT: Always include "break;" at the end of each case.
+  Without break, execution falls through to the next case.
+
+  Switch works with strings, integers, and other value types.
+
+
+================================================================================
+  12. FOR LOOPS
+================================================================================
+
+  --- COUNTED LOOP ---
+    for (i = 0; i < 10; i++)
+    {
+        self iPrintLn("Count: " + i);
+    }
+
+  --- INFINITE LOOP ---
+    for (;;)
+    {
+        // Runs forever
+        wait 0.05;    // MUST have wait to prevent freeze
+    }
+
+  --- ARRAY ITERATION ---
+    weapons = self getWeaponsList();
+    for (i = 0; i < weapons.size; i++)
+    {
+        self giveMaxAmmo(weapons[i]);
+    }
+
+  --- BACKWARDS LOOP ---
+    for (i = arr.size - 1; i >= 0; i--)
+    {
+        doSomething(arr[i]);
+    }
+
+
+================================================================================
+  13. WHILE LOOPS
+================================================================================
+
+  --- BASIC WHILE ---
+    while (condition)
+    {
+        doSomething();
+        wait 0.05;
+    }
+
+  --- EXAMPLE ---
+    while (self isAlive())
+    {
+        self iPrintLn("Still alive");
+        wait 1;
+    }
+
+  --- WHILE TRUE (INFINITE) ---
+    while (true)
+    {
+        level waittill("connected", player);
+        player thread onPlayerSpawned();
+    }
+
+  A "while (true)" loop is the same as "for (;;)".
+  Both loop forever. Both MUST have a wait or waittill inside.
+
+
+================================================================================
+  14. FOREACH LOOPS
+================================================================================
+
+  Foreach iterates over every element in an array.
+
+  --- VALUE ONLY ---
+    weapons = self getWeaponsList();
+    foreach (weapon in weapons)
+    {
+        self giveMaxAmmo(weapon);
+    }
+
+  --- KEY AND VALUE ---
+    foreach (key, value in self.pers)
+    {
+        self iPrintLn(key + " = " + value);
+    }
+
+  Foreach is cleaner than a for loop when you don't need the index.
+
+
+================================================================================
+  15. BREAK AND CONTINUE
+================================================================================
+
+  --- BREAK ---
+  Exits the loop immediately.
+
+    for (i = 0; i < 100; i++)
+    {
+        if (i == 5)
+            break;          // Exits loop at i == 5
+        self iPrintLn("" + i);
+    }
+    // Prints 0, 1, 2, 3, 4
+
+  --- CONTINUE ---
+  Skips to the next iteration.
+
+    for (i = 0; i < 10; i++)
+    {
+        if (i == 5)
+            continue;       // Skips i == 5
+        self iPrintLn("" + i);
+    }
+    // Prints 0, 1, 2, 3, 4, 6, 7, 8, 9
+
+
+================================================================================
+  16. RETURN
+================================================================================
+
+  Return exits a function, optionally with a value.
+
+  --- RETURN WITHOUT VALUE ---
+    earlyExit()
+    {
+        if (!self isAlive())
+            return;              // Exit function early
+        // rest of code
+    }
+
+  --- RETURN WITH VALUE ---
+    add(a, b)
+    {
+        return a + b;
+    }
+
+    result = add(3, 4);         // result = 7
+
+  --- MULTIPLE RETURNS ---
+    getStatus()
+    {
+        if (self getPers("god") == "On")
+            return "Godmode Active";
+        if (self getPers("speed") == "On")
+            return "Speed Active";
+        return "Normal";
+    }
+
+
+================================================================================
+================================================================================
+  PART 3 - FUNCTIONS
+================================================================================
+================================================================================
+
+
+================================================================================
+  17. DEFINING FUNCTIONS
+================================================================================
+
+  Functions are defined at the file level (not inside other functions).
+
+    // No arguments
+    sayHello()
+    {
+        self iPrintLn("Hello!");
+    }
+
+    // With arguments
+    giveWeap(weapon, ammo)
+    {
+        self giveWeapon(weapon);
+        self setWeaponAmmoClip(weapon, ammo);
+    }
+
+    // With return value
+    add(a, b)
+    {
+        return a + b;
+    }
+
+  Rules:
+  - Function names must be unique within included files
+  - No return type declaration
+  - No parameter type declaration
+  - Braces are required even for one-line functions
+
+
+================================================================================
+  18. CALLING FUNCTIONS
+================================================================================
+
+  --- ON AN ENTITY (MOST COMMON) ---
+    self myFunction();               // self = calling entity (player)
+    player myFunction();             // player = specific player entity
+    level myFunction();              // level = server entity
+
+  --- STANDALONE ---
+    result = add(3, 4);
+    name = getDvar("sv_hostname");
+
+  --- FROM ANOTHER FILE (EXPLICIT PATH) ---
+    self scripts\mp\menu\_setupmenu::SetupMenu();
+    //   file path                   :: function name
+
+  --- THREADED ---
+    self thread myFunction();        // Runs in background
+    level thread onPlayerConnect();  // Runs on level in background
+
+
+================================================================================
+  19. FUNCTION PARAMETERS
+================================================================================
+
+  Parameters are passed by value for primitives (numbers, strings, bools)
+  and by reference for entities and arrays.
+
+    myFunc(name, score, player)
+    {
+        // name = copy of original string
+        // score = copy of original number
+        // player = reference to actual player entity
+    }
+
+  --- OPTIONAL PARAMETERS ---
+  Check with isDefined:
+
+    greet(name, title)
+    {
+        if (isDefined(title))
+            self iPrintLn("Hello " + title + " " + name);
+        else
+            self iPrintLn("Hello " + name);
+    }
+
+    greet("Player");                   // "Hello Player"
+    greet("Player", "Mr.");            // "Hello Mr. Player"
+
+  Unspecified parameters are undefined.
+
+
+================================================================================
+  20. RETURN VALUES
+================================================================================
+
+    getHealth()
+    {
+        return self.health;
+    }
+
+    hp = self getHealth();
+
+  If a function has no return statement, it returns undefined.
+
+    doSomething()
+    {
+        self iPrintLn("done");
+        // no return - returns undefined
+    }
+
+    result = self doSomething();     // result = undefined
+
+
+================================================================================
+  21. SELF (THE CALLING ENTITY)
+================================================================================
+
+  "self" refers to the entity that the function was called on.
+
+    // When you do:
+    player thread myFunction();
+    // Inside myFunction(), self == player
+
+    // When you do:
+    level thread myFunction();
+    // Inside myFunction(), self == level
+
+  "self" is determined by how the function is called:
+
+    self myFunc();          // self inside myFunc = the calling entity
+    myFunc();               // self inside myFunc = undefined (standalone)
+    player myFunc();        // self inside myFunc = player
+
+  For menu code, almost everything uses self = the player:
+
+    godmode()
+    {
+        self enableInvulnerability();    // "self" is the player
+        self iPrintLn("God: ^2On");     // "self" is the player
+    }
+
+
+================================================================================
+  22. THREADED FUNCTIONS
+================================================================================
+
+  "thread" runs a function in the background without blocking.
+
+    self thread myLoop();    // Starts myLoop and continues immediately
+    self iPrintLn("This runs right away, doesn't wait for myLoop");
+
+  WITHOUT thread:
+    self myFunction();       // Waits for myFunction to complete
+    self iPrintLn("This runs after myFunction finishes");
+
+  WITH thread:
+    self thread myFunction();  // Starts myFunction in background
+    self iPrintLn("This runs immediately, parallel to myFunction");
+
+  --- WHEN TO USE THREAD ---
+
+  Use thread for:
+  - Functions with infinite loops (for(;;), while(true))
+  - Functions with waittill (they wait indefinitely)
+  - Long-running tasks you don't want to block on
+
+  Do NOT use thread for:
+  - Quick one-time functions (toggle, give weapon, etc.)
+  - Functions where you need the return value immediately
+
+
+================================================================================
+  23. FUNCTION POINTERS
+================================================================================
+
+  You can store a reference to a function and call it later.
+
+  --- STORING ---
+    ref = ::myFunction;              // :: creates a reference
+    ref = ::godmode;
+
+  --- CALLING ---
+    self thread [[ref]]();           // [[ ]] calls the stored function
+    self thread [[ref]](arg1);       // With arguments
+    self thread [[ref]](arg1, arg2); // With multiple arguments
+
+  --- WHY USE THEM ---
+  The menu system uses function pointers to store which function
+  each option calls:
+
+    self.menu.func["Submenu 1"][0] = ::godmode;
+    // Later, when the option is selected:
+    self thread [[self.menu.func[menu][index]]]();
+
+  This is how AddOption works - it stores ::func and later
+  ExecuteFunction calls it with [[ ]].
+
+
+================================================================================
+  24. OPTIONAL PARAMETERS
+================================================================================
+
+  GSC doesn't have default parameter values. Use isDefined to check:
+
+    createEffect(name, pos, scale)
+    {
+        if (!isDefined(scale))
+            scale = 1.0;           // Default value
+
+        // use scale
+    }
+
+    createEffect("fire", origin);        // scale defaults to 1.0
+    createEffect("fire", origin, 2.5);   // scale = 2.5
+
+
+================================================================================
+================================================================================
+  PART 4 - THE EVENT SYSTEM
+================================================================================
+================================================================================
+
+
+================================================================================
+  25. NOTIFY AND WAITTILL
+================================================================================
+
+  The event system is the core of GSC. It lets code wait for things
+  to happen without constantly checking.
+
+  --- SENDING AN EVENT ---
+    self notify("my_event");                    // No data
+    self notify("my_event", someValue);          // With data
+    level notify("game_over");                   // On level
+
+  --- WAITING FOR AN EVENT ---
+    self waittill("my_event");                   // Wait, no data
+    self waittill("my_event", data);             // Wait and capture data
+    level waittill("game_over");                 // Wait on level
+
+  --- HOW IT WORKS ---
+
+  waittill PAUSES the current thread until the matching notify fires.
+  The thread resumes right after the waittill line.
+
+    // Thread 1
+    self waittill("ready");          // Pauses here...
+    self iPrintLn("Got the signal"); // ...resumes here when "ready" fires
+
+    // Thread 2 (running at the same time)
+    wait 5;
+    self notify("ready");            // After 5 seconds, fires "ready"
+
+  --- DATA PASSING ---
+
+    // Sender
+    self notify("damage_taken", 50, "ak47_mp");
+
+    // Receiver
+    self waittill("damage_taken", amount, weapon);
+    // amount = 50, weapon = "ak47_mp"
+
+
+================================================================================
+  26. ENDON
+================================================================================
+
+  endon kills the current thread when a specific event fires.
+
+    self endon("disconnect");        // Die if player disconnects
+    self endon("death");             // Die if player dies
+    self endon("stop_myloop");       // Die if custom stop event
+
+  --- WHY IT MATTERS ---
+
+  Without endon, threads keep running even after the player dies
+  or disconnects. This causes errors and memory leaks.
+
+  ALWAYS add to looping functions:
+
+    myLoop()
+    {
+        self endon("disconnect");    // ALWAYS
+        self endon("death");         // ALWAYS
+        for (;;)
+        {
+            doSomething();
+            wait 0.05;
+        }
+    }
+
+  --- MULTIPLE ENDONS ---
+
+  You can have multiple endon calls. The thread dies when ANY of them fire:
+
+    self endon("disconnect");
+    self endon("death");
+    self endon("stop_feature");
+
+  --- ENDON ORDER ---
+
+  Put endon BEFORE the loop, not inside it:
+
+    // CORRECT
+    self endon("disconnect");
+    for (;;)
+    {
+        wait 0.05;
+    }
+
+    // WRONG - endon re-registers every iteration
+    for (;;)
+    {
+        self endon("disconnect");
+        wait 0.05;
+    }
+
+
+================================================================================
+  27. notifyOnPlayerCommand
+================================================================================
+
+  Links a game input command to a notify event on the player.
+
+    self notifyOnPlayerCommand("myNotify", "+mycommand");
+
+  When the player's client sends "+mycommand" (from a key bind),
+  the engine fires "myNotify" as a notify on that player.
+
+  Then you catch it with waittill:
+
+    self waittill("myNotify");
+
+  --- EXAMPLE ---
+
+    self notifyOnPlayerCommand("jump_pressed", "+gostand");
+    for (;;)
+    {
+        self waittill("jump_pressed");
+        self iPrintLn("You jumped!");
+    }
+
+  --- STOCK COMMANDS ---
+  These are commands the game already uses:
+
+    +attack        = Fire weapon
+    +speed_throw   = ADS (aim down sights)
+    +melee         = Knife
+    +usereload     = Use / Reload
+    +gostand       = Jump
+    +stance        = Crouch/Prone
+    +frag          = Lethal equipment
+    +smoke         = Tactical equipment
+    +actionslot 1  = Killstreak 1 / D-pad Up
+    +actionslot 2  = Killstreak 2 / D-pad Down
+    +actionslot 3  = Killstreak 3 / D-pad Left
+    +actionslot 4  = Killstreak 4 / D-pad Right
+
+  --- CUSTOM COMMANDS ---
+  You can create any +command name:
+
+    self notifyOnPlayerCommand("cfg_god", "+godmode");
+    self notifyOnPlayerCommand("cfg_speed", "+speed");
+    self notifyOnPlayerCommand("cfg_ammo", "+refill");
+
+  Bind them in console or .cfg:
+    bind G "+godmode"
+    bind H "+speed"
+    bind J "+refill"
+
+
+================================================================================
+  28. COMMON EVENTS
+================================================================================
+
+  --- PLAYER EVENTS ---
+    "spawned_player"     // Player spawned into the game
+    "death"              // Player died
+    "disconnect"         // Player left the server
+    "weapon_fired"       // Player fired their weapon
+    "weapon_change"      // Player switched weapons
+    "damage"             // Player took damage
+    "killed_enemy"       // Player killed someone (custom, varies)
+
+  --- LEVEL EVENTS ---
+    "connected"          // A player connected (data: player entity)
+    "game_ended"         // Match ended
+    "prematch_over"      // Prematch countdown finished
+
+  --- USAGE ---
+    // Wait for player to die
+    self waittill("death");
+
+    // Wait for someone to connect
+    level waittill("connected", player);
+
+    // Wait for weapon fire
+    self waittill("weapon_fired");
+
+
+================================================================================
+  29. CUSTOM EVENTS
+================================================================================
+
+  You can create your own events for communication between threads.
+
+    // Thread 1 - waits for signal
+    self waittill("menu_closed");
+    self iPrintLn("Menu was closed");
+
+    // Thread 2 - sends signal
+    self notify("menu_closed");
+
+  Custom events are just strings. Name them anything:
+
+    self notify("stop_ufo");
+    self notify("reload_menu");
+    self notify("start_recording");
+    self notify("teleport_done");
+
+  --- WITH DATA ---
+    self notify("item_collected", "gold_coin", 50);
+    self waittill("item_collected", itemName, value);
+    // itemName = "gold_coin", value = 50
+
+
+================================================================================
+  30. EVENT PATTERNS
+================================================================================
+
+  --- ANTI-STACK PATTERN ---
+  Prevents duplicate threads:
+
+    myFeature()
+    {
+        self notify("stop_myFeature");     // Kill existing copy
+        self endon("stop_myFeature");      // Die if another copy starts
+        self endon("disconnect");
+        self endon("death");
+        for (;;)
+        {
+            doSomething();
+            wait 0.05;
+        }
+    }
+
+  --- WAIT FOR MULTIPLE EVENTS ---
+  You can't wait for two events at once with one waittill.
+  Use two threads instead:
+
+    watchForDeath()
+    {
+        self waittill("death");
+        self notify("stopped");
+    }
+
+    watchForDisconnect()
+    {
+        self waittill("disconnect");
+        self notify("stopped");
+    }
+
+    mainLogic()
+    {
+        self thread watchForDeath();
+        self thread watchForDisconnect();
+        self waittill("stopped");
+        // Either death or disconnect happened
+    }
+
+  --- TIMEOUT PATTERN ---
+  Wait for an event with a time limit:
+
+    // Using endon
+    waitWithTimeout()
+    {
+        self endon("the_event");    // Cancel if event fires
+        wait 5;                     // Wait 5 seconds
+        self iPrintLn("Timed out"); // Event didn't fire in time
+    }
+
+
+================================================================================
+================================================================================
+  PART 5 - ENTITIES AND OBJECTS
+================================================================================
+================================================================================
+
+
+================================================================================
+  31. WHAT IS AN ENTITY
+================================================================================
+
+  An entity is any game object that exists in the world:
+  - Players
+  - Weapons on the ground
+  - Spawned objects (crates, turrets)
+  - Triggers (invisible zones)
+  - HUD elements
+
+  Each entity has properties you can read and set:
+    player.health = 100;
+    player.maxhealth = 200;
+    player.origin = (0, 0, 0);
+
+  Entities can have functions called on them:
+    player iPrintLn("Hello");
+    player giveWeapon("ak47_mp");
+
+  Entities can send and receive events:
+    player notify("custom_event");
+    player waittill("death");
+
+
+================================================================================
+  32. THE LEVEL ENTITY
+================================================================================
+
+  "level" is a special entity that represents the entire server/match.
+  It exists for the whole game and never dies.
+
+  Use level for:
+  - Global variables: level.myGlobal = 5;
+  - Server-wide events: level notify("game_start");
+  - Threading server logic: level thread myServerFunc();
+  - Waiting for connections: level waittill("connected", player);
+
+  level is NOT a player. You cannot call player functions on it:
+    level iPrintLn("test");    // WRONG - level is not a player
+    iPrintLnBold("test");      // OK - standalone function
+
+
+================================================================================
+  33. PLAYER ENTITIES
+================================================================================
+
+  Player entities represent connected players. You get them from events:
+
+    level waittill("connected", player);    // player = entity
+    // or
+    players = getEntArray("player", "classname");  // Array of all players
+
+  Players have tons of built-in properties:
+    self.health           // Current health
+    self.maxhealth        // Maximum health
+    self.name             // Player name
+    self.origin           // Position
+    self.angles           // View angles
+    self.pers             // Persistent data array
+    self.team             // "allies", "axis", or "spectator"
+    self.sessionteam      // Same as team
+    self.statusicon        // Icon shown by name
+
+  And built-in functions:
+    self getOrigin()              // Get position
+    self setOrigin(pos)           // Teleport
+    self getPlayerAngles()        // Get view direction
+    self getCurrentWeapon()       // Get held weapon
+    self giveWeapon(weapon)       // Give weapon
+    self isHost()                 // Is this the host?
+    self isAlive()                // Is the player alive?
+
+
+================================================================================
+  34. SPAWNED ENTITIES
+================================================================================
+
+  You can spawn new entities in the world:
+
+    // Spawn a script model
+    obj = spawn("script_model", origin);
+    obj setModel("com_plasticcase_friendly");
+
+    // Spawn a trigger
+    trigger = spawn("trigger_radius", origin, 0, 100, 100);
+
+    // Spawn an origin (invisible point)
+    point = spawn("script_origin", origin);
+
+  Spawned entities persist until destroyed:
+    obj delete();
+
+
+================================================================================
+  35. STRUCTS
+================================================================================
+
+  Structs are lightweight data containers. They don't exist in the
+  game world (no position, no model) - they just hold data.
+
+    obj = spawnStruct();
+    obj.name = "test";
+    obj.value = 42;
+    obj.nested = [];
+    obj.nested[0] = "hello";
+
+  The menu system uses a struct:
+    self.menu = spawnStruct();
+    self.menu.isopen = false;
+    self.menu.scroll = 0;
+    self.menu.text = [];
+
+  Structs are useful when you need to group related data together
+  without creating a game entity.
+
+
+================================================================================
+  36. ENTITY PROPERTIES
+================================================================================
+
+  You can add any custom property to any entity:
+
+    self.myCustomVar = 42;
+    self.speedMultiplier = 2.0;
+    self.savedPosition = self getOrigin();
+    self.features = [];
+    self.features["god"] = true;
+
+  Properties persist as long as the entity exists.
+  For players, properties persist until they disconnect.
+
+  self.pers[] is special - it survives across deaths:
+    self.pers["god"] = "On";      // Survives death
+    self.customVar = true;         // LOST on death (reset on spawn)
+
+
+================================================================================
+================================================================================
+  PART 6 - HUD SYSTEM
+================================================================================
+================================================================================
+
+
+================================================================================
+  37. CREATING TEXT ELEMENTS
+================================================================================
+
+  --- USING createFontString (ENGINE FUNCTION) ---
+    text = self createFontString("objective", 1.5);
+    text setPoint("CENTER", "CENTER", 0, 0);
+    text setText("Hello World");
+
+  --- USING createText (FROM _util.gsc) ---
+    text = self createText("bigfixed", 0.3, "CENTER", "CENTER",
+        0, 0, (1, 1, 1), 5, 1, "Hello World");
+
+  --- FONT NAMES ---
+    "default"       // Standard font
+    "bigfixed"      // Fixed-width, good for menus
+    "smallfixed"    // Smaller fixed-width
+    "objective"     // Objective marker font
+    "big"           // Large font
+
+  --- TEXT PROPERTIES ---
+    text.alpha = 1.0;              // Opacity (0 = invisible, 1 = visible)
+    text.color = (1, 0, 0);        // Red color
+    text.sort = 5;                 // Draw order
+    text.foreground = true;        // Draw in front of game
+    text.hideWhenInMenu = true;    // Hide in pause menu
+    text.archived = true;          // Persist across round restarts
+
+  --- UPDATING TEXT ---
+    text setText("New text");              // Direct update
+    text setSafeText("New text");          // Safe update (use this)
+
+  --- SERVER FONT STRING ---
+    text = createServerFontString("default", 1.5);
+    // Visible to all players (not just one)
+
+
+================================================================================
+  38. CREATING SHADER ELEMENTS (BOXES, BARS)
+================================================================================
+
+  --- USING newClientHudElem (ENGINE FUNCTION) ---
+    box = newClientHudElem(self);
+    box.elemType = "icon";
+    box.width = 200;
+    box.height = 100;
+    box.color = (0, 0, 0);
+    box.alpha = 0.8;
+    box setShader("white", 200, 100);
+    box setPoint("CENTER", "CENTER", 0, 0);
+
+  --- USING createRectangle (FROM _util.gsc) ---
+    box = self createRectangle("white", "CENTER", "CENTER",
+        0, 0, 200, 100, (0, 0, 0), 3, 0.8);
+
+  --- SHADER NAMES ---
+    "white"          // Solid white (gets colored by .color property)
+    "black"          // Solid black
+
+  Any shader in the game can be used, but "white" with .color is most common.
+
+  --- CHANGING SIZE ---
+    box setShader("white", newWidth, newHeight);
+
+  --- CHANGING COLOR ---
+    box.color = (1, 0, 0);          // Red
+
+
+================================================================================
+  39. POSITIONING AND ALIGNMENT
+================================================================================
+
+  setPoint(alignX, alignY, x, y) positions a HUD element.
+
+  --- ALIGNMENT OPTIONS ---
+
+    alignX:  "LEFT", "CENTER", "RIGHT"
+    alignY:  "TOP", "CENTER", "BOTTOM"
+
+    setPoint("CENTER", "CENTER", 0, 0)    // Dead center of screen
+    setPoint("LEFT", "TOP", 10, 10)       // Top-left corner
+    setPoint("RIGHT", "BOTTOM", -10, -10) // Bottom-right corner
+
+  --- X AND Y VALUES ---
+    x = horizontal offset from alignment point (positive = right)
+    y = vertical offset from alignment point (positive = down)
+
+    setPoint("CENTER", "CENTER", 100, 0)   // 100px right of center
+    setPoint("CENTER", "CENTER", 0, -50)   // 50px above center
+    setPoint("LEFT", "TOP", 10, 10)        // 10px from left, 10px from top
+
+  --- SCREEN COORDINATES ---
+    The screen is roughly 640x480 in the game's coordinate system.
+    (0,0) is top-left, (640,480) is bottom-right.
+
+
+================================================================================
+  40. ANIMATING HUD ELEMENTS
+================================================================================
+
+  --- MOVE OVER TIME ---
+    elem moveOverTime(seconds);
+    elem.x = newX;
+    elem.y = newY;
+
+    // Example: slide element to the right over 0.5 seconds
+    elem moveOverTime(0.5);
+    elem.x = 300;
+
+  --- FADE OVER TIME ---
+    elem fadeOverTime(seconds);
+    elem.alpha = 0;              // Fade out
+
+    elem fadeOverTime(0.3);
+    elem.alpha = 1;              // Fade in
+
+  --- SCALE OVER TIME ---
+    elem scaleOverTime(seconds, newWidth, newHeight);
+
+    elem scaleOverTime(0.5, 300, 200);  // Grow to 300x200
+
+  --- CHANGE COLOR OVER TIME ---
+    // No direct engine function. Change .color each frame:
+    for (;;)
+    {
+        elem.color = getColorFromHue(hue, 1, 1);
+        hue += 0.01;
+        wait 0.05;
+    }
+
+
+================================================================================
+  41. DESTROYING HUD ELEMENTS
+================================================================================
+
+  --- SINGLE ELEMENT ---
+    elem destroy();
+
+  --- ARRAY OF ELEMENTS ---
+    for (i = 0; i < self.hud["text"].size; i++)
+        self.hud["text"][i] destroy();
+
+  --- ALL HUD ELEMENTS ---
+    foreach (key, elem in self.hud)
+    {
+        if (isArray(elem))
+        {
+            foreach (subElem in elem)
+                subElem destroy();
+        }
+        else
+            elem destroy();
+    }
+
+  IMPORTANT: Always destroy HUD elements when done with them.
+  Undestroyed elements stay on screen and waste memory.
+
+
+================================================================================
+================================================================================
+  PART 7 - DVARS
+================================================================================
+================================================================================
+
+
+================================================================================
+  42. WHAT ARE DVARS
+================================================================================
+
+  Dvars (Dynamic VARiables) are the game's configuration system.
+  They control everything from game speed to gravity to FOV.
+
+  Dvars are separate from GSC variables. They're part of the engine
+  and persist across function calls and even map restarts.
+
+  Every dvar has a string name and a value:
+    "g_speed" = "190"          (player movement speed)
+    "g_gravity" = "800"        (gravity strength)
+    "jump_height" = "39"       (jump height)
+    "sv_hostname" = "My Server" (server name)
+
+
+================================================================================
+  43. GETTING AND SETTING DVARS
+================================================================================
+
+  --- SETTING ---
+    setDvar("g_speed", 500);           // Set to number
+    setDvar("sv_hostname", "My Server"); // Set to string
+
+  --- GETTING ---
+    getDvar("g_speed")                 // Returns string "500"
+    getDvarFloat("g_speed")            // Returns float 500.0
+    getDvarInt("g_speed")              // Returns integer 500
+
+  --- CHECKING ---
+    if (getDvarFloat("g_speed") > 300)
+        self iPrintLn("Speed is high");
+
+
+================================================================================
+  44. CLIENT vs SERVER DVARS
+================================================================================
+
+  --- SERVER DVARS ---
+  Affect the whole server. Set with setDvar():
+    setDvar("g_speed", 500);           // All players affected
+    setDvar("g_gravity", 100);         // All players affected
+
+  --- CLIENT DVARS ---
+  Affect only one player. Set with setClientDvar():
+    self setClientDvar("cg_fov", 90);            // Only this player
+    self setClientDvar("cg_drawFPS", 1);         // Only this player
+    self setClientDvar("r_fullbright", 1);       // Only this player
+
+  --- COMMON SERVER DVARS ---
+    g_speed        (default 190)    Player movement speed
+    g_gravity      (default 800)    Gravity
+    jump_height    (default 39)     Jump height
+    player_sustainAmmo (0 or 1)     Unlimited ammo
+
+  --- COMMON CLIENT DVARS ---
+    cg_fov                          Field of view
+    cg_drawFPS                      Show FPS counter
+    r_fullbright                    Full brightness (wallhack-like)
+    com_maxfps                      FPS cap
+
+
+================================================================================
+  45. CUSTOM DVARS
+================================================================================
+
+  You can create your own dvars for storing settings:
+
+    setDvar("mod_feature_enabled", 1);
+    setDvar("mod_speed_multiplier", 2.5);
+
+  Read them back:
+    if (getDvarInt("mod_feature_enabled") == 1)
+        doSomething();
+
+  Custom dvars persist until the server restarts.
+  Use setDvarIfUni to set only if not already defined.
+
+
+================================================================================
+================================================================================
+  PART 8 - PLAYER FUNCTIONS
+================================================================================
+================================================================================
+
+
+================================================================================
+  46. HEALTH AND DAMAGE
+================================================================================
+
+    self.health                        // Current health (read/write)
+    self.maxhealth                     // Max health (read/write)
+    self enableInvulnerability();       // Can't take damage
+    self disableInvulnerability();      // Can take damage
+    self suicide();                     // Kill self
+    self.health = self.maxhealth;      // Full heal
+
+  --- CHANGE MAX HEALTH ---
+    self.maxhealth = 300;
+    self.health = self.maxhealth;
+
+  --- DAMAGE CALLBACK ---
+  Override the damage callback to modify damage:
+
+    // In _main.gsc init():
+    level.callbackPlayerDamage = ::customDamage;
+
+    customDamage(eInflictor, eAttacker, iDamage, iDFlags,
+        sMeansOfDeath, sWeapon, vPoint, vDir, sHitLoc, timeOffset)
+    {
+        // Modify iDamage, then call stock damage
+        iDamage = int(iDamage * 2);  // Double damage
+        [[level.previousDamageCallback]](eInflictor, eAttacker,
+            iDamage, iDFlags, sMeansOfDeath, sWeapon, vPoint,
+            vDir, sHitLoc, timeOffset);
+    }
+
+
+================================================================================
+  47. WEAPONS
+================================================================================
+
+    self getCurrentWeapon()             // Name of held weapon
+    self getWeaponsList()               // Array of all weapons
+    self giveWeapon(weapon)             // Give weapon
+    self takeWeapon(weapon)             // Remove weapon
+    self takeAllWeapons()               // Remove all weapons
+    self switchToWeapon(weapon)         // Switch to weapon
+    self giveMaxAmmo(weapon)            // Max ammo
+    self setWeaponAmmoClip(weapon, n)   // Set clip ammo
+    self setWeaponAmmoStock(weapon, n)  // Set reserve ammo
+    self getWeaponAmmoClip(weapon)      // Get clip ammo
+    self getWeaponAmmoStock(weapon)     // Get reserve ammo
+
+  --- WEAPON NAMES ---
+  All weapons end with "_mp":
+    "ak47_mp", "m4_mp", "cheytac_mp", "ump45_mp",
+    "deserteaglegold_mp", "spas12_mp", "rpg_mp"
+
+  --- GIVE AND SWITCH ---
+    self giveWeapon("cheytac_mp");
+    self switchToWeapon("cheytac_mp");
+    self giveMaxAmmo("cheytac_mp");
+
+  --- DETECT WEAPON FIRE ---
+    self waittill("weapon_fired");
+    weapon = self getCurrentWeapon();
+
+
+================================================================================
+  48. MOVEMENT AND POSITION
+================================================================================
+
+    self getOrigin()                    // Position (x, y, z)
+    self setOrigin(pos)                 // Teleport
+    self getPlayerAngles()              // View angles
+    self setPlayerAngles(angles)        // Force look direction
+    self getVelocity()                  // Movement velocity
+    self setVelocity(vel)               // Set velocity
+
+  --- TELEPORT ---
+    self setOrigin((100, 200, 50));
+
+  --- SAVE AND LOAD POSITION ---
+    // Save
+    self.saved_pos = self getOrigin();
+    self.saved_ang = self getPlayerAngles();
+
+    // Load
+    self setOrigin(self.saved_pos);
+    self setPlayerAngles(self.saved_ang);
+
+  --- LAUNCH PLAYER ---
+    vel = self getVelocity();
+    self setVelocity((vel[0], vel[1], vel[2] + 500));  // Launch up
+
+  --- NOCLIP (FLY MODE) ---
+    self allowSpectateTeam("freelook", true);
+    self.sessionstate = "spectator";
+    // To exit:
+    self.sessionstate = "playing";
+
+
+================================================================================
+  49. PLAYER PROPERTIES
+================================================================================
+
+    self.name                  // Player display name
+    self.team                  // "allies", "axis", "spectator"
+    self.health                // Current health
+    self.maxhealth             // Max health
+    self.pers                  // Persistent data (survives death)
+    self.score                 // Score
+    self.kills                 // Kill count
+    self.deaths                // Death count
+    self.assists               // Assist count
+    self.statusicon            // Icon by player name
+    self.headicon              // Icon above player head
+    self.sessionstate          // "playing", "dead", "spectator"
+    self.spectatorclient       // Who they're spectating
+    self.killstreakcount       // Killstreak count
+
+
+================================================================================
+  50. PLAYER INPUT
+================================================================================
+
+  --- BUTTON CHECKS (INSTANT) ---
+    self attackButtonPressed()         // Firing?
+    self adsButtonPressed()            // ADS?
+    self meleeButtonPressed()          // Knifing?
+    self useButtonPressed()            // Use button?
+    self fragButtonPressed()           // Frag button?
+
+  --- BUTTON EVENTS (VIA NOTIFY) ---
+    self notifyOnPlayerCommand("shoot", "+attack");
+    self waittill("shoot");
+
+  --- MOVEMENT INPUT ---
+    self getPlayerAngles()             // Where they're looking
+    self getVelocity()                 // How they're moving
+
+
+================================================================================
+================================================================================
+  PART 9 - ADVANCED
+================================================================================
+================================================================================
+
+
+================================================================================
+  51. LEVEL VARIABLES
+================================================================================
+
+  Level variables are accessible from any function on any entity.
+  They're the closest thing to "global" variables.
+
+    // Set in init()
+    level.maxSpeed = 500;
+    level.modVersion = "1.0";
+    level.debug = true;
+    level.bannedPlayers = [];
+
+    // Read anywhere
+    if (level.debug)
+        self iPrintLn("Debug mode");
+
+  Use level variables for:
+  - Settings that apply server-wide
+  - Shared data between players
+  - Feature flags
+  - Storing arrays of data (level.strings, level.arrayscrolls)
+
+
+================================================================================
+  52. CALLBACKS
+================================================================================
+
+  Callbacks let you hook into the game's built-in systems.
+
+  --- DAMAGE CALLBACK ---
+    init()
+    {
+        level.callbackPlayerDamage = ::onDamage;
+    }
+
+    onDamage(eInflictor, eAttacker, iDamage, iDFlags,
+        sMeansOfDeath, sWeapon, vPoint, vDir, sHitLoc, timeOffset)
+    {
+        // Modify damage here
+        // Call original to apply
+    }
+
+  --- KILLED CALLBACK ---
+    init()
+    {
+        level.callbackPlayerKilled = ::onKilled;
+    }
+
+    onKilled(eInflictor, attacker, iDamage, sMeansOfDeath,
+        sWeapon, vDir, sHitLoc, timeOffset, deathAnimDuration)
+    {
+        // Custom death logic
+    }
+
+
+================================================================================
+  53. TIME AND TIMING
+================================================================================
+
+  --- WAIT ---
+    wait 0.05;             // Wait 0.05 seconds (1 frame at 20fps)
+    wait 1;                // Wait 1 second
+    wait 5;                // Wait 5 seconds
+    wait 0.5;              // Wait half a second
+
+  --- GAME TIME ---
+    getTime()              // Milliseconds since server start
+    time = getTime();
+    elapsed = getTime() - time;   // Milliseconds elapsed
+
+  --- FRAME TIMING ---
+    The game runs at a fixed tick rate (usually 20 ticks/second).
+    wait 0.05 = roughly one game tick.
+    Some operations happen per-frame, others per-tick.
+
+  --- DELAYS ---
+    // Do something after a delay
+    wait 3;
+    self iPrintLn("3 seconds passed");
+
+    // Or in a thread:
+    self thread delayedAction();
+
+    delayedAction()
+    {
+        self endon("disconnect");
+        wait 5;
+        self iPrintLn("5 seconds after thread started");
+    }
+
+
+================================================================================
+  54. MATH FUNCTIONS
+================================================================================
+
+    int(x)                   // Float to integer (truncates)
+    float(x)                 // Integer to float
+    abs(x)                   // Absolute value
+    min(a, b)                // Smaller of two values
+    max(a, b)                // Larger of two values
+    floor(x)                 // Round down
+    ceil(x)                  // Round up
+    sqrt(x)                  // Square root
+    sin(x)                   // Sine (degrees)
+    cos(x)                   // Cosine (degrees)
+    atan(x)                  // Arc tangent
+    randomInt(max)           // Random 0 to max-1
+    randomIntRange(min, max) // Random min to max-1
+    randomFloat(max)         // Random 0.0 to max
+    randomFloatRange(min, max) // Random min to max
+    distance(a, b)           // Distance between two 3D points
+    length(v)                // Length of vector
+    vectorNormalize(v)       // Unit vector
+
+
+================================================================================
+  55. DEBUGGING TECHNIQUES
+================================================================================
+
+  --- PRINT DEBUGGING ---
+    self iPrintLn("Reached point A");
+    self iPrintLn("Value: " + myVar);
+    self iPrintLn("Pos: " + self getOrigin());
+    self iPrintLn("Type check: " + isDefined(x));
+
+  --- ON-SCREEN COUNTER ---
+    myDebugLoop()
+    {
+        self endon("disconnect");
+        counter = 0;
+        for (;;)
+        {
+            counter++;
+            self iPrintLn("Tick: " + counter);
+            wait 1;
+        }
+    }
+
+  --- CHECK IF CODE RUNS ---
+    self iPrintLn("^2CHECKPOINT 1");   // Green = good
+    // ... suspect code ...
+    self iPrintLn("^2CHECKPOINT 2");   // If you see this, code ran
+
+  --- CHECK VARIABLE VALUES ---
+    self iPrintLn("god=" + self getPers("god"));
+    self iPrintLn("menu=" + self.menu.isopen);
+    self iPrintLn("weap=" + self getCurrentWeapon());
+
+
+================================================================================
+  56. PERFORMANCE TIPS
+================================================================================
+
+  1. MINIMIZE THREADS
+     Each thread uses memory. Don't create threads you don't need.
+
+  2. USE APPROPRIATE WAIT TIMES
+     wait 0.05 = 20 times/second (fast, for real-time features)
+     wait 0.5 = 2 times/second (slow, for periodic checks)
+     wait 1 = once per second (for infrequent things)
+
+  3. KILL THREADS WHEN DONE
+     Use endon and notify to clean up threads that are no longer needed.
+
+  4. DON'T CREATE HUD ELEMENTS IN LOOPS
+     Create once, update with setText/setShader. Don't destroy and
+     recreate every frame.
+
+  5. MINIMIZE DVAR CALLS
+     getDvar/setDvar are relatively slow. Cache values when possible:
+       value = getDvarFloat("g_speed");  // Read once
+       // Use value multiple times
+
+  6. USE isDefined BEFORE ACCESSING
+     Accessing undefined variables can cause errors. Always check:
+       if (isDefined(self.savedPos))
+           self setOrigin(self.savedPos);
+
+
+================================================================================
+  57. COMMON PATTERNS
+================================================================================
+
+  --- TOGGLE PATTERN ---
+    toggle(persKey, onFunc, offFunc)
+    {
+        if (self getPers(persKey) == "Off")
+        {
+            self setPers(persKey, "On");
+            if (isDefined(onFunc))
+                self thread [[onFunc]]();
+            self iPrintLn(persKey + ": ^2On");
+        }
+        else
+        {
+            self setPers(persKey, "Off");
+            if (isDefined(offFunc))
+                self thread [[offFunc]]();
+            self iPrintLn(persKey + ": ^1Off");
+        }
+    }
+
+  --- SAFE LOOP PATTERN ---
+    safeLoop()
+    {
+        self endon("disconnect");
+        self endon("death");
+        self notify("stop_safeLoop");
+        self endon("stop_safeLoop");
+        for (;;)
+        {
+            // Your code here
+            wait 0.05;
+        }
+    }
+
+  --- CFG LISTENER PATTERN ---
+    myCfgListener()
+    {
+        self endon("disconnect");
+        self endon("death");
+        self notifyOnPlayerCommand("do_mine", "+mycommand");
+        for (;;)
+        {
+            self waittill("do_mine");
+            self thread myFunction();
+        }
+    }
+
+  --- CONNECT + SPAWN PATTERN ---
+    init()
+    {
+        level thread onConnect();
+    }
+
+    onConnect()
+    {
+        while (true)
+        {
+            level waittill("connected", player);
+            player thread onSpawn();
+        }
+    }
+
+    onSpawn()
+    {
+        while (true)
+        {
+            self waittill("spawned_player");
+            // Per-spawn code here
+        }
+    }
+
+  --- TIMED ACTION PATTERN ---
+    doAfterDelay(delay, func)
+    {
+        self endon("disconnect");
+        wait delay;
+        self thread [[func]]();
+    }
+
+    // Usage:
+    self thread doAfterDelay(3, ::myFunction);
+
+  --- DISTANCE CHECK PATTERN ---
+    isNearPlayer(otherPlayer, range)
+    {
+        return distance(self getOrigin(), otherPlayer getOrigin()) < range;
+    }
+
+  --- FOR ALL PLAYERS PATTERN ---
+    doForAllPlayers(func)
+    {
+        players = getEntArray("player", "classname");
+        for (i = 0; i < players.size; i++)
+        {
+            if (isDefined(players[i]) && isAlive(players[i]))
+                players[i] thread [[func]]();
+        }
+    }
+
+================================================================================
