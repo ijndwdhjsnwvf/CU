@@ -1,0 +1,673 @@
+================================================================================
+              IWD AND FF FILE GUIDE
+              Custom Assets, Compiled Mods, and Packaging
+================================================================================
+
+This guide covers .iwd and mod.ff files - how to create them,
+what goes inside them, and how your mod uses them.
+
+
+================================================================================
+  TABLE OF CONTENTS
+================================================================================
+
+  1.  What Are IWD Files
+  2.  Creating an IWD File
+  3.  IWD Folder Structure
+  4.  What Goes in an IWD
+  5.  How the Engine Finds IWD Assets
+  6.  Naming and Load Order
+  7.  Using IWD Assets in GSC
+  8.  Custom Images (IWI Format)
+  9.  Custom Sounds
+  10. Custom Models
+  11. Custom Weapon Files
+  12. What Is mod.ff
+  13. When You Need mod.ff
+  14. Creating mod.ff
+  15. mod.ff vs Raw Scripts
+  16. Zone Files (.zone)
+  17. Building mod.ff Step by Step
+  18. mod.csv and Asset Lists
+  19. Combining IWD + FF + Raw GSC
+  20. Folder Structure Summary
+  21. Common Errors
+  22. Quick Reference
+
+
+================================================================================
+  1. WHAT ARE IWD FILES
+================================================================================
+
+  An .iwd file is a renamed .zip file that contains custom assets.
+  The engine reads .iwd files automatically from your mod folder.
+
+  .iwd files can contain:
+  - Custom images/textures (.iwi format)
+  - Custom sounds (.wav, .mp3)
+  - Custom models
+  - Custom weapon files
+  - Custom fx (effects)
+  - Custom materials
+  - Any asset the engine normally loads from its own files
+
+  .iwd files CANNOT contain:
+  - GSC scripts (use raw files for that)
+  - Compiled .ff fast files (those are separate)
+
+
+================================================================================
+  2. CREATING AN IWD FILE
+================================================================================
+
+  Step by step:
+
+  1. Create a normal folder on your desktop
+  2. Put your custom assets inside with the correct folder structure
+  3. Select all files/folders INSIDE (not the parent folder)
+  4. Right-click -> Send to -> Compressed (zipped) folder
+  5. Rename the .zip extension to .iwd
+  6. Put the .iwd in your mod folder: mods/my_mod/
+
+  --- USING 7-ZIP ---
+  1. Open 7-Zip
+  2. Navigate to your asset folder
+  3. Select all contents
+  4. Click Add -> Archive format: zip -> Create
+  5. Rename .zip to .iwd
+
+  --- USING WINRAR ---
+  1. Select all files/folders inside your asset folder
+  2. Right-click -> Add to archive
+  3. Set format to ZIP (NOT RAR - engine only reads ZIP format)
+  4. Create, then rename .zip to .iwd
+
+  IMPORTANT: The .iwd must be ZIP format. RAR, 7z, etc. will NOT work.
+
+  IMPORTANT: Zip the CONTENTS, not the parent folder.
+  WRONG:  myassets/ -> images/ -> my_image.iwi
+  RIGHT:  images/ -> my_image.iwi (images/ is at the root of the zip)
+
+
+================================================================================
+  3. IWD FOLDER STRUCTURE
+================================================================================
+
+  Inside the .iwd, use the same folder structure as the game:
+
+    images/                    Custom .iwi images
+    sound/                     Custom sounds
+    xmodel/                    Custom models
+    materials/                 Custom materials
+    fx/                        Custom effects
+    weapons/mp/                Custom weapon files
+
+  Example .iwd contents for a mod with a custom menu image and sound:
+
+    images/menu_background.iwi
+    images/menu_icon_god.iwi
+    images/menu_icon_speed.iwi
+    sound/menu_open.wav
+    sound/menu_close.wav
+
+
+================================================================================
+  4. WHAT GOES IN AN IWD
+================================================================================
+
+  --- IMAGES ---
+  Custom textures and images. Must be in .iwi format.
+  Used for: HUD elements, menu backgrounds, custom shaders
+  Folder: images/
+
+  --- SOUNDS ---
+  Custom sound effects and music.
+  Formats: .wav (recommended), .mp3
+  Folder: sound/
+
+  --- MODELS ---
+  Custom 3D models (xmodels).
+  Used for: custom weapons, custom props, spawned objects
+  Folder: xmodel/
+
+  --- WEAPON FILES ---
+  Custom weapon definitions that change weapon behavior.
+  Used for: modifying damage, fire rate, ammo, etc.
+  Folder: weapons/mp/
+
+  --- MATERIALS ---
+  Material definitions that control how surfaces look.
+  Folder: materials/
+
+  --- FX ---
+  Custom effects (explosions, particles, etc.).
+  Folder: fx/
+
+
+================================================================================
+  5. HOW THE ENGINE FINDS IWD ASSETS
+================================================================================
+
+  When you precache or reference an asset, the engine searches:
+
+    1. Raw files in your mod folder first (mods/my_mod/images/)
+    2. IWD files in your mod folder (mods/my_mod/*.iwd)
+    3. The game's own IWD files (main/*.iwd)
+    4. The game's fast files (.ff)
+
+  This means:
+  - Your mod's raw files override everything
+  - Your mod's .iwd files override the game's files
+  - You can replace stock assets by using the same file path
+
+  To override the game's intervention scope texture:
+    Put images/weapon_cheytac_scope.iwi in your .iwd
+    The engine uses YOUR version instead of the stock one
+
+
+================================================================================
+  6. NAMING AND LOAD ORDER
+================================================================================
+
+  IWD files load ALPHABETICALLY within each location.
+
+  Later-loaded files override earlier ones. To make sure your custom
+  assets load LAST (and override everything), prefix with z_:
+
+    mods/my_mod/z_custom_assets.iwd    <- loads last, wins conflicts
+
+  If you have multiple .iwd files:
+    mods/my_mod/a_base_assets.iwd      <- loads first
+    mods/my_mod/m_extra_assets.iwd     <- loads second
+    mods/my_mod/z_override_assets.iwd  <- loads last (highest priority)
+
+  Convention:
+    z_modname.iwd        Common naming pattern
+    iw_00.iwd            Stock game pattern (don't use iw_ prefix)
+
+  IMPORTANT: Do NOT name your iwd files starting with "iw_" - that
+  prefix is reserved for stock game files.
+
+
+================================================================================
+  7. USING IWD ASSETS IN GSC
+================================================================================
+
+  Once an asset is in your .iwd and placed in your mod folder,
+  you use it in GSC exactly like any stock asset:
+
+  --- CUSTOM IMAGE ON HUD ---
+    // In init() - precache first:
+    precacheShader("menu_background");
+
+    // In a function - use it:
+    bg = newClientHudElem(self);
+    bg setShader("menu_background", 640, 480);
+    // "menu_background" matches images/menu_background.iwi in your .iwd
+
+  --- CUSTOM SOUND ---
+    // No precache needed for most sounds
+    self playSound("menu_open");
+    // Matches sound/menu_open.wav in your .iwd
+
+  --- CUSTOM MODEL ---
+    // In init() - precache first:
+    precacheModel("my_custom_model");
+
+    // In a function - use it:
+    obj = spawn("script_model", self getOrigin());
+    obj setModel("my_custom_model");
+    // Matches xmodel/my_custom_model in your .iwd
+
+  The key point: the engine automatically searches your .iwd files.
+  You don't need to tell it "look in my iwd" - just use the asset
+  name and it finds it.
+
+
+================================================================================
+  8. CUSTOM IMAGES (IWI FORMAT)
+================================================================================
+
+  The engine uses .iwi format for images, not .png or .jpg.
+
+  --- CONVERTING TO IWI ---
+
+  Method 1 - iwi_x_dds (recommended):
+    1. Save your image as .dds (DirectDraw Surface) in Photoshop/GIMP
+       - Plugin for GIMP: gimp-dds
+       - Plugin for Photoshop: nvidia-texture-tools or Intel plugin
+    2. Use iwi_x_dds converter to convert .dds -> .iwi
+    3. Place the .iwi in images/ folder in your .iwd
+
+  Method 2 - IWI writer tools:
+    Various community tools can convert .png -> .iwi directly.
+    Search "cod4 iwi converter" or "iw4x iwi tools"
+
+  --- IMAGE SIZES ---
+  Images MUST be power-of-2 dimensions:
+    64x64, 128x128, 256x256, 512x512, 1024x1024, 2048x2048
+
+  Non-square is OK as long as both dimensions are powers of 2:
+    256x128, 512x256, 1024x512
+
+  --- DDS FORMAT SETTINGS ---
+  When saving as .dds:
+    - With transparency: DXT5 (or BC3)
+    - Without transparency: DXT1 (or BC1)
+    - Generate mipmaps: Yes (recommended)
+
+
+================================================================================
+  9. CUSTOM SOUNDS
+================================================================================
+
+  --- SUPPORTED FORMATS ---
+    .wav   - Recommended. Uncompressed, most compatible.
+    .mp3   - Works for music and longer sounds.
+
+  --- FOLDER STRUCTURE ---
+    sound/my_sound_name.wav
+    sound/ambient/my_ambient.wav
+    sound/music/my_music.mp3
+
+  --- SOUND ALIASES ---
+  For advanced sound control, you can create sound alias files
+  that define volume, distance, looping, etc.
+
+  For simple use, just use playSound with the filename:
+    self playSound("my_sound_name");
+
+
+================================================================================
+  10. CUSTOM MODELS
+================================================================================
+
+  Custom models require:
+  1. The model file in xmodel/ folder
+  2. The model's textures in images/ folder
+  3. Precaching in init()
+
+  Creating custom models requires 3D modeling tools like:
+  - Maya with CoD export plugins
+  - Blender with CoD xmodel export
+
+  For most GSC mods, you'll use stock models:
+    precacheModel("com_plasticcase_friendly");   // Ammo crate
+    precacheModel("com_barrel_white");           // White barrel
+    precacheModel("vehicle_80s_sedan1_brn");     // Car
+
+
+================================================================================
+  11. CUSTOM WEAPON FILES
+================================================================================
+
+  Weapon files define weapon behavior. They go in weapons/mp/ in your .iwd.
+
+  --- WHAT YOU CAN CHANGE ---
+  - Damage values
+  - Fire rate
+  - Ammo capacity
+  - Reload speed
+  - Recoil patterns
+  - ADS speed
+  - Movement speed while holding
+  - Weapon model and attachments
+
+  --- HOW TO MODIFY A WEAPON ---
+  1. Extract the stock weapon file from the game's .ff
+     (Use a tool like "CoD4 Asset Extractor" or similar for IW4x)
+  2. Edit the text values in the weapon file
+  3. Put the modified file at weapons/mp/weapon_name in your .iwd
+
+  --- EXAMPLE: MAKE AK47 DO 999 DAMAGE ---
+  1. Extract weapons/mp/ak47_mp from stock files
+  2. Find the "damage" line
+  3. Change to: damage 999
+  4. Save in your .iwd at weapons/mp/ak47_mp
+  5. The engine uses YOUR weapon file instead of the stock one
+
+  --- ALTERNATIVE: CHANGE WEAPON PROPERTIES IN GSC ---
+  For simple changes, you can modify weapons in GSC without .iwd:
+
+    self giveWeapon("ak47_mp");
+    self setWeaponAmmoClip("ak47_mp", 999);   // Huge clip
+    self setWeaponAmmoStock("ak47_mp", 999);  // Huge reserve
+
+
+================================================================================
+  12. WHAT IS MOD.FF
+================================================================================
+
+  A mod.ff is a "fast file" - a compiled binary that contains:
+  - Precached asset references
+  - Precompiled GSC scripts
+  - Localized strings
+  - Menu definitions (.menu files)
+  - Material definitions
+  - Any other asset the engine can preload
+
+  Think of mod.ff as a "preloader" - it tells the engine what to
+  load into memory before the map starts.
+
+
+================================================================================
+  13. WHEN YOU NEED MOD.FF
+================================================================================
+
+  You DO need mod.ff when:
+  - Using custom .menu files (ingame UI menus, not GSC menus)
+  - Needing to define custom materials
+  - Overriding stock localized strings
+  - Want faster load times (precompiled scripts)
+  - Using some advanced modding features
+
+  You do NOT need mod.ff when:
+  - Only using GSC scripts (raw .gsc files work fine)
+  - Only using custom images/sounds/models (use .iwd for those)
+  - Building a simple mod menu (like this example)
+
+  MOST SIMPLE GSC MODS DO NOT NEED MOD.FF.
+  If you're just writing GSC code and using stock assets, skip mod.ff.
+
+
+================================================================================
+  14. CREATING MOD.FF
+================================================================================
+
+  Creating mod.ff requires:
+  1. IW4x mod tools (linker and compiler)
+  2. A zone file (.zone) that lists what goes in the ff
+  3. Running the linker tool to compile
+
+  This is an advanced topic. For most GSC-only mods, you don't need it.
+
+  If you need it, the basic process is:
+
+    1. Install IW4x mod tools
+    2. Create zone_source/mod.zone listing your assets
+    3. Run: linker.exe -language english -compress mod
+    4. Output: mod.ff in your mod folder
+
+  Tools and detailed instructions:
+    - IW4x GitHub wiki
+    - IW4x modding Discord
+    - CoD modding community resources
+
+
+================================================================================
+  15. MOD.FF vs RAW SCRIPTS
+================================================================================
+
+  --- RAW SCRIPTS ---
+  Your .gsc files sit in the mod folder as plain text files:
+    mods/my_mod/scripts/mp/_main.gsc
+
+  Pros:
+  - Easy to edit (just open in text editor)
+  - No compilation step
+  - Changes apply on fast_restart
+  - Anyone can read and learn from them
+
+  Cons:
+  - Slightly slower load time
+  - Anyone can read and modify them
+
+  --- MOD.FF COMPILED ---
+  Scripts are compiled into mod.ff binary:
+    mods/my_mod/mod.ff
+
+  Pros:
+  - Faster load time
+  - Scripts are compiled (harder to read/steal)
+  - Can include menu definitions and materials
+
+  Cons:
+  - Must recompile after every change
+  - Need mod tools installed
+  - Harder to debug
+
+  --- RECOMMENDATION ---
+  Start with raw scripts. Only use mod.ff when you specifically
+  need its features (custom .menu files, etc.) or when you want
+  to distribute a mod without sharing your source code.
+
+
+================================================================================
+  16. ZONE FILES (.ZONE)
+================================================================================
+
+  A .zone file lists all assets to include in the .ff.
+
+  --- LOCATION ---
+    zone_source/mod.zone
+
+  --- FORMAT ---
+  Each line is: type,name
+
+    // Weapons to precache
+    weapon,ak47_mp
+    weapon,cheytac_mp
+
+    // Scripts to include
+    rawfile,scripts/mp/_main.gsc
+    rawfile,scripts/mp/_functions.gsc
+
+    // Localized strings
+    localize,mod_menu_title
+
+    // Materials
+    material,my_custom_material
+
+    // Fx
+    fx,explosions/my_custom_fx
+
+  Lines starting with // are comments.
+
+
+================================================================================
+  17. BUILDING MOD.FF STEP BY STEP
+================================================================================
+
+  This is the full process if you need mod.ff:
+
+  1. SET UP MOD TOOLS
+     Download and install IW4x mod tools.
+     Make sure linker.exe is accessible.
+
+  2. CREATE FOLDER STRUCTURE
+     mods/my_mod/
+       zone_source/
+         mod.zone
+       scripts/mp/
+         _main.gsc
+         _functions.gsc
+
+  3. WRITE YOUR ZONE FILE
+     zone_source/mod.zone:
+
+       // Scripts
+       rawfile,scripts/mp/_main.gsc
+       rawfile,scripts/mp/_functions.gsc
+       rawfile,scripts/mp/_util.gsc
+       rawfile,scripts/mp/menu/_structure.gsc
+       rawfile,scripts/mp/menu/_menulogic.gsc
+       rawfile,scripts/mp/menu/_menuutils.gsc
+       rawfile,scripts/mp/menu/_setupmenu.gsc
+
+       // Weapons (if you use giveWeapon)
+       weapon,cheytac_mp
+       weapon,ak47_mp
+
+  4. COMPILE
+     Open command prompt in the IW4x directory:
+       linker.exe -language english -compress mod
+
+  5. OUTPUT
+     mod.ff is created in your mod folder.
+
+  6. TEST
+     Start IW4x, load your mod with fs_game, play.
+
+
+================================================================================
+  18. MOD.CSV AND ASSET LISTS
+================================================================================
+
+  Some modding setups use mod.csv instead of .zone files.
+  The concept is the same - listing assets to include.
+
+  --- MOD.CSV FORMAT ---
+    type,name,optional_parameters
+    weapon,mp/ak47_mp,
+    fx,explosions/default,
+    xmodel,com_plasticcase_friendly,
+
+  Whether you use .zone or .csv depends on which tools you're using.
+  IW4x mod tools typically use .zone files.
+
+
+================================================================================
+  19. COMBINING IWD + FF + RAW GSC
+================================================================================
+
+  A complete mod often uses all three:
+
+    mods/my_mod/
+      mod.ff                           <- Compiled fast file (optional)
+      z_custom_assets.iwd              <- Custom images, sounds, models
+      scripts/mp/_main.gsc             <- Raw GSC scripts
+      scripts/mp/_functions.gsc
+      scripts/mp/_util.gsc
+      scripts/mp/menu/_structure.gsc
+      scripts/mp/menu/_menulogic.gsc
+      scripts/mp/menu/_menuutils.gsc
+      scripts/mp/menu/_setupmenu.gsc
+
+  --- LOAD ORDER ---
+  1. mod.ff loads first (precaches, compiled scripts)
+  2. IWD files load (custom assets available to the engine)
+  3. Raw GSC scripts load and execute (your mod code)
+
+  --- IMPORTANT ---
+  If a script is in BOTH mod.ff AND raw files, the raw file wins.
+  This means you can have a compiled mod.ff but still override
+  individual scripts with raw .gsc files for testing.
+
+  --- TYPICAL SETUPS ---
+
+  Setup 1: Simple GSC mod (NO mod.ff, NO .iwd)
+    mods/my_mod/
+      scripts/mp/_main.gsc
+      scripts/mp/_functions.gsc
+      scripts/mp/_util.gsc
+      scripts/mp/menu/...
+
+  Setup 2: GSC mod with custom assets (NO mod.ff, YES .iwd)
+    mods/my_mod/
+      z_assets.iwd
+      scripts/mp/_main.gsc
+      scripts/mp/...
+
+  Setup 3: Full compiled mod (YES mod.ff, YES .iwd)
+    mods/my_mod/
+      mod.ff
+      z_assets.iwd
+      scripts/mp/...          <- optional raw overrides
+
+
+================================================================================
+  20. FOLDER STRUCTURE SUMMARY
+================================================================================
+
+  --- YOUR MOD FOLDER ---
+    IW4x/
+      mods/
+        my_mod/
+          mod.ff                           (optional, compiled)
+          z_custom_assets.iwd              (optional, custom assets)
+          scripts/
+            mp/
+              _main.gsc                    (entry point)
+              _functions.gsc               (your functions)
+              _util.gsc                    (utility helpers)
+              menu/
+                _structure.gsc             (menu layout)
+                _menulogic.gsc             (menu input handling)
+                _menuutils.gsc             (HUD helpers)
+                _setupmenu.gsc             (menu init)
+
+  --- INSIDE YOUR .IWD ---
+    z_custom_assets.iwd (which is a .zip):
+      images/
+        my_image.iwi
+        my_other_image.iwi
+      sound/
+        my_sound.wav
+      xmodel/
+        my_model
+
+  --- ZONE SOURCE (if using mod.ff) ---
+    IW4x/
+      zone_source/
+        mod.zone
+
+
+================================================================================
+  21. COMMON ERRORS
+================================================================================
+
+  ERROR: Custom image doesn't show up
+  CAUSE: Image not in .iwi format, or wrong folder path in .iwd
+  FIX:   Convert to .iwi, ensure it's at images/name.iwi in the zip
+
+  ERROR: "precacheItem: can only be called during level load"
+  CAUSE: Trying to precache after init() has finished
+  FIX:   Move all precache calls to init() before onPlayerConnect
+
+  ERROR: Custom sound doesn't play
+  CAUSE: Wrong format or wrong path
+  FIX:   Use .wav format, place at sound/name.wav in .iwd
+
+  ERROR: .iwd not loading
+  CAUSE: File is not ZIP format (it's RAR or 7z), or wrong location
+  FIX:   Ensure it's a .zip renamed to .iwd, in your mod folder
+
+  ERROR: .iwd loads but assets not found
+  CAUSE: Wrong internal folder structure (parent folder included)
+  FIX:   When zipping, select the contents (images/, sound/), not
+         the parent folder. images/ should be at the ROOT of the zip.
+
+  ERROR: mod.ff won't compile
+  CAUSE: Asset listed in .zone doesn't exist
+  FIX:   Check every line in mod.zone points to a real file
+
+  ERROR: "Could not load mod" / mod.ff corrupt
+  CAUSE: Compiled with wrong tool version or wrong compression
+  FIX:   Use the linker that matches your IW4x version
+
+  ERROR: Stock weapon behavior doesn't change
+  CAUSE: Weapon file not in correct path in .iwd
+  FIX:   Must be at weapons/mp/weapon_name (exact path the game expects)
+
+
+================================================================================
+  22. QUICK REFERENCE
+================================================================================
+
+  TASK                          HOW
+  ----                          ---
+  Add custom image              Convert to .iwi -> images/name.iwi in .iwd
+  Add custom sound              sound/name.wav in .iwd
+  Add custom model              xmodel/name in .iwd -> precacheModel in init
+  Override stock weapon         weapons/mp/name in .iwd (same path as stock)
+  Override stock texture        images/stock_name.iwi in .iwd
+  Use custom image in HUD       precacheShader("name") in init, setShader("name")
+  Play custom sound             self playSound("name")
+  Spawn custom model            precacheModel("name") in init, spawn + setModel
+  Create .iwd                   ZIP your assets -> rename .zip to .iwd
+  Create mod.ff                 Write mod.zone -> run linker.exe
+  Test without mod.ff           Just use raw .gsc files, no compilation needed
+  Override mod.ff script        Put raw .gsc file in same path, raw wins
+  Make assets load last         Prefix .iwd name with z_ (z_mymod.iwd)
+
+================================================================================

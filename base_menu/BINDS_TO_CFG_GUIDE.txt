@@ -1,0 +1,822 @@
+================================================================================
+              BINDS TO CFG CALLS - COMPLETE GUIDE
+              How to Convert Any Button Bind to a +Command
+================================================================================
+
+This guide is exclusively about one thing: taking a function that
+currently requires pressing a button (or selecting a menu option)
+and making it callable with a +command from a .cfg file.
+
+Every step. Every file. Every line of code. Start to finish.
+
+
+================================================================================
+  TABLE OF CONTENTS
+================================================================================
+
+  1.  What Is a +Command
+  2.  What Is a .cfg File
+  3.  How It All Connects (The Full Chain)
+  4.  The 4 Files You Touch
+  5.  Step 1: The Function (_functions.gsc)
+  6.  Step 2: The CFG Listener (_functions.gsc)
+  7.  Step 3: Thread the Listener (_main.gsc)
+  8.  Step 4: The Key Bind (.cfg file)
+  9.  Complete Walkthrough: God Mode
+  10. Complete Walkthrough: Speed Toggle
+  11. Complete Walkthrough: Refill Ammo (One-Shot Action)
+  12. Complete Walkthrough: UFO Mode
+  13. Converting an Existing Menu-Only Function
+  14. Making a Function Work From BOTH Menu AND Cfg
+  15. Hold-to-Activate Pattern (+/-)
+  16. Multiple Functions on One Key (Combo Bind)
+  17. Cfg Commands Without a Menu Option
+  18. Menu Option Without a Cfg Command
+  19. Naming Conventions
+  20. Troubleshooting
+  21. Quick Reference Template
+  22. All Stock +Commands You Can Use
+
+
+================================================================================
+  1. WHAT IS A +COMMAND
+================================================================================
+
+  A +command is a console command that starts with the + symbol.
+  When a player presses a key bound to a +command, the game sends
+  a notification that your GSC code can catch.
+
+  Examples:
+    +godmode      (custom - you create this)
+    +speed        (custom - you create this)
+    +attack       (stock - fire weapon)
+    +gostand      (stock - jump)
+
+  The + means "pressed". There's also a - version that means
+  "released" (used for hold-to-activate patterns).
+
+  +commands are the bridge between key presses and GSC code.
+
+  KEY → +command → GSC notification → Your function runs
+
+
+================================================================================
+  2. WHAT IS A .CFG FILE
+================================================================================
+
+  A .cfg file is a plain text file containing console commands.
+  It's loaded with: exec filename.cfg
+
+  Location: IW4x/players/profiles/
+  Or: IW4x/mods/your_mod/
+
+  A .cfg file can bind keys to +commands:
+
+    bind G "+godmode"
+    bind H "+speed"
+    bind R "+refill"
+
+  "bind G "+godmode"" means:
+  When the player presses G, the game sends "+godmode" to the server.
+
+  You can have one .cfg file with all your binds, or multiple files
+  for different configurations.
+
+
+================================================================================
+  3. HOW IT ALL CONNECTS (THE FULL CHAIN)
+================================================================================
+
+  Here's the FULL chain from key press to function execution:
+
+    1. PLAYER presses G on their keyboard
+
+    2. .CFG FILE has: bind G "+godmode"
+       → Game sends "+godmode" to the server
+
+    3. _FUNCTIONS.GSC has a cfg listener with:
+       self notifyOnPlayerCommand("cfg_godmode", "+godmode");
+       → Engine fires "cfg_godmode" as a notify on the player
+
+    4. Same cfg listener has:
+       self waittill("cfg_godmode");
+       → Thread wakes up and runs the next line
+
+    5. Cfg listener calls:
+       self thread godmode();
+       → Your actual function runs
+
+    6. FUNCTION executes:
+       godmode() toggles god mode on/off for the player
+
+  The 4 pieces:
+    .cfg file     →  bind KEY "+command"
+    Listener      →  notifyOnPlayerCommand + waittill
+    Thread start  →  self thread listenerCfg(); (in _main.gsc)
+    Function      →  the actual code that runs
+
+
+================================================================================
+  4. THE 4 FILES YOU TOUCH
+================================================================================
+
+  To add a new +command, you edit exactly 4 things:
+
+  FILE 1: _functions.gsc
+    → Write the actual function (if it doesn't exist already)
+    → Write the cfg listener function
+
+  FILE 2: _main.gsc
+    → Thread the cfg listener in onPlayerSpawned()
+
+  FILE 3: example_binds.cfg (or your .cfg file)
+    → Add the key bind: bind KEY "+command"
+
+  FILE 4 (optional): _structure.gsc
+    → Add a menu option that calls the same function
+      (only if you want it in the menu too)
+
+  That's it. 4 files, 4 changes.
+
+
+================================================================================
+  5. STEP 1: THE FUNCTION (_functions.gsc)
+================================================================================
+
+  First, you need the function that actually does the thing.
+  If it already exists, skip to Step 2.
+
+  --- TOGGLE FUNCTION (on/off) ---
+
+    myFeature()
+    {
+        if (self getPers("myfeature") == "Off")
+        {
+            self setPers("myfeature", "On");
+            // Do the ON action here
+            self iPrintLn("My Feature: ^2On");
+        }
+        else
+        {
+            self setPers("myfeature", "Off");
+            // Do the OFF action here
+            self iPrintLn("My Feature: ^1Off");
+        }
+    }
+
+  Don't forget to initialize the pers in functions_calls():
+
+    functions_calls()
+    {
+        self setPersIfUni("myfeature", "Off");   // ADD THIS
+    }
+
+  --- ONE-SHOT FUNCTION (do once) ---
+
+    myAction()
+    {
+        // Do the action
+        self iPrintLn("Action done");
+    }
+
+
+================================================================================
+  6. STEP 2: THE CFG LISTENER (_functions.gsc)
+================================================================================
+
+  The cfg listener is a small function that connects the +command
+  to your actual function. It goes in _functions.gsc.
+
+  --- TEMPLATE ---
+
+    myFeatureCfg()
+    {
+        self endon("disconnect");
+        self endon("death");
+        self notifyOnPlayerCommand("cfg_myfeature", "+myfeature");
+        for (;;)
+        {
+            self waittill("cfg_myfeature");
+            self thread myFeature();
+        }
+    }
+
+  --- BREAKING IT DOWN ---
+
+    self endon("disconnect");
+      → Kill this thread if player disconnects
+
+    self endon("death");
+      → Kill this thread if player dies (restarts on next spawn)
+
+    self notifyOnPlayerCommand("cfg_myfeature", "+myfeature");
+      → Register: when "+myfeature" arrives, fire "cfg_myfeature" notify
+      → "cfg_myfeature" = the notify name (can be anything unique)
+      → "+myfeature" = the +command name (must match .cfg file)
+
+    for (;;)
+      → Loop forever (listener stays active)
+
+    self waittill("cfg_myfeature");
+      → Pause and wait for the notify to fire
+
+    self thread myFeature();
+      → When it fires, run the actual function
+
+  --- NAMING CONVENTION ---
+  For the cfg listener function:
+    Function:    godmode()
+    Listener:    godmodeCfg()
+
+  For the notify name:
+    "cfg_" + descriptive name
+    "cfg_godmode", "cfg_speed", "cfg_refill"
+
+  For the +command:
+    "+godmode", "+speed", "+refill"
+
+
+================================================================================
+  7. STEP 3: THREAD THE LISTENER (_main.gsc)
+================================================================================
+
+  The cfg listener must be threaded on the player every time they
+  spawn. Add it to onPlayerSpawned() in _main.gsc.
+
+  Find this section in _main.gsc:
+
+    onPlayerSpawned()
+    {
+        while (true)
+        {
+            self waittill("spawned_player");
+
+            if (!self.pers["isBot"])
+            {
+                // ... existing code ...
+
+                // ADD YOUR LISTENER HERE:
+                self thread myFeatureCfg();
+            }
+        }
+    }
+
+  WHY in onPlayerSpawned?
+  Because the cfg listener has endon("death"). When the player
+  dies, the listener thread dies. When they respawn, onPlayerSpawned
+  runs again and re-threads it.
+
+  WHY "thread"?
+  Because the listener has a for(;;) loop with waittill.
+  Without "thread", the code would wait here forever and
+  never run the next line.
+
+
+================================================================================
+  8. STEP 4: THE KEY BIND (.cfg file)
+================================================================================
+
+  Add the bind to your .cfg file:
+
+    bind G "+myfeature"
+
+  --- FORMAT ---
+    bind KEY "+command"
+
+  KEY = the keyboard key:
+    Letters:  A-Z (just the letter, e.g. G)
+    Numbers:  0-9
+    Function: F1-F12
+    Special:  TAB, ENTER, SPACE, ESCAPE
+    Numpad:   KP_INS, KP_DEL, KP_ENTER, etc.
+    Mouse:    MOUSE1 (left), MOUSE2 (right), MOUSE3 (middle),
+              MOUSE4, MOUSE5 (side buttons)
+    Other:    SHIFT, CTRL, ALT, CAPSLOCK, INS, DEL, HOME, END,
+              PGUP, PGDN, UPARROW, DOWNARROW, LEFTARROW, RIGHTARROW
+
+  "+command" = must match what you used in notifyOnPlayerCommand
+    bind G "+myfeature"    matches    "+myfeature"
+
+  --- LOADING THE CFG ---
+  In IW4x console:
+    exec example_binds.cfg
+
+  Or add to your config.cfg:
+    exec example_binds.cfg
+
+
+================================================================================
+  9. COMPLETE WALKTHROUGH: GOD MODE
+================================================================================
+
+  Let's add +godmode from scratch. Every file, every line.
+
+  --- FILE 1: _functions.gsc ---
+
+  Add to functions_calls():
+    self setPersIfUni("god", "Off");
+
+  Add the function:
+    godmode()
+    {
+        if (self getPers("god") == "Off")
+        {
+            self setPers("god", "On");
+            self enableInvulnerability();
+            self iPrintLn("God Mode: ^2On");
+        }
+        else
+        {
+            self setPers("god", "Off");
+            self disableInvulnerability();
+            self iPrintLn("God Mode: ^1Off");
+        }
+    }
+
+  Add the cfg listener:
+    godmodeCfg()
+    {
+        self endon("disconnect");
+        self endon("death");
+        self notifyOnPlayerCommand("cfg_godmode", "+godmode");
+        for (;;)
+        {
+            self waittill("cfg_godmode");
+            self thread godmode();
+        }
+    }
+
+  --- FILE 2: _main.gsc ---
+
+  In onPlayerSpawned(), inside the if (!self.pers["isBot"]) block:
+    self thread godmodeCfg();
+
+  --- FILE 3: .cfg file ---
+
+    bind G "+godmode"
+
+  --- DONE ---
+  Player presses G → +godmode fires → cfg_godmode notify →
+  godmodeCfg catches it → calls godmode() → toggles invulnerability.
+
+
+================================================================================
+  10. COMPLETE WALKTHROUGH: SPEED TOGGLE
+================================================================================
+
+  --- _functions.gsc ---
+
+  In functions_calls():
+    self setPersIfUni("speed", "Off");
+
+  Function:
+    speed()
+    {
+        if (self getPers("speed") == "Off")
+        {
+            self setPers("speed", "On");
+            setDvar("g_speed", 500);
+            self iPrintLn("Speed: ^2On");
+        }
+        else
+        {
+            self setPers("speed", "Off");
+            setDvar("g_speed", 190);
+            self iPrintLn("Speed: ^1Off");
+        }
+    }
+
+  Cfg listener:
+    speedCfg()
+    {
+        self endon("disconnect");
+        self endon("death");
+        self notifyOnPlayerCommand("cfg_speed", "+speed");
+        for (;;)
+        {
+            self waittill("cfg_speed");
+            self thread speed();
+        }
+    }
+
+  --- _main.gsc ---
+    self thread speedCfg();
+
+  --- .cfg ---
+    bind H "+speed"
+
+
+================================================================================
+  11. COMPLETE WALKTHROUGH: REFILL AMMO (ONE-SHOT ACTION)
+================================================================================
+
+  This is a one-shot action (not a toggle). Same pattern, just
+  no pers tracking.
+
+  --- _functions.gsc ---
+
+  Function (no pers needed for one-shot):
+    refillAmmo()
+    {
+        weapons = self getWeaponsList();
+        for (i = 0; i < weapons.size; i++)
+            self giveMaxAmmo(weapons[i]);
+        self iPrintLn("Ammo Refilled");
+    }
+
+  Cfg listener:
+    refillCfg()
+    {
+        self endon("disconnect");
+        self endon("death");
+        self notifyOnPlayerCommand("cfg_refill", "+refill");
+        for (;;)
+        {
+            self waittill("cfg_refill");
+            self thread refillAmmo();
+        }
+    }
+
+  --- _main.gsc ---
+    self thread refillCfg();
+
+  --- .cfg ---
+    bind R "+refill"
+
+
+================================================================================
+  12. COMPLETE WALKTHROUGH: UFO MODE
+================================================================================
+
+  --- _functions.gsc ---
+
+  In functions_calls():
+    self setPersIfUni("ufo", "Off");
+
+  Function:
+    ufo()
+    {
+        if (self getPers("ufo") == "Off")
+        {
+            self setPers("ufo", "On");
+            self allowSpectateTeam("freelook", true);
+            self.sessionstate = "spectator";
+            self iPrintLn("UFO Mode: ^2On");
+        }
+        else
+        {
+            self setPers("ufo", "Off");
+            self.sessionstate = "playing";
+            self allowSpectateTeam("freelook", false);
+            self iPrintLn("UFO Mode: ^1Off");
+        }
+    }
+
+  Cfg listener:
+    ufoCfg()
+    {
+        self endon("disconnect");
+        self endon("death");
+        self notifyOnPlayerCommand("cfg_ufo", "+ufo");
+        for (;;)
+        {
+            self waittill("cfg_ufo");
+            self thread ufo();
+        }
+    }
+
+  --- _main.gsc ---
+    self thread ufoCfg();
+
+  --- .cfg ---
+    bind U "+ufo"
+
+
+================================================================================
+  13. CONVERTING AN EXISTING MENU-ONLY FUNCTION
+================================================================================
+
+  You already have a function that works from the menu.
+  Now you want to also call it with a +command.
+
+  EXISTING (menu only):
+    // In _functions.gsc:
+    myFeature() { ... }
+
+    // In _structure.gsc:
+    self AddOption("Player", "My Feature", ::myFeature);
+
+    // In _main.gsc: nothing (menu handles calling it)
+
+  TO ADD CFG SUPPORT, you only need to add:
+
+  1. Add cfg listener to _functions.gsc:
+       myFeatureCfg()
+       {
+           self endon("disconnect");
+           self endon("death");
+           self notifyOnPlayerCommand("cfg_myfeature", "+myfeature");
+           for (;;)
+           {
+               self waittill("cfg_myfeature");
+               self thread myFeature();
+           }
+       }
+
+  2. Thread it in _main.gsc onPlayerSpawned():
+       self thread myFeatureCfg();
+
+  3. Add bind in .cfg:
+       bind KEY "+myfeature"
+
+  That's it. The menu option still works too. Both the menu and
+  the +command call the same function.
+
+
+================================================================================
+  14. MAKING A FUNCTION WORK FROM BOTH MENU AND CFG
+================================================================================
+
+  The key insight: the menu and the cfg listener both call the
+  SAME function. You don't need two different functions.
+
+                        ┌──→ godmode()
+    Menu (select) ──────┤
+                        │
+    +godmode (key) ─────┘
+
+  In _structure.gsc:
+    self AddOption("Player", "God Mode", ::godmode, self getPers("god"));
+    // This calls godmode() when the player selects it in the menu
+
+  In _functions.gsc:
+    godmodeCfg()
+    {
+        ...
+        self thread godmode();
+        // This calls the SAME godmode() when +godmode is pressed
+    }
+
+  One function. Two ways to trigger it. They don't interfere.
+
+
+================================================================================
+  15. HOLD-TO-ACTIVATE PATTERN (+/-)
+================================================================================
+
+  Normal +commands fire once when pressed. But +commands actually
+  have TWO events:
+    +command = key pressed DOWN
+    -command = key RELEASED
+
+  You can use both for hold-to-activate features:
+
+    holdFeatureCfg()
+    {
+        self endon("disconnect");
+        self endon("death");
+        self notifyOnPlayerCommand("hold_on", "+holdfeature");
+        self notifyOnPlayerCommand("hold_off", "-holdfeature");
+        for (;;)
+        {
+            self waittill("hold_on");
+            // Key pressed - activate
+            setDvar("g_speed", 1000);
+            self iPrintLn("Speed: ^2ACTIVE (hold)");
+
+            self waittill("hold_off");
+            // Key released - deactivate
+            setDvar("g_speed", 190);
+            self iPrintLn("Speed: ^1Released");
+        }
+    }
+
+  .cfg: bind SHIFT "+holdfeature"
+  Hold SHIFT = fast. Release SHIFT = normal.
+
+  IMPORTANT: The -command fires automatically when the key is
+  released. You don't need a separate bind for it. Just binding
+  "+holdfeature" handles both + and - automatically.
+
+
+================================================================================
+  16. MULTIPLE FUNCTIONS ON ONE KEY (COMBO BIND)
+================================================================================
+
+  You can bind multiple +commands to one key using a .cfg:
+
+    // combo_god_ammo.cfg
+    bind G "+godmode; +maxammo"
+
+  Or create a combo function:
+
+    comboGodAmmo()
+    {
+        self thread godmode();
+        self thread maxammo();
+    }
+
+    comboGodAmmoCfg()
+    {
+        self endon("disconnect");
+        self endon("death");
+        self notifyOnPlayerCommand("cfg_combo", "+combo");
+        for (;;)
+        {
+            self waittill("cfg_combo");
+            self thread comboGodAmmo();
+        }
+    }
+
+  .cfg: bind G "+combo"
+
+
+================================================================================
+  17. CFG COMMANDS WITHOUT A MENU OPTION
+================================================================================
+
+  You can have +commands that aren't in the menu at all.
+  Just skip the _structure.gsc part.
+
+  1. Write function in _functions.gsc
+  2. Write cfg listener in _functions.gsc
+  3. Thread listener in _main.gsc
+  4. Add bind in .cfg
+
+  No _structure.gsc changes needed. The player uses the key
+  bind to trigger it. There's no menu option for it.
+
+
+================================================================================
+  18. MENU OPTION WITHOUT A CFG COMMAND
+================================================================================
+
+  If you only want a menu option and NO key bind:
+
+  1. Write function in _functions.gsc
+  2. Add option in _structure.gsc
+  3. That's it — no cfg listener, no _main.gsc thread, no .cfg bind
+
+  The function only runs when the player selects it in the menu.
+
+
+================================================================================
+  19. NAMING CONVENTIONS
+================================================================================
+
+  Stay consistent. Here's the convention used in this mod:
+
+  FUNCTION:        godmode()
+  CFG LISTENER:    godmodeCfg()
+  NOTIFY NAME:     "cfg_godmode"
+  +COMMAND:        "+godmode"
+  PERS KEY:        "god"
+  .CFG BIND:       bind G "+godmode"
+
+  Another example:
+  FUNCTION:        refillAmmo()
+  CFG LISTENER:    refillCfg()
+  NOTIFY NAME:     "cfg_refill"
+  +COMMAND:        "+refill"
+  .CFG BIND:       bind R "+refill"
+
+  Rules:
+  - +command names: lowercase, no spaces, descriptive
+  - Notify names: prefix with "cfg_" to avoid conflicts
+  - Cfg listener: same name as function + "Cfg" suffix
+  - Each +command must have a UNIQUE name
+
+
+================================================================================
+  20. TROUBLESHOOTING
+================================================================================
+
+  PROBLEM: Key does nothing when pressed
+  CHECK:
+  - Did you exec your .cfg file? (exec example_binds.cfg)
+  - Does the bind line match the +command in notifyOnPlayerCommand?
+  - Is the cfg listener threaded in _main.gsc onPlayerSpawned()?
+  - Did the player die since last spawn? (listener restarts on spawn)
+  - Is the player alive? (endon "death" kills the listener)
+
+  PROBLEM: "unknown function" error
+  CHECK:
+  - Does the function name in the cfg listener match EXACTLY?
+  - Is _functions.gsc #included in _main.gsc?
+  - Check case sensitivity: godmodeCfg vs godmodecfg
+
+  PROBLEM: Function runs twice
+  CHECK:
+  - Is the cfg listener threaded multiple times?
+  - Does the function have the anti-stack pattern if it's a loop?
+  - Check that onPlayerSpawned only threads it once per spawn
+
+  PROBLEM: +command conflicts with game controls
+  CHECK:
+  - Don't use +attack, +speed_throw, +melee, +usereload
+  - These are stock commands used by the game
+  - Use unique names: +godmode, +myspeed, +myrefill
+
+  PROBLEM: Function works from menu but not from key bind
+  CHECK:
+  - Verify the cfg listener is threaded in _main.gsc
+  - Verify the .cfg file was executed
+  - Verify the +command name matches between .cfg and listener
+  - Try: in IW4x console, type: bind G "+godmode"
+    (This bypasses the .cfg file to test directly)
+
+
+================================================================================
+  21. QUICK REFERENCE TEMPLATE
+================================================================================
+
+  Copy-paste this template every time you add a new +command.
+  Replace MYFEATURE, myFeature, myfeature with your names.
+
+  --- _functions.gsc: Add to functions_calls() ---
+
+    self setPersIfUni("myfeature", "Off");
+
+  --- _functions.gsc: Add the function ---
+
+    myFeature()
+    {
+        if (self getPers("myfeature") == "Off")
+        {
+            self setPers("myfeature", "On");
+            // ON actions here
+            self iPrintLn("My Feature: ^2On");
+        }
+        else
+        {
+            self setPers("myfeature", "Off");
+            // OFF actions here
+            self iPrintLn("My Feature: ^1Off");
+        }
+    }
+
+  --- _functions.gsc: Add the cfg listener ---
+
+    myFeatureCfg()
+    {
+        self endon("disconnect");
+        self endon("death");
+        self notifyOnPlayerCommand("cfg_myfeature", "+myfeature");
+        for (;;)
+        {
+            self waittill("cfg_myfeature");
+            self thread myFeature();
+        }
+    }
+
+  --- _main.gsc: Thread in onPlayerSpawned() ---
+
+    self thread myFeatureCfg();
+
+  --- .cfg file ---
+
+    bind KEY "+myfeature"
+
+  --- _structure.gsc (optional, if you also want a menu option) ---
+
+    self AddOption("MyMenu", "My Feature", ::myFeature, self getPers("myfeature"));
+
+
+================================================================================
+  22. ALL STOCK +COMMANDS YOU CAN USE
+================================================================================
+
+  These are +commands the game already has. You can use them
+  in notifyOnPlayerCommand to detect when the player does
+  standard game actions:
+
+    +attack            Fire weapon
+    -attack            Stop firing
+    +speed_throw       ADS (aim down sights)
+    -speed_throw       Stop ADS
+    +melee             Knife
+    +usereload         Use button / Reload
+    +gostand           Jump / Stand up
+    +stance            Crouch / Prone toggle
+    +frag              Lethal equipment
+    +smoke             Tactical equipment
+    +actionslot 1      Killstreak 1 / D-pad Up
+    +actionslot 2      Killstreak 2 / D-pad Down
+    +actionslot 3      Killstreak 3 / D-pad Left
+    +actionslot 4      Killstreak 4 / D-pad Right
+    +breathe_sprint    Sprint
+    +toggleads_throw   Toggle ADS
+    +scores            Scoreboard
+
+  You can listen for ANY of these in your code:
+
+    self notifyOnPlayerCommand("player_fired", "+attack");
+    self waittill("player_fired");
+    // Runs every time the player fires their weapon
+
+  WARNING: Be careful overriding stock commands. If you bind
+  a key to a custom +command, that key no longer does its
+  original game function. Choose keys that aren't critical
+  for gameplay, or use keys the player doesn't normally use.
+
+================================================================================

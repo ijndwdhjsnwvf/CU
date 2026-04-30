@@ -1,0 +1,1285 @@
+================================================================================
+              FIXING BAD SYNTAX IN GSC - COMPLETE GUIDE
+              Every Error Type, How to Find It, How to Fix It
+================================================================================
+
+This guide covers every type of syntax error and compilation error
+you'll encounter in IW4x GSC scripting. Based on real errors fixed
+in actual mods. Every error includes what you see, why it happens,
+and exactly how to fix it - with before/after code examples.
+
+
+================================================================================
+  TABLE OF CONTENTS
+================================================================================
+
+  PART 1 - UNDERSTANDING ERRORS
+    1.  How GSC Compilation Works
+    2.  Reading Error Messages
+    3.  The Cascading Error Problem
+    4.  Finding Where the Error Is
+
+  PART 2 - SYNTAX ERRORS
+    5.  Missing Semicolons
+    6.  Missing Braces { }
+    7.  Missing Parentheses ( )
+    8.  Missing Commas in Function Calls
+    9.  Extra Commas
+    10. Unclosed Strings
+    11. Bad Operators
+    12. Code Outside Functions
+    13. Nested Function Definitions
+    14. Missing Function Body
+    15. Bad #include Lines
+
+  PART 3 - FUNCTION ERRORS
+    16. Unknown Function (Case Mismatch)
+    17. Unknown Function (Missing File)
+    18. Unknown Function (Missing #include)
+    19. Unknown Function (Misspelled Name)
+    20. Unknown Function (Engine vs User)
+    21. Wrong Number of Parameters
+    22. Missing Self on Entity Functions
+    23. Self on Standalone Functions
+    24. Calling Undefined Functions
+    25. Function Name Conflicts
+
+  PART 4 - VARIABLE ERRORS
+    26. Using Undefined Variables
+    27. Cannot Cast Type Errors
+    28. Wrong Self Context
+    29. Accessing Properties on Undefined
+
+  PART 5 - LOGIC ERRORS (NOT SYNTAX, BUT COMMON)
+    30. Infinite Loops Without Wait
+    31. Missing Endon Guards
+    32. Thread Stacking
+    33. Recursive Self-Call (Stack Overflow)
+    34. Missing Break in Switch
+    35. Single = vs Double ==
+
+  PART 6 - REFERENCE
+    36. Error Message Quick Reference
+    37. Syntax Checklist Before Loading
+    38. Common Engine Function Spelling
+    39. Debugging Workflow
+
+
+================================================================================
+================================================================================
+  PART 1 - UNDERSTANDING ERRORS
+================================================================================
+================================================================================
+
+
+================================================================================
+  1. HOW GSC COMPILATION WORKS
+================================================================================
+
+  When you load a map in IW4x, the engine:
+  1. Finds all .gsc files in your mod folder
+  2. Reads them in alphabetical order
+  3. Compiles each one to bytecode
+  4. If ANY error is found, compilation STOPS
+
+  KEY POINT: The compiler stops at the FIRST error it finds.
+  It will NOT show you all errors at once. You fix one error,
+  reload, and it shows you the NEXT error.
+
+  This is why the error address (@ XXXXXX) changes each time
+  you fix something — the compiler got further before hitting
+  the next problem.
+
+
+================================================================================
+  2. READING ERROR MESSAGES
+================================================================================
+
+  Error messages look like this:
+
+    Loading script _cfg.gsc...
+    Error:
+    ******* script compile error *******
+    Error: unknown function: @ 428003
+
+  Breaking this down:
+  - "Loading script _cfg.gsc" = The file being compiled when it failed
+  - "unknown function" = The type of error
+  - "@ 428003" = The byte offset in the compiled output
+
+  --- COMMON ERROR TYPES ---
+
+    "unknown function"       A function call can't be found
+    "bad syntax"             Syntax error (missing ; or { or ))
+    "bad token"              Unexpected character in the code
+    "cannot cast"            Type mismatch (string vs number, etc.)
+    "uninitialised variable" Using a variable before setting it
+    "syntax error"           General parsing failure
+
+  --- THE @ NUMBER ---
+
+  The @ number is a byte offset, NOT a line number. It's not
+  directly useful for finding the error in your code. What IS
+  useful is:
+  1. Which file was being loaded (shown above the error)
+  2. If the number changes after a fix, your fix worked
+  3. If the number stays the same, your fix didn't help
+
+
+================================================================================
+  3. THE CASCADING ERROR PROBLEM
+================================================================================
+
+  Because the compiler stops at the FIRST error, you often have
+  this experience:
+
+    Load mod → Error @ 428010 → Fix it
+    Load mod → Error @ 428003 → Fix it (different address = progress!)
+    Load mod → Error @ 428009 → Fix it
+    Load mod → Error @ 428015 → Fix it
+    Load mod → Works!
+
+  Each time the address changes, it means:
+  - Your previous fix was correct
+  - The compiler got further before hitting the next error
+  - There was ALWAYS more than one error, you just couldn't see them
+
+  LESSON: When fixing errors, don't stop after one. Do a FULL
+  review of ALL your files for the same type of mistake before
+  reloading. This saves time.
+
+
+================================================================================
+  4. FINDING WHERE THE ERROR IS
+================================================================================
+
+  The error message tells you WHICH FILE was being loaded, but not
+  the exact line. Here's how to find the problem:
+
+  STEP 1: Look at which file was loading
+    "Loading script _cfg.gsc..." → the error is in _cfg.gsc
+    OR in a file that _cfg.gsc #includes
+
+  STEP 2: Check recent changes first
+    If it was working before, the error is in whatever you changed.
+
+  STEP 3: Binary search
+    If you can't find it, comment out half the file.
+    If the error goes away, it's in the half you commented out.
+    Uncomment half of that half. Repeat until you find it.
+
+  STEP 4: Check all function calls
+    For "unknown function" errors, search every function call
+    and verify the function exists with EXACT same spelling.
+
+  STEP 5: Check included files
+    The error might be in a file that's #included, not the file
+    shown in the error. Check your #include chain.
+
+
+================================================================================
+================================================================================
+  PART 2 - SYNTAX ERRORS
+================================================================================
+================================================================================
+
+
+================================================================================
+  5. MISSING SEMICOLONS
+================================================================================
+
+  Every statement in GSC must end with a semicolon.
+
+  --- WHAT YOU SEE ---
+    Error: bad syntax
+
+  --- WRONG ---
+    self iPrintLn("Hello")
+    self.health = 100
+    wait 1
+
+  --- RIGHT ---
+    self iPrintLn("Hello");
+    self.health = 100;
+    wait 1;
+
+  --- TRICKY CASES ---
+
+  After a function call with no return:
+    WRONG:  self giveWeapon("ak47_mp")
+    RIGHT:  self giveWeapon("ak47_mp");
+
+  After variable assignment:
+    WRONG:  x = 5
+    RIGHT:  x = 5;
+
+  After return:
+    WRONG:  return x
+    RIGHT:  return x;
+
+  After wait:
+    WRONG:  wait 0.05
+    RIGHT:  wait 0.05;
+
+  After endon:
+    WRONG:  self endon("disconnect")
+    RIGHT:  self endon("disconnect");
+
+  NOT needed after braces:
+    RIGHT:  if (x > 5) { }     // No semicolon after }
+    WRONG:  if (x > 5) { };    // Don't do this
+
+
+================================================================================
+  6. MISSING BRACES { }
+================================================================================
+
+  Braces define code blocks. Every { must have a matching }.
+
+  --- WHAT YOU SEE ---
+    Error: bad syntax
+    (Often at a seemingly unrelated location)
+
+  --- WRONG (missing closing brace) ---
+    myFunc()
+    {
+        if (x > 5)
+        {
+            doSomething();
+        // Missing } here!
+    }
+
+  --- RIGHT ---
+    myFunc()
+    {
+        if (x > 5)
+        {
+            doSomething();
+        }
+    }
+
+  --- WRONG (missing opening brace) ---
+    if (x > 5)
+        doA();
+        doB();    // THIS IS NOT INSIDE THE IF!
+
+  --- RIGHT ---
+    if (x > 5)
+    {
+        doA();
+        doB();
+    }
+
+  --- HOW TO FIND MISSING BRACES ---
+  Count them. Every { needs a }. In your text editor:
+  - Search for { and count them
+  - Search for } and count them
+  - If the counts don't match, you're missing one
+
+  Good text editors (VS Code, Notepad++) highlight matching braces.
+  Click on a { and it highlights the matching }. If it doesn't
+  highlight, that brace is unmatched.
+
+
+================================================================================
+  7. MISSING PARENTHESES ( )
+================================================================================
+
+  Function calls and conditions need matching parentheses.
+
+  --- WHAT YOU SEE ---
+    Error: bad syntax
+
+  --- WRONG ---
+    if (self isAlive()
+        doSomething();
+
+    self iPrintLn("test";
+
+  --- RIGHT ---
+    if (self isAlive())
+        doSomething();
+
+    self iPrintLn("test");
+
+  --- NESTED PARENTHESES ---
+    WRONG:  if (int(getDvar("g_speed") > 100)
+    RIGHT:  if (int(getDvar("g_speed")) > 100)
+
+  Count the ( and ) — they must match.
+
+
+================================================================================
+  8. MISSING COMMAS IN FUNCTION CALLS
+================================================================================
+
+  Function parameters are separated by commas.
+
+  --- WHAT YOU SEE ---
+    Error: bad syntax
+
+  --- WRONG ---
+    self AddOption("Main" "Submenu 1" ::LoadMenu);
+    self setPoint("CENTER" "CENTER" 0 0);
+
+  --- RIGHT ---
+    self AddOption("Main", "Submenu 1", ::LoadMenu);
+    self setPoint("CENTER", "CENTER", 0, 0);
+
+
+================================================================================
+  9. EXTRA COMMAS
+================================================================================
+
+  A trailing comma or double comma causes errors.
+
+  --- WHAT YOU SEE ---
+    Error: bad syntax
+
+  --- WRONG ---
+    self AddOption("Main", "Sub",, ::LoadMenu);    // double comma
+    self AddOption("Main", "Sub", ::LoadMenu,);    // trailing comma
+
+  --- RIGHT ---
+    self AddOption("Main", "Sub", ::LoadMenu);
+
+
+================================================================================
+  10. UNCLOSED STRINGS
+================================================================================
+
+  Every opening " must have a closing ".
+
+  --- WHAT YOU SEE ---
+    Error: bad syntax (often on a line far from the actual error)
+
+  --- WRONG ---
+    self iPrintLn("Hello World);
+    text = "unclosed;
+
+  --- RIGHT ---
+    self iPrintLn("Hello World");
+    text = "unclosed";
+
+  This is especially tricky because the compiler thinks everything
+  after the opening " is part of the string, until it hits the next "
+  which might be on a completely different line.
+
+
+================================================================================
+  11. BAD OPERATORS
+================================================================================
+
+  --- WHAT YOU SEE ---
+    Error: bad syntax or bad token
+
+  --- WRONG ---
+    if (x = 5)       // Assignment, not comparison!
+    if (x === 5)     // Triple equals doesn't exist in GSC
+    if (x <> 5)      // Wrong not-equal operator
+
+  --- RIGHT ---
+    if (x == 5)      // Comparison
+    if (x != 5)      // Not equal
+
+  --- WRONG ---
+    x =+ 5;          // Wrong order
+    x =- 5;          // Wrong order
+
+  --- RIGHT ---
+    x += 5;          // Add and assign
+    x -= 5;          // Subtract and assign
+
+
+================================================================================
+  12. CODE OUTSIDE FUNCTIONS
+================================================================================
+
+  All executable code must be inside a function body.
+
+  --- WHAT YOU SEE ---
+    Error: bad syntax (often very confusing location)
+
+  --- WRONG ---
+    #include common_scripts\utility;
+
+    x = 5;           // WRONG - code outside a function!
+
+    myFunc()
+    {
+        // ...
+    }
+
+  --- RIGHT ---
+    #include common_scripts\utility;
+
+    myFunc()
+    {
+        x = 5;       // Inside a function
+    }
+
+  The only things allowed outside functions:
+  - #include lines
+  - Comments (//, /* */)
+  - Function definitions
+
+
+================================================================================
+  13. NESTED FUNCTION DEFINITIONS
+================================================================================
+
+  You cannot define a function inside another function.
+
+  --- WHAT YOU SEE ---
+    Error: bad syntax
+
+  --- WRONG ---
+    outerFunc()
+    {
+        innerFunc()      // WRONG - can't define here!
+        {
+            doSomething();
+        }
+    }
+
+  --- RIGHT ---
+    outerFunc()
+    {
+        self thread innerFunc();
+    }
+
+    innerFunc()          // Defined at file level
+    {
+        doSomething();
+    }
+
+
+================================================================================
+  14. MISSING FUNCTION BODY
+================================================================================
+
+  Every function must have a body with braces.
+
+  --- WHAT YOU SEE ---
+    Error: bad syntax
+
+  --- WRONG ---
+    myFunc()             // Missing body!
+
+    anotherFunc()
+    {
+        // ...
+    }
+
+  --- RIGHT ---
+    myFunc()
+    {
+        // Empty functions still need braces
+    }
+
+
+================================================================================
+  15. BAD #INCLUDE LINES
+================================================================================
+
+  --- WHAT YOU SEE ---
+    Error: can't find include file
+
+  --- WRONG ---
+    #include "common_scripts\utility";     // No quotes!
+    #include common_scripts/utility;       // Wrong slash!
+    #include common_scripts\utility.gsc;   // No .gsc extension!
+
+  --- RIGHT ---
+    #include common_scripts\utility;       // No quotes, backslash, no .gsc
+
+  --- INCLUDE PATH RULES ---
+  - Use backslashes \ not forward slashes /
+  - Don't include the .gsc extension
+  - Don't use quotes
+  - Path is relative to the game's script root
+  - The file must exist at that path
+
+
+================================================================================
+================================================================================
+  PART 3 - FUNCTION ERRORS
+================================================================================
+================================================================================
+
+
+================================================================================
+  16. UNKNOWN FUNCTION (CASE MISMATCH)
+================================================================================
+
+  THE #1 MOST COMMON ERROR IN GSC MODDING.
+
+  User-defined function names are CASE-SENSITIVE.
+  If you define "myFunction" and call "myfunction", it will NOT work.
+
+  --- WHAT YOU SEE ---
+    Error: unknown function: @ XXXXXX
+
+  --- WRONG ---
+    // Definition in _util.gsc:
+    setPers(key, value) { ... }
+
+    // Call in _functions.gsc:
+    self setpers("god", "On");     // lowercase 'p' - WON'T WORK
+
+  --- RIGHT ---
+    self setPers("god", "On");     // Matches definition exactly
+
+  --- REAL EXAMPLES WE'VE FIXED ---
+
+    WRONG: notifyOnplayerCommand    RIGHT: notifyOnPlayerCommand
+    WRONG: setpers                  RIGHT: setPers
+    WRONG: getpers                  RIGHT: getPers
+    WRONG: setpersifuni             RIGHT: setPersIfUni
+    WRONG: setupbind                RIGHT: setupBind
+    WRONG: isinmenu                 RIGHT: isInMenu
+    WRONG: addoption                RIGHT: AddOption
+    WRONG: createmenu               RIGHT: CreateMenu
+    WRONG: loadmenu                 RIGHT: LoadMenu
+
+  --- HOW TO PREVENT ---
+  1. Pick ONE naming convention and stick to it
+  2. Copy-paste function names instead of retyping them
+  3. Before loading, search for every function definition and
+     verify every call site uses the exact same spelling
+
+  --- NOTE ON ENGINE BUILTINS ---
+  Engine builtin functions (iPrintLn, giveWeapon, etc.) are
+  case-INSENSITIVE. Only YOUR custom functions are case-sensitive.
+
+    self iprintln("test");         // Works (engine builtin)
+    self iPrintLn("test");         // Also works
+    self setpers("god", "On");     // FAILS (user-defined, wrong case)
+
+
+================================================================================
+  17. UNKNOWN FUNCTION (MISSING FILE)
+================================================================================
+
+  If the function is defined in a file that doesn't exist or
+  isn't in the right location, the compiler can't find it.
+
+  --- WHAT YOU SEE ---
+    Error: unknown function: @ XXXXXX
+
+  --- CAUSE ---
+  The .gsc file containing the function isn't in your mod folder,
+  or is in the wrong path.
+
+  --- FIX ---
+  Check that the file exists at the expected path:
+    scripts/mp/_functions.gsc
+    scripts/mp/menu/_menuutils.gsc
+
+  If you moved files, update the paths.
+  If you renamed files, update the #include lines.
+
+
+================================================================================
+  18. UNKNOWN FUNCTION (MISSING #INCLUDE)
+================================================================================
+
+  To call functions from another file, you must #include that file.
+
+  --- WHAT YOU SEE ---
+    Error: unknown function: @ XXXXXX
+
+  --- WRONG ---
+    // _structure.gsc - calling functions from _functions.gsc
+    // but missing the #include!
+    Structure()
+    {
+        self AddOption("Main", "God", ::godmode);  // godmode is in _functions.gsc
+    }
+
+  --- RIGHT ---
+    #include scripts\mp\_functions;    // ADD THIS!
+
+    Structure()
+    {
+        self AddOption("Main", "God", ::godmode);
+    }
+
+  --- RULES ---
+  - If file A calls functions from file B, file A needs:
+    #include scripts\mp\file_B;
+  - If file A only uses function pointers (::func) from file B,
+    file A STILL needs the #include
+  - If the function is in the SAME file, no #include needed
+
+
+================================================================================
+  19. UNKNOWN FUNCTION (MISSPELLED NAME)
+================================================================================
+
+  Simple typo in the function name.
+
+  --- WHAT YOU SEE ---
+    Error: unknown function: @ XXXXXX
+
+  --- WRONG ---
+    self AddOption("Main", "God", ::godMode);    // extra capital M
+    // But defined as: godmode() { }
+
+  --- RIGHT ---
+    self AddOption("Main", "God", ::godmode);    // matches definition
+
+  --- WRONG ---
+    self thread relfectcfg();     // typo: "relfect" instead of "reflect"
+
+  --- RIGHT ---
+    self thread reflectcfg();     // correct spelling
+
+
+================================================================================
+  20. UNKNOWN FUNCTION (ENGINE VS USER)
+================================================================================
+
+  Some function names look like engine builtins but aren't.
+  If you call something thinking the engine provides it, but
+  it's not a real engine function, you get unknown function.
+
+  --- WHAT YOU SEE ---
+    Error: unknown function: @ XXXXXX
+
+  --- EXAMPLES OF THINGS THAT DON'T EXIST ---
+    weapdef_forcecowboy()     // Not a GSC function
+    exec("some_command")      // exec() doesn't exist in stock IW4x GSC
+    setGravity(100)           // Not a function, use setDvar("g_gravity", 100)
+    setSpeed(500)             // Not a function, use setDvar("g_speed", 500)
+
+  --- HOW TO CHECK ---
+  If you're not sure whether a function is a real engine builtin:
+  1. Search for it in the stock game scripts
+  2. Check the IW4x script documentation
+  3. If you can't find it defined anywhere, it probably doesn't exist
+
+  --- FIX ---
+  Find the correct way to do what you want:
+  - For dvars: use setDvar() / getDvar()
+  - For player settings: use the correct engine function
+  - For custom behavior: write your own function
+
+
+================================================================================
+  21. WRONG NUMBER OF PARAMETERS
+================================================================================
+
+  Passing too many or too few arguments to a function.
+
+  --- WHAT YOU SEE ---
+    Runtime error (may not always show a clear error, just crash)
+
+  --- WRONG ---
+    // Function defined with 2 params:
+    giveWeap(weapon, ammo) { }
+
+    // Called with 1:
+    self giveWeap("ak47_mp");         // Missing ammo!
+
+    // Called with 3:
+    self giveWeap("ak47_mp", 100, true);  // Extra param!
+
+  --- RIGHT ---
+    self giveWeap("ak47_mp", 100);
+
+  --- FOR OPTIONAL PARAMS ---
+  If you want optional parameters, check with isDefined:
+
+    giveWeap(weapon, ammo)
+    {
+        if (!isDefined(ammo))
+            ammo = 999;
+        self giveWeapon(weapon);
+        self setWeaponAmmoClip(weapon, ammo);
+    }
+
+
+================================================================================
+  22. MISSING SELF ON ENTITY FUNCTIONS
+================================================================================
+
+  Entity functions must be called ON an entity with "self" or a variable.
+
+  --- WHAT YOU SEE ---
+    Error: unknown function (treated as standalone, can't find it)
+    OR: runtime crash
+
+  --- WRONG ---
+    iPrintLn("test");              // Missing self!
+    giveWeapon("ak47_mp");         // Missing self!
+    enableInvulnerability();       // Missing self!
+
+  --- RIGHT ---
+    self iPrintLn("test");
+    self giveWeapon("ak47_mp");
+    self enableInvulnerability();
+
+  --- EXCEPTIONS (STANDALONE FUNCTIONS) ---
+  Some functions are standalone and do NOT use self:
+
+    getDvar("g_speed");            // Standalone - no self
+    setDvar("g_speed", 500);       // Standalone - no self
+    getEntArray("player", "classname");  // Standalone
+    distance(posA, posB);          // Standalone
+    randomInt(100);                // Standalone
+    isDefined(x);                  // Standalone
+    isAlive(player);               // Standalone (takes entity as param)
+
+
+================================================================================
+  23. SELF ON STANDALONE FUNCTIONS
+================================================================================
+
+  Using self on functions that don't take an entity.
+
+  --- WHAT YOU SEE ---
+    May compile but behave wrong, or may error
+
+  --- WRONG ---
+    self setDvar("g_speed", 500);      // setDvar is standalone
+    self getDvar("g_speed");           // getDvar is standalone
+    self randomInt(100);               // randomInt is standalone
+
+  --- RIGHT ---
+    setDvar("g_speed", 500);
+    value = getDvar("g_speed");
+    num = randomInt(100);
+
+  --- EXCEPTION ---
+  setClientDvar IS called on an entity:
+    self setClientDvar("cg_fov", 90);  // Correct - sets on this player
+
+
+================================================================================
+  24. CALLING UNDEFINED FUNCTIONS
+================================================================================
+
+  Calling a function that you never defined anywhere.
+
+  --- WHAT YOU SEE ---
+    Error: unknown function: @ XXXXXX
+
+  --- EXAMPLE ---
+    // You call this:
+    self thread superSpeed();
+
+    // But superSpeed() is never defined in any file!
+
+  --- FIX ---
+  Either:
+  1. Define the function
+  2. Remove the call
+  3. Check if you meant a different function name
+
+
+================================================================================
+  25. FUNCTION NAME CONFLICTS
+================================================================================
+
+  Two functions with the same name in different included files.
+
+  --- WHAT YOU SEE ---
+    Error: function already defined
+
+  --- WRONG ---
+    // File A:
+    init() { }
+
+    // File B (also included):
+    init() { }    // Conflict!
+
+  --- FIX ---
+  Rename one of them:
+    // File A:
+    init() { }
+
+    // File B:
+    initModB() { }    // Different name
+
+
+================================================================================
+================================================================================
+  PART 4 - VARIABLE ERRORS
+================================================================================
+================================================================================
+
+
+================================================================================
+  26. USING UNDEFINED VARIABLES
+================================================================================
+
+  Accessing a variable that was never assigned a value.
+
+  --- WHAT YOU SEE ---
+    Error: uninitialised variable
+
+  --- WRONG ---
+    myFunc()
+    {
+        self iPrintLn("Value: " + x);    // x was never set!
+    }
+
+  --- RIGHT ---
+    myFunc()
+    {
+        x = 5;
+        self iPrintLn("Value: " + x);
+    }
+
+  --- COMMON CASE: PERS NOT INITIALIZED ---
+    WRONG:
+      if (self getPers("god") == "On")   // Never initialized!
+
+    RIGHT:
+      // In functions_calls (runs on spawn):
+      self setPersIfUni("god", "Off");
+
+      // Then check:
+      if (self getPers("god") == "On")   // Now it's always defined
+
+
+================================================================================
+  27. CANNOT CAST TYPE ERRORS
+================================================================================
+
+  Using a value of the wrong type where another type is expected.
+
+  --- WHAT YOU SEE ---
+    Error: cannot cast X to Y
+
+  --- WRONG ---
+    self.health = "100";             // String, not number!
+    wait "1";                        // String, not number!
+    self setOrigin("100, 200, 300"); // String, not vector!
+
+  --- RIGHT ---
+    self.health = 100;               // Number
+    wait 1;                          // Number
+    self setOrigin((100, 200, 300)); // Vector (with parentheses)
+
+  --- CONVERTING TYPES ---
+    int("5")          // String to integer: 5
+    float("5.5")      // String to float: 5.5
+    "" + 42           // Number to string: "42"
+    int(5.7)          // Float to integer: 5 (truncates)
+
+
+================================================================================
+  28. WRONG SELF CONTEXT
+================================================================================
+
+  Calling player functions when self isn't a player.
+
+  --- WHAT YOU SEE ---
+    Runtime crash or unexpected behavior
+
+  --- WRONG ---
+    init()
+    {
+        self iPrintLn("test");    // self is LEVEL here, not a player!
+    }
+
+  --- RIGHT ---
+    init()
+    {
+        // In init(), there are no players yet.
+        // Use iPrintLnBold for server-wide messages.
+        iPrintLnBold("Mod loaded");
+    }
+
+  --- CONTEXT GUIDE ---
+    init()              → self is NOT a player (don't use player funcs)
+    onPlayerConnect()   → self is NOT a player (use "player" variable)
+    onPlayerSpawned()   → self IS the player (player funcs work)
+    Any function called with "self thread" from onPlayerSpawned
+                        → self IS the player
+
+
+================================================================================
+  29. ACCESSING PROPERTIES ON UNDEFINED
+================================================================================
+
+  Trying to read a property of something that doesn't exist.
+
+  --- WHAT YOU SEE ---
+    Runtime error
+
+  --- WRONG ---
+    origin = self.savedPos.origin;   // self.savedPos might be undefined!
+
+  --- RIGHT ---
+    if (isDefined(self.savedPos))
+        origin = self.savedPos.origin;
+
+  Always use isDefined() before accessing nested properties.
+
+
+================================================================================
+================================================================================
+  PART 5 - LOGIC ERRORS (NOT SYNTAX, BUT COMMON)
+================================================================================
+================================================================================
+
+
+================================================================================
+  30. INFINITE LOOPS WITHOUT WAIT
+================================================================================
+
+  A loop without a wait statement freezes the game.
+
+  --- WHAT YOU SEE ---
+    Game freezes/hangs, must force-close
+
+  --- WRONG ---
+    for (;;)
+    {
+        doSomething();
+        // NO WAIT = GAME FREEZE!
+    }
+
+  --- RIGHT ---
+    for (;;)
+    {
+        doSomething();
+        wait 0.05;           // Let the engine breathe
+    }
+
+  --- ALSO WRONG ---
+    while (self isAlive())
+    {
+        // Nothing with a wait inside
+        self.health = 100;
+    }
+
+  --- RIGHT ---
+    while (self isAlive())
+    {
+        self.health = 100;
+        wait 0.05;
+    }
+
+  RULE: Every for(;;) and while() loop MUST have either:
+  - wait X; somewhere inside
+  - waittill() somewhere inside (also pauses execution)
+
+
+================================================================================
+  31. MISSING ENDON GUARDS
+================================================================================
+
+  Threads keep running after the player dies or disconnects
+  unless you add endon() guards.
+
+  --- WHAT YOU SEE ---
+    Errors after player disconnects
+    Functions running on dead players
+    Memory leaks over time
+
+  --- WRONG ---
+    myLoop()
+    {
+        for (;;)
+        {
+            doSomething();
+            wait 0.05;
+        }
+    }
+
+  --- RIGHT ---
+    myLoop()
+    {
+        self endon("disconnect");    // ALWAYS add these
+        self endon("death");         // ALWAYS add these
+        for (;;)
+        {
+            doSomething();
+            wait 0.05;
+        }
+    }
+
+  Put endon at the TOP of the function, BEFORE the loop.
+
+
+================================================================================
+  32. THREAD STACKING
+================================================================================
+
+  Starting the same thread multiple times without killing the
+  previous one. Causes functions to run in parallel duplicates.
+
+  --- WHAT YOU SEE ---
+    Effects doubling/tripling
+    Speed increases stacking
+    Multiple copies of the same loop
+
+  --- WRONG ---
+    // Called every spawn without stopping previous:
+    self thread myLoop();
+
+  --- RIGHT (ANTI-STACK PATTERN) ---
+    myLoop()
+    {
+        self notify("stop_myLoop");       // Kill existing copy
+        self endon("stop_myLoop");        // Die if another starts
+        self endon("disconnect");
+        self endon("death");
+        for (;;)
+        {
+            doSomething();
+            wait 0.05;
+        }
+    }
+
+
+================================================================================
+  33. RECURSIVE SELF-CALL (STACK OVERFLOW)
+================================================================================
+
+  A function calling itself in a loop causes a stack overflow.
+
+  --- WHAT YOU SEE ---
+    Game crash (stack overflow)
+
+  --- WRONG ---
+    myFunc()
+    {
+        doSomething();
+        wait 1;
+        self thread myFunc();    // Calls itself! Creates infinite chain!
+    }
+
+  --- RIGHT ---
+    myFunc()
+    {
+        self endon("disconnect");
+        self endon("death");
+        for (;;)                 // Use a loop instead
+        {
+            doSomething();
+            wait 1;
+        }
+    }
+
+
+================================================================================
+  34. MISSING BREAK IN SWITCH
+================================================================================
+
+  Without break, execution falls through to the next case.
+
+  --- WHAT YOU SEE ---
+    Wrong case being executed
+    Multiple cases running
+
+  --- WRONG ---
+    switch (weapon)
+    {
+        case "ak47_mp":
+            self iPrintLn("AK-47");
+            // Missing break! Falls through to next case!
+        case "m4_mp":
+            self iPrintLn("M4A1");
+            break;
+    }
+    // Player with AK-47 sees BOTH "AK-47" AND "M4A1"
+
+  --- RIGHT ---
+    switch (weapon)
+    {
+        case "ak47_mp":
+            self iPrintLn("AK-47");
+            break;                     // Stop here!
+        case "m4_mp":
+            self iPrintLn("M4A1");
+            break;
+    }
+
+
+================================================================================
+  35. SINGLE = vs DOUBLE ==
+================================================================================
+
+  = is assignment. == is comparison.
+
+  --- WHAT YOU SEE ---
+    Bad syntax error (in some contexts)
+    Or: condition always true (no error, just wrong behavior)
+
+  --- WRONG ---
+    if (x = 5)              // ASSIGNS 5 to x, doesn't compare!
+        doSomething();
+
+  --- RIGHT ---
+    if (x == 5)             // COMPARES x to 5
+        doSomething();
+
+  --- ALSO WRONG ---
+    self.health == 100;     // Compares but doesn't assign!
+
+  --- RIGHT ---
+    self.health = 100;      // Assigns 100 to health
+
+
+================================================================================
+================================================================================
+  PART 6 - REFERENCE
+================================================================================
+================================================================================
+
+
+================================================================================
+  36. ERROR MESSAGE QUICK REFERENCE
+================================================================================
+
+  ERROR                         LIKELY CAUSE                    SECTION
+  -----                         -----------                     -------
+  "unknown function @ XXX"      Case mismatch                   16
+  "unknown function @ XXX"      Missing #include                18
+  "unknown function @ XXX"      Misspelled function name        19
+  "unknown function @ XXX"      Function doesn't exist          20, 24
+  "bad syntax"                  Missing semicolon               5
+  "bad syntax"                  Missing brace { }               6
+  "bad syntax"                  Missing parenthesis ( )         7
+  "bad syntax"                  Missing comma                   8
+  "bad syntax"                  Unclosed string                 10
+  "bad syntax"                  Code outside function           12
+  "bad token"                   Bad operator                    11
+  "cannot cast"                 Type mismatch                   27
+  "uninitialised variable"      Variable not set                26
+  "function already defined"    Duplicate function names        25
+  "can't find include file"     Bad #include path               15
+  Game freeze                   Loop without wait               30
+  Game crash                    Recursive self-call             33
+  Function doubles up           Missing anti-stack pattern      32
+
+
+================================================================================
+  37. SYNTAX CHECKLIST BEFORE LOADING
+================================================================================
+
+  Run through this checklist before loading your mod:
+
+  [ ] Every statement ends with ;
+  [ ] Every { has a matching }
+  [ ] Every ( has a matching )
+  [ ] Every " has a matching "
+  [ ] All #include lines use backslash \ and no .gsc extension
+  [ ] All function calls match the EXACT case of the definition
+  [ ] All entity functions use self (self iPrintLn, not iPrintLn)
+  [ ] All standalone functions don't use self (setDvar, not self setDvar)
+  [ ] All loops have wait or waittill inside
+  [ ] All looping functions have endon("disconnect") and endon("death")
+  [ ] All toggle functions initialize their pers in functions_calls()
+  [ ] No code exists outside of functions (except #include and comments)
+  [ ] No functions defined inside other functions
+  [ ] All referenced functions actually exist in included files
+
+
+================================================================================
+  38. COMMON ENGINE FUNCTION SPELLING
+================================================================================
+
+  These are the correct spellings of common engine functions.
+  Remember: engine builtins are case-insensitive, but these are
+  the conventional spellings.
+
+  PRINTING:
+    iPrintLn            iPrintLnBold
+
+  WEAPONS:
+    giveWeapon          takeWeapon          takeAllWeapons
+    switchToWeapon      getCurrentWeapon    getWeaponsList
+    giveMaxAmmo         setWeaponAmmoClip   setWeaponAmmoStock
+    getWeaponAmmoClip   getWeaponAmmoStock
+
+  PLAYER:
+    enableInvulnerability    disableInvulnerability
+    isHost              isAlive             suicide
+    getOrigin           setOrigin           getPlayerAngles
+    setPlayerAngles     getVelocity         setVelocity
+    freezeControls      allowSpectateTeam
+
+  DVARS:
+    getDvar             setDvar             getDvarFloat
+    getDvarInt          setClientDvar
+
+  HUD:
+    createFontString    newClientHudElem
+    setPoint            setText             setShader
+    moveOverTime        fadeOverTime        scaleOverTime
+
+  EVENTS:
+    notifyOnPlayerCommand    notify         waittill
+    endon
+
+  ENTITY:
+    getEntArray         spawn               delete
+    setModel
+
+  UTILITY:
+    isDefined           isString            isInt
+    isFloat             isArray
+    precacheItem        precacheShader      precacheModel
+
+  MATH:
+    randomInt           randomFloat         distance
+    int                 float               abs
+    sin                 cos                 sqrt
+
+
+================================================================================
+  39. DEBUGGING WORKFLOW
+================================================================================
+
+  When you get a compile error, follow this workflow:
+
+  1. READ THE ERROR
+     - Which file was loading?
+     - What type of error? (unknown function, bad syntax, etc.)
+     - What's the @ number?
+
+  2. CHECK THE FILE
+     - Open the file mentioned in the error
+     - If "unknown function": search for every function call
+       and verify each one exists with exact spelling
+     - If "bad syntax": check semicolons, braces, parentheses
+
+  3. CHECK INCLUDES
+     - Open every file that's #included by the error file
+     - Verify the included files exist and have no errors
+     - Verify function names match between definition and call
+
+  4. DO A FULL SWEEP
+     Don't fix just one thing. Check the ENTIRE file for:
+     - All function name spellings (case-sensitive!)
+     - All semicolons
+     - All brace pairs
+     - All parenthesis pairs
+
+  5. RELOAD AND CHECK
+     - fast_restart or map mp_rust
+     - If the @ number changed: your fix worked, but there's
+       another error. Go back to step 1.
+     - If the @ number is the same: your fix didn't help.
+       The error is somewhere else. Go back to step 2.
+
+  6. BINARY SEARCH
+     If you can't find it:
+     - Comment out half the file with /* */
+     - Reload. If error is gone, it's in the commented half.
+     - Uncomment half of that half. Repeat.
+
+  7. PRINT DEBUGGING
+     Once it compiles, if something doesn't WORK:
+     - Add self iPrintLn("CHECKPOINT 1"); at key points
+     - See which checkpoints print and which don't
+     - The error is between the last one that prints and
+       the first one that doesn't
+
+================================================================================
