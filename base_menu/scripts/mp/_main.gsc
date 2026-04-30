@@ -12,6 +12,49 @@
 // =========================================================================
 init()
 {
+    // =================================================================
+    //  PRECACHING
+    //  GUIDE REF: SETUP_GUIDE Section 19 (Precaching Resources)
+    //
+    //  Precaching MUST happen in init(), BEFORE onPlayerConnect.
+    //  You cannot precache mid-game. If you try, you get:
+    //    "precacheItem: can only be called during level load"
+    //
+    //  Precache anything you plan to give/spawn/display:
+    //    precacheItem()   - weapons
+    //    precacheShader() - images, textures (for HUD or .iwd custom art)
+    //    precacheModel()  - 3D models (from stock or .iwd)
+    //    precacheString() - strings for some HUD functions
+    //
+    //  If the asset is in a .iwd file, precache it the same way.
+    //  The engine finds it automatically from any loaded .iwd.
+    // =================================================================
+
+    // --- Weapon precaching ---
+    // Uncomment any weapon you want to use with giveWeapon()
+    // precacheItem("cheytac_mp");
+    // precacheItem("deserteaglegold_mp");
+    // precacheItem("ak47_mp");
+    // precacheItem("m4_mp");
+    // precacheItem("ump45_mp");
+    // precacheItem("spas12_mp");
+    // precacheItem("rpg_mp");
+    // precacheItem("barrett_mp");
+
+    // --- Shader precaching ---
+    // Stock shaders (already in game, but precache if you use them in HUD):
+    // precacheShader("white");
+    // precacheShader("minimap_scanlines");
+    //
+    // Custom shaders from .iwd files:
+    // precacheShader("my_custom_image");
+    // The image file must be at images/my_custom_image.iwi inside your .iwd
+
+    // --- Model precaching ---
+    // precacheModel("com_plasticcase_friendly");
+    // For custom models in .iwd: precacheModel("my_model");
+    // The model file must be at xmodel/my_model inside your .iwd
+
     level thread onPlayerConnect();
 }
 
