@@ -241,7 +241,7 @@ onJumpChange(value)
 changeMap(map)
 {
     self iPrintLn("Next map: " + map);
-    setDvar("sv_maprotation", "gametype war map " + map);
+    setDvar("sv_maprotation", "gametype " + getDvar("g_gametype") + " map " + map);
 }
 
 changeGametype(gametype)
@@ -325,7 +325,10 @@ espLoop()
         for (i = 0; i < players.size; i++)
         {
             if (isDefined(players[i]) && isAlive(players[i]) && players[i] != self)
-                players[i] setClientDvar("waypointIconHeight", 20);
+            {
+                players[i].headicon = "headicon_dead";
+                players[i].headiconteam = "none";
+            }
         }
         wait 0.5;
     }
