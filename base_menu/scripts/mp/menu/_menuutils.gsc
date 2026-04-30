@@ -163,6 +163,13 @@ CreateMenuHud()
     self.hud["header_box"].foreground = true;
     self.hud["top_bar"].foreground = true;
 
+    // =====================================================================
+    //  MENU TITLE - TEXT VERSION (DEFAULT)
+    //  To use a custom image instead, comment out the text title block
+    //  below and uncomment the image title block after it.
+    // =====================================================================
+
+    // --- TEXT TITLE (default) ---
     self.hud["title"] = self createText("bigfixed", 0.20, "CENTER", "CENTER", 278, -145, self.menu.color["white"], 5, 1, "B A S E   M E N U");
     self.hud["title"].fontStyle = 2;
     self.hud["title"].foreground = true;
@@ -170,6 +177,33 @@ CreateMenuHud()
     self.hud["subtitle"] = self createText("bigfixed", 0.17, "CENTER", "CENTER", 278, -137, self.menu.color["white"], 5, 0.88, "IW4x GSC Menu");
     self.hud["subtitle"].fontStyle = 2;
     self.hud["subtitle"].foreground = true;
+
+    // --- IMAGE TITLE (uncomment to use) ---
+    // To use this:
+    //   1. Create your image (power-of-2 size, e.g. 128x32 or 256x64)
+    //   2. Convert to .iwi format (see IWD_AND_FF_GUIDE.txt Section 8)
+    //   3. Put at images/menu_title.iwi inside your .iwd file
+    //   4. Precache in _main.gsc init(): precacheShader("menu_title");
+    //   5. Comment out the TEXT TITLE block above
+    //   6. Uncomment the block below
+    //
+    // self.hud["title"] = newClientHudElem(self);
+    // self.hud["title"].elemType = "icon";
+    // self.hud["title"].x = 278;
+    // self.hud["title"].y = -141;
+    // self.hud["title"].width = 128;        // Match your image width
+    // self.hud["title"].height = 32;         // Match your image height
+    // self.hud["title"].color = (1, 1, 1);   // (1,1,1) = no tint
+    // self.hud["title"].alpha = 1;
+    // self.hud["title"].sort = 5;
+    // self.hud["title"].foreground = true;
+    // self.hud["title"] setShader("menu_title", 128, 32);
+    // self.hud["title"] setPoint("CENTER", "CENTER", 278, -141);
+    //
+    // NOTE: Remove self.hud["subtitle"] too, or move it below the image.
+    // The rainbow color cycle in updateBarColors() will still affect
+    // self.hud["title"].color if it's in the cycle. To keep the image
+    // at its original colors, remove the title line from updateBarColors().
 
     self.hud["footer_box"] = self createRectangle("white", "TOP", "CENTER", 278, 16, 155, 0, self.menu.color["background"], 1, 0);
     self.hud["footer"] = self createText("default", 0.01, "CENTER", "CENTER", 278, 24, self.menu.color["background"], 5, 0, " ");
