@@ -4,11 +4,22 @@
 #include scripts\mp\_util;
 #include scripts\mp\_functions;
 
+// =========================================================================
+//  init()
+//  GUIDE REF: Section 4 (_main.gsc), Section 9 (init Entry Point)
+//  Called once by the engine when the match starts.
+//  "self" here is the level, NOT a player.
+// =========================================================================
 init()
 {
     level thread onPlayerConnect();
 }
 
+// =========================================================================
+//  onPlayerConnect()
+//  GUIDE REF: Section 4, SETUP_GUIDE Section 9
+//  Loops forever on level. Catches "connected" event for each player.
+// =========================================================================
 onPlayerConnect()
 {
     while (true)
@@ -18,21 +29,67 @@ onPlayerConnect()
     }
 }
 
+// =========================================================================
+//  onPlayerSpawned()
+//  GUIDE REF: Section 4, SETUP_GUIDE Section 9
+//  Loops forever on each player. Runs every time they spawn/respawn.
+//  This is where you:
+//    1. Set up the menu system
+//    2. Call functions_calls() to init pers/dvars/binds
+//    3. Thread all cfg listeners so +commands work
+// =========================================================================
 onPlayerSpawned()
 {
     while (true)
     {
         self waittill("spawned_player");
 
+        // Only the host runs the overflow fix (prevents string crashes)
         if (self isHost())
             self thread OverflowFixInit();
 
+        // Skip bots - they don't need menus or cfg listeners
         if (!self.pers["isBot"])
         {
+            // --- Menu Setup ---
+            // GUIDE REF: Section 7 (_setupmenu.gsc)
             self scripts\mp\menu\_setupmenu::SetupMenu();
             self freezeControls(false);
             self iPrintLn("[{+speed_throw}] & [{+actionslot 2}] to open menu");
+
+            // --- Initialize all pers, dvars, and binds ---
+            // GUIDE REF: Section 6 (_functions.gsc)
             self thread functions_calls();
+
+            // =============================================================
+            //  CFG LISTENERS
+            //  GUIDE REF: Section 20 (Setting Up a +Command)
+            //             Section 21 (Menu Function Also as +Command)
+            //             Section 22 (Bind Callable With +Command)
+            //
+            //  Each cfg listener is threaded here so it starts on every
+            //  spawn. They die on death (endon "death") and restart here.
+            //
+            //  To add a new cfg command:
+            //    1. Write the function in _functions.gsc
+            //    2. Write a cfg listener (xxxCfg) in _functions.gsc
+            //    3. Thread it here: self thread xxxCfg();
+            //    4. Bind in .cfg: bind KEY "+commandname"
+            // =============================================================
+
+            // Toggle commands (menu function + cfg command)
+            self thread godmodeCfg();     // bind G "+godmode"
+            self thread ufoCfg();         // bind U "+ufo"
+            self thread speedCfg();       // bind H "+speed"
+            self thread maxammoCfg();     // bind J "+maxammo"
+            self thread espCfg();         // bind F1 "+esp"
+
+            // Action commands (one-shot, not toggles)
+            self thread refillCfg();      // bind R "+refill"
+            self thread saveCfg();        // bind F5 "+save"
+            self thread loadCfg();        // bind F6 "+load"
+            self thread suicideCfg();     // bind K "+die"
+            self thread healCfg();        // bind F2 "+heal"
         }
     }
 }
